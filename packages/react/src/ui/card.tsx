@@ -1,7 +1,8 @@
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
+import { forwardRef, type ElementType, type HTMLAttributes, type ReactNode } from 'react'
 import { cn } from '../lib/cn'
+import { toneClass, type AccentTone } from '../lib/tone'
 
 export const cardVariants = cva('sui-card', {
   variants: {
@@ -65,18 +66,29 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function C
   )
 })
 
-export const CardTitle = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  function CardTitle({ className, ...props }, ref) {
-    return (
-      <div
-        ref={ref}
-        data-slot="card-title"
-        className={cn('sui-card__title', className)}
-        {...props}
-      />
-    )
-  },
-)
+export interface CardTitleProps extends HTMLAttributes<HTMLDivElement> {
+  /**
+   * The element to render. A `div` by default, which is invisible to heading
+   * navigation; pass the level that fits the page outline (`h2` under the
+   * page's `h1`, say) so screen-reader users can jump between cards.
+   */
+  as?: 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+}
+
+export const CardTitle = forwardRef<HTMLDivElement, CardTitleProps>(function CardTitle(
+  { className, as = 'div', ...props },
+  ref,
+) {
+  const Comp = as as ElementType
+  return (
+    <Comp
+      ref={ref}
+      data-slot="card-title"
+      className={cn('sui-card__title', className)}
+      {...props}
+    />
+  )
+})
 
 export const CardDescription = forwardRef<
   HTMLParagraphElement,
@@ -105,6 +117,41 @@ export const CardAction = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
     )
   },
 )
+
+export const cardIconVariants = cva('sui-card__icon', {
+  variants: {
+    size: { sm: 'sui-card__icon--sm', default: '', lg: 'sui-card__icon--lg' },
+  },
+  defaultVariants: { size: 'default' },
+})
+
+export interface CardIconProps
+  extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof cardIconVariants> {
+  /** The tint behind the glyph. */
+  tone?: AccentTone
+}
+
+/**
+ * A tinted glyph tile at the start of the header.
+ *
+ * Placed first inside `CardHeader`, it takes its own column and spans the
+ * title and description, so the text block stays left-aligned beside it and a
+ * `CardAction` still lands at the far right.
+ */
+export const CardIcon = forwardRef<HTMLSpanElement, CardIconProps>(function CardIcon(
+  { className, size, tone = 'primary', ...props },
+  ref,
+) {
+  return (
+    <span
+      ref={ref}
+      data-slot="card-icon"
+      aria-hidden="true"
+      className={cn(cardIconVariants({ size }), toneClass(tone), className)}
+      {...props}
+    />
+  )
+})
 
 export const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   function CardContent({ className, ...props }, ref) {

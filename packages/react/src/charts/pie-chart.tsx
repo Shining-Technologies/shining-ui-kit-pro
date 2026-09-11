@@ -1,7 +1,22 @@
-import { useMemo, useState, type CSSProperties, type ReactNode, type SVGProps } from 'react'
+import { useMemo, type CSSProperties, type ReactNode, type SVGProps } from 'react'
 import { cn } from '../lib/cn'
-import { ChartContainer, seriesColor, type TooltipState } from './chart-frame'
-import { arcPath, formatCompact, linePath, linearScale, smoothPath, type Point } from './scale'
+import {
+  ChartContainer,
+  describeTooltip,
+  seriesColor,
+  useActivePoint,
+  type ChartTableProps,
+  type TooltipState,
+} from './chart-frame'
+import {
+  arcPath,
+  extent,
+  formatCompact,
+  linePath,
+  linearScale,
+  smoothPath,
+  type Point,
+} from './scale'
 
 export interface PieSlice {
   key: string
@@ -10,7 +25,7 @@ export interface PieSlice {
   color?: string
 }
 
-export interface PieChartProps {
+export interface PieChartProps extends ChartTableProps {
   data: PieSlice[]
   height?: number
   className?: string
@@ -26,7 +41,17 @@ export interface PieChartProps {
   legend?: boolean
   valueFormatter?: (value: number) => string
   emptyMessage?: ReactNode
+  /**
+   * The chart's accessible name. Defaults to every slice with its share —
+   * "Pie chart: Completed 81%, In progress 19%." — which is the whole of what
+   * the drawing says.
+   */
+  ariaLabel?: string
 }
+
+/** A slice's contribution: negative, `NaN` and infinite values count as nothing. */
+const sliceValue = (slice: PieSlice) =>
+  Number.isFinite(slice.value) && slice.value > 0 ? slice.value : 0
 
 export function PieChart({
   data,
@@ -38,13 +63,33 @@ export function PieChart({
   legend = true,
   valueFormatter = formatCompact,
   emptyMessage,
+  ariaLabel,
+  showTableToggle,
+  tableToggleLabel,
 }: PieChartProps) {
-  const [active, setActive] = useState<number | null>(null)
+  // One `NaN` slice used to make the total `NaN`, which failed every guard
+  // below and drew no slices at all — the valid ones included.
+  const total = useMemo(() => data.reduce((sum, slice) => sum + sliceValue(slice), 0), [data])
 
-  const total = useMemo(
-    () => data.reduce((sum, slice) => sum + Math.max(0, slice.value), 0),
+  // Only the slices that are drawn can be reached: an empty one has no arc
+  // to highlight. Up/Down step too, because a circle has no "left".
+  const indices = useMemo(
+    () => data.flatMap((slice, i) => (sliceValue(slice) > 0 ? [i] : [])),
     [data],
   )
+  const point = useActivePoint(indices, { upDown: true })
+  const active = point.index
+
+  const label = useMemo(() => {
+    if (ariaLabel) return ariaLabel
+    const parts = data
+      .filter((slice) => sliceValue(slice) > 0)
+      .map(
+        (slice) =>
+          `${slice.label ?? slice.key} ${Math.round((sliceValue(slice) / (total || 1)) * 100)}%`,
+      )
+    return `${innerRadius > 0 ? 'Donut chart' : 'Pie chart'}: ${parts.join(', ')}.`
+  }, [ariaLabel, data, total, innerRadius])
 
   const series = useMemo(
     () => data.map((slice) => ({ key: slice.key, label: slice.label, color: slice.color })),
@@ -61,7 +106,7 @@ export function PieChart({
           rows: [
             {
               color: seriesColor(series[active]!, active),
-              label: total > 0 ? `${((data[active]!.value / total) * 100).toFixed(1)}%` : '—',
+              label: total > 0 ? `${((sliceValue(data[active]!) / total) * 100).toFixed(1)}%` : '—',
               value: valueFormatter(data[active]!.value),
             },
           ],
@@ -74,8 +119,27 @@ export function PieChart({
       series={series}
       legend={legend}
       tooltip={tooltip}
+      announcement={point.keyboard ? describeTooltip(tooltip) : null}
       isEmpty={total <= 0}
       emptyMessage={emptyMessage}
+      showTableToggle={showTableToggle}
+      tableToggleLabel={tableToggleLabel}
+      table={
+        showTableToggle
+          ? {
+              caption: label,
+              labelHeader: 'Slice',
+              columns: ['Value', 'Share (%)'],
+              rows: indices.map((i) => ({
+                label: data[i]!.label ?? data[i]!.key,
+                values: [
+                  sliceValue(data[i]!),
+                  total > 0 ? Math.round((sliceValue(data[i]!) / total) * 1000) / 10 : null,
+                ],
+              })),
+            }
+          : undefined
+      }
     >
       {({ width }) => {
         const size = Math.min(width, height)
@@ -93,11 +157,14 @@ export function PieChart({
             className="sui-chart__svg"
             width={width}
             height={height}
-            role="img"
-            onMouseLeave={() => setActive(null)}
+            // An application, as the cartesian charts are: it takes the arrow keys.
+            role="application"
+            aria-label={label}
+            {...point.keyboardProps}
+            onMouseLeave={() => point.leave()}
           >
             {data.map((slice, i) => {
-              const value = Math.max(0, slice.value)
+              const value = sliceValue(slice)
               const sweep = total > 0 ? (value / total) * Math.PI * 2 : 0
               const start = angle
               angle += sweep
@@ -110,7 +177,7 @@ export function PieChart({
                   style={{ '--sui-series-color': seriesColor(series[i]!, i) } as CSSProperties}
                   d={arcPath(cx, cy, outer, inner, start, angle)}
                   opacity={active === null || active === i ? 1 : 0.4}
-                  onMouseEnter={() => setActive(i)}
+                  onMouseEnter={() => point.hover(i)}
                 />
               )
             })}
@@ -163,24 +230,37 @@ export function Sparkline({
   strokeWidth = 1.5,
   height = 28,
   className,
+  style,
   ...props
 }: SparklineProps) {
   const W = 100
   const H = 32
 
   const points = useMemo<Point[]>(() => {
-    if (data.length === 0) return []
-    const min = Math.min(...data)
-    const max = Math.max(...data)
+    const range = extent(data)
+    if (!range) return []
     const x = linearScale([0, Math.max(1, data.length - 1)], [1, W - 1])
     // Padded by the stroke width so the extremes are not clipped in half.
-    const y = linearScale([min, max], [H - strokeWidth, strokeWidth])
-    return data.map((value, i) => ({ x: x(i), y: y(value) }))
+    const y = linearScale(range, [H - strokeWidth, strokeWidth])
+    // A non-finite reading is skipped rather than drawn: one `NaN` used to
+    // turn the whole path into `MNaN,NaN …` and the line vanished.
+    const out: Point[] = []
+    data.forEach((value, i) => {
+      if (Number.isFinite(value)) out.push({ x: x(i), y: y(value) })
+    })
+    return out
   }, [data, strokeWidth])
 
   if (points.length === 0) return null
 
-  const d = smooth ? smoothPath(points) : linePath(points)
+  // One reading has no trend to draw — a lone `M` point paints nothing — so
+  // show it as a level line across the box at its height.
+  const d =
+    points.length === 1
+      ? `M1,${points[0]!.y} L${W - 1},${points[0]!.y}`
+      : smooth
+        ? smoothPath(points)
+        : linePath(points)
 
   return (
     <svg
@@ -189,8 +269,17 @@ export function Sparkline({
       preserveAspectRatio="none"
       height={height}
       aria-hidden="true"
-      style={{ '--sui-series-color': color ?? 'var(--sui-chart-1)' } as CSSProperties}
       {...props}
+      style={
+        {
+          '--sui-series-color': color ?? 'var(--sui-chart-1)',
+          // Inline, not only the attribute: `.sui-chart__sparkline` sets a CSS
+          // height, and CSS outranks a presentation attribute — so `height`
+          // was silently ignored whenever the stylesheet was loaded.
+          height,
+          ...style,
+        } as CSSProperties
+      }
     >
       {area && (
         <path

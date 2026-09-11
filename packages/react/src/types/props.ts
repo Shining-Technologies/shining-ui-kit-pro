@@ -19,7 +19,7 @@ import type {
   TableTheme,
   TableVariant,
   VisibilityState,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import type { Cell, Row, Table } from '@tanstack/react-table'
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import type { RowActionSpec } from '../components/cells/row-action'
@@ -69,8 +69,12 @@ export type CellClassName<TData> = string | ((cell: Cell<TData, unknown>) => str
 
 export interface DataTableProps<TData> {
   // ---------------------------------------------------------------- data
-  data: TData[]
-  columns: ColumnDef<TData>[]
+  /**
+   * The rows. Read-only arrays are accepted — the table never mutates them —
+   * so a frozen or `as const` result set needs no copy.
+   */
+  data: readonly TData[]
+  columns: readonly ColumnDef<TData>[]
   /** Stable row identity. Strongly recommended for server data and selection. */
   getRowId?: (row: TData, index: number) => string
 
@@ -92,6 +96,14 @@ export interface DataTableProps<TData> {
   pageSize?: number
   /** Total rows on the server. Shorthand for `features.pagination.rowCount`. */
   rowCount?: number
+  /**
+   * Stay on the current page when `data` changes identity — a refetch, a poll,
+   * an optimistic update. By default (client pagination) any new `data` array
+   * returns to the first page. Sorting, filtering and searching still do; and
+   * if the new data has fewer pages, the table steps back to the last one.
+   * Ignored in server pagination, which never resets on new data.
+   */
+  keepPageOnDataChange?: boolean
 
   // ---------------------------------------------------------------- state
   /** Controlled sorting state, or a `{ mode }` config object. */
@@ -209,7 +221,12 @@ export interface DataTableProps<TData> {
    * or laid out flat across the toolbar (`'inline'`).
    */
   filterLayout?: FilterLayout
-  /** Keep the header visible while the body scrolls. Defaults to `true`. */
+  /**
+   * Keep the header visible while the body scrolls. Defaults to `true`.
+   *
+   * The header sticks to the table's own scroll frame, so it takes effect with
+   * `maxHeight`; without one the rows scroll with the page, header included.
+   */
   stickyHeader?: boolean
   /**
    * Keep the footer row pinned to the bottom of the scroll container.
@@ -262,7 +279,7 @@ export interface DataTableProps<TData> {
 
   // ------------------------------------------------------------------ a11y
   id?: string
-  /** Accessible name for the table. Rendered as a visually hidden `<caption>`. */
+  /** Accessible name for the table, applied as `aria-label`. Not needed when `title` is set. */
   label?: string
   /** Visible caption. Takes precedence over `label`. */
   caption?: ReactNode

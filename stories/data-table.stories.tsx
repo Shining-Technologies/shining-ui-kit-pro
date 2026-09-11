@@ -7,8 +7,8 @@ import {
   TrashIcon,
   type ColumnDef,
   type DataTableQuery,
-} from '@shining-ui-kit/react'
-import { makeUsers, users, type User } from '@shining-ui-kit/examples'
+} from '@shining-technologies/ui-kit-react'
+import { makeUsers, users, type User } from '@shining-technologies/ui-kit-examples'
 import type { Meta, StoryObj } from '@storybook/react'
 import { useEffect, useState } from 'react'
 

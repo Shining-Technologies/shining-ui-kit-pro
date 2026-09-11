@@ -8,14 +8,14 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@shining-ui-kit/core': r('./packages/core/src/index.ts'),
-      '@shining-ui-kit/react/styles.css': r('./tests/style-stub.css'),
-      '@shining-ui-kit/react/virtualized': r('./packages/react/src/virtualized.tsx'),
-      '@shining-ui-kit/react/recharts': r('./packages/react/src/recharts.ts'),
-      '@shining-ui-kit/react': r('./packages/react/src/index.ts'),
-      '@shining-ui-kit/themes': r('./packages/themes/src/index.ts'),
-      '@shining-ui-kit/export-csv': r('./packages/export-csv/src/index.ts'),
-      '@shining-ui-kit/examples': r('./examples/src/index.ts'),
+      '@shining-technologies/ui-kit-core': r('./packages/core/src/index.ts'),
+      '@shining-technologies/ui-kit-react/styles.css': r('./tests/style-stub.css'),
+      '@shining-technologies/ui-kit-react/virtualized': r('./packages/react/src/virtualized.tsx'),
+      '@shining-technologies/ui-kit-react/recharts': r('./packages/react/src/recharts.ts'),
+      '@shining-technologies/ui-kit-react': r('./packages/react/src/index.ts'),
+      '@shining-technologies/ui-kit-themes': r('./packages/themes/src/index.ts'),
+      '@shining-technologies/ui-kit-export-csv': r('./packages/export-csv/src/index.ts'),
+      '@shining-technologies/ui-kit-examples': r('./examples/src/index.ts'),
     },
   },
   test: {

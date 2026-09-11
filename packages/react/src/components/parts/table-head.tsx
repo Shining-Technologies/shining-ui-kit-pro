@@ -1,8 +1,13 @@
 import { flexRender } from '@tanstack/react-table'
 import type { CSSProperties } from 'react'
-import { ALIGN_CLASS, responsiveClass } from '../../lib/class-names'
+import { ALIGN_CLASS } from '../../lib/class-names'
 import { cn } from '../../lib/cn'
-import { pinningClasses, pinningStyle, sizeStyle } from '../../lib/cell-style'
+import {
+  pinningClasses,
+  pinningStyle,
+  responsiveColumnClass,
+  sizeStyle,
+} from '../../lib/cell-style'
 import { useDataTable } from '../../context/table-context'
 
 /**
@@ -12,13 +17,15 @@ import { useDataTable } from '../../context/table-context'
  * replaceable is every part it renders: `Header`, `HeaderRow` and `HeaderCell`.
  */
 export function TableHead<TData>() {
-  const { table, components, headerClassName, classNames, stickyHeader } = useDataTable<TData>()
+  const { table, components, headerClassName, classNames, stickyHeader, rowIndex } =
+    useDataTable<TData>()
   const { Header, HeaderRow, HeaderCell } = components
 
   return (
     <Header
       table={table}
       headerProps={{
+        role: 'rowgroup',
         className: cn('sui-thead', stickyHeader && 'sui-thead--sticky', headerClassName),
       }}
     >
@@ -28,6 +35,8 @@ export function TableHead<TData>() {
           table={table}
           headerGroup={headerGroup}
           rowProps={{
+            role: 'row',
+            'aria-rowindex': rowIndex?.header(groupIndex),
             className: cn('sui-tr', 'sui-tr--head', classNames.headerRow),
             // Grouped headers are several rows deep. Each one sticks below the
             // one above it instead of all of them stacking at `top: 0`, where
@@ -58,6 +67,7 @@ export function TableHead<TData>() {
                 canResize={column.getCanResize()}
                 isPinned={pinned}
                 cellProps={{
+                  role: 'columnheader',
                   scope: header.colSpan > 1 ? 'colgroup' : 'col',
                   colSpan: header.colSpan > 1 ? header.colSpan : undefined,
                   // Only sortable columns advertise a sort state.
@@ -71,7 +81,7 @@ export function TableHead<TData>() {
                   className: cn(
                     'sui-th',
                     ALIGN_CLASS[meta?.align ?? 'left'],
-                    responsiveClass(meta?.responsive),
+                    responsiveColumnClass(table, column),
                     pinningClasses(column),
                     meta?.headerClassName,
                     classNames.headerCell,

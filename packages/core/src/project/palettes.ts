@@ -109,6 +109,66 @@ export const rosePalette: ProjectDefinition = createProject({
   shape: { radius: '1rem', density: 'spacious', elevation: 'raised' },
 })
 
+/**
+ * Indigo and amber on cool white, square-ish corners, dense striped rows and
+ * no shadows. Technical and precise: operations consoles, logistics, finance.
+ */
+export const darwindPalette: ProjectDefinition = createProject({
+  id: 'darwind',
+  name: 'Darwind',
+  description: 'Indigo and amber, sharp corners, dense striped rows. Crisp and technical.',
+  builtIn: true,
+  neutralTint: 'subtle',
+  seed: {
+    primary: '#3730a3',
+    accent: '#f59e0b',
+    neutral: '#64748b',
+    surface: '#f8fafc',
+    info: '#0284c7',
+  },
+  shape: {
+    radius: '0.25rem',
+    density: 'compact',
+    elevation: 'flat',
+    variant: 'striped',
+    borderWidth: '1px',
+  },
+  typography: {
+    fontFamily:
+      "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    titleFontWeight: '700',
+  },
+})
+
+/**
+ * Teal and coral on warm paper, very round corners, generous spacing and lifted
+ * surfaces. Friendly and calm: customer portals, education, healthcare.
+ */
+export const unnPalette: ProjectDefinition = createProject({
+  id: 'unn',
+  name: 'Unn',
+  description: 'Teal and coral, rounded corners, airy spacing. Soft and approachable.',
+  builtIn: true,
+  neutralTint: 'tinted',
+  seed: {
+    primary: '#0f766e',
+    accent: '#f97362',
+    neutral: '#78716c',
+    surface: '#fbfaf7',
+  },
+  shape: {
+    radius: '1.25rem',
+    density: 'spacious',
+    elevation: 'raised',
+    variant: 'borderless',
+    borderWidth: '1px',
+  },
+  typography: {
+    fontSize: '0.9375rem',
+    titleFontWeight: '500',
+  },
+})
+
 export const BUILT_IN_PALETTES: ProjectDefinition[] = [
   shiningPalette,
   slatePalette,
@@ -118,7 +178,22 @@ export const BUILT_IN_PALETTES: ProjectDefinition[] = [
   forestPalette,
   rosePalette,
   monoPalette,
+  darwindPalette,
+  unnPalette,
 ]
+
+/** Ids of the shipped presets, for autocompletion on `<UIKitProvider preset>`. */
+export type PresetId =
+  | 'shining'
+  | 'slate'
+  | 'midnight'
+  | 'violet'
+  | 'ember'
+  | 'forest'
+  | 'rose'
+  | 'mono'
+  | 'darwind'
+  | 'unn'
 
 export const paletteById: Record<string, ProjectDefinition> = Object.fromEntries(
   BUILT_IN_PALETTES.map((p) => [p.id, p]),

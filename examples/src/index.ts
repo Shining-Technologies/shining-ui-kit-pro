@@ -1,5 +1,5 @@
 /**
- * `@shining-ui-kit/examples`
+ * `@shining-technologies/ui-kit-examples`
  *
  * Real-world tables, written once and consumed by both Storybook and the docs
  * site. One copy means the examples cannot drift apart (see ARCHITECTURE.md §2).

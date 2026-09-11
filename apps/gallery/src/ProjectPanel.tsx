@@ -14,7 +14,7 @@ import {
   TabsTrigger,
   TokenSwatchGrid,
   useUIKit,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 
 export interface ProjectPanelProps {
   open: boolean

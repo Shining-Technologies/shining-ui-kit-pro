@@ -1,7 +1,7 @@
-import { BasicTable } from '@shining-ui-kit/examples'
+import { BasicTable } from '@shining-technologies/ui-kit-examples'
 
-const SNIPPET = `import { DataTable, type ColumnDef } from '@shining-ui-kit/react'
-import '@shining-ui-kit/react/styles.css'
+const SNIPPET = `import { DataTable, type ColumnDef } from '@shining-technologies/ui-kit-react'
+import '@shining-technologies/ui-kit-react/styles.css'
 
 interface User {
   name: string

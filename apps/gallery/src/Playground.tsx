@@ -1,4 +1,4 @@
-import { users, type User } from '@shining-ui-kit/examples'
+import { users, type User } from '@shining-technologies/ui-kit-examples'
 import {
   CellBadge,
   CellPerson,
@@ -7,8 +7,8 @@ import {
   PencilIcon,
   TrashIcon,
   type ColumnDef,
-} from '@shining-ui-kit/react'
-import { midnightTheme, type UIKitTheme } from '@shining-ui-kit/themes'
+} from '@shining-technologies/ui-kit-react'
+import { midnightTheme, type UIKitTheme } from '@shining-technologies/ui-kit-themes'
 import { useState } from 'react'
 import { PLAYGROUND_DEFAULTS, PlaygroundControls, type PlaygroundState } from './PlaygroundControls'
 

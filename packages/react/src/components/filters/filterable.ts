@@ -1,4 +1,4 @@
-import type { ColumnFilterConfig } from '@shining-ui-kit/core'
+import type { ColumnFilterConfig } from '@shining-technologies/ui-kit-core'
 import type { Column, Table } from '@tanstack/react-table'
 
 export interface FilterableColumn<TData> {

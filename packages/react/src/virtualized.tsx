@@ -1,13 +1,13 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useEffect, useRef, useState } from 'react'
 import { DataTable } from './components/data-table'
-import { BodyRow } from './components/parts/table-body'
+import { BodyRow } from './components/parts/body-row'
 import { useDataTable } from './context/table-context'
 import type { BodyProps } from './types/components'
 import type { DataTableProps } from './types/props'
 
 /**
- * `@shining-ui-kit/react/virtualized`
+ * `@shining-technologies/ui-kit-react/virtualized`
  *
  * Row virtualisation, kept in a separate entry point so that
  * `@tanstack/react-virtual` is only downloaded by apps that actually
@@ -15,7 +15,7 @@ import type { DataTableProps } from './types/props'
  * what pulls it in (§41, §53).
  *
  * ```tsx
- * import { VirtualizedDataTable } from '@shining-ui-kit/react/virtualized'
+ * import { VirtualizedDataTable } from '@shining-technologies/ui-kit-react/virtualized'
  *
  * <VirtualizedDataTable
  *   data={hundredThousandRows}
@@ -36,7 +36,7 @@ import type { DataTableProps } from './types/props'
  * column grid intact — no absolute positioning, no second layout system.
  */
 export function VirtualizedBody<TData>({ rows, bodyProps, children }: BodyProps<TData>) {
-  const { features } = useDataTable<TData>()
+  const { features, navigation, isRowDisabled } = useDataTable<TData>()
   const bodyRef = useRef<HTMLTableSectionElement>(null)
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null)
 
@@ -70,6 +70,14 @@ export function VirtualizedBody<TData>({ rows, bodyProps, children }: BodyProps<
   const last = items[items.length - 1]
   const paddingTop = first ? first.start : 0
   const paddingBottom = last ? virtualizer.getTotalSize() - last.end : 0
+  // The tab stop has to be on a row that is actually in the DOM: once the
+  // focused row scrolls out of the window, the nearest rendered one takes it,
+  // or tabbing would skip the rows altogether.
+  const tabStop = navigation.resolveTabStop(
+    (index) => !isRowDisabled?.(rows[index]!.original),
+    first?.index ?? 0,
+    last?.index ?? -1,
+  )
 
   return (
     <tbody {...bodyProps} ref={bodyRef}>
@@ -84,6 +92,7 @@ export function VirtualizedBody<TData>({ rows, bodyProps, children }: BodyProps<
             row={row}
             index={item.index}
             rowCount={rows.length}
+            tabStop={tabStop}
             measureRef={virtualizer.measureElement}
           />
         )

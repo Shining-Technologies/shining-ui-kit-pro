@@ -6,10 +6,11 @@ import type {
   TableLayout,
   TableSurface,
   TableVariant,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import type { Row, Table } from '@tanstack/react-table'
 import { createContext, useContext, type MouseEvent, type ReactNode } from 'react'
 import type { ResolvedFeatures } from '../hooks/resolve-features'
+import type { RowIndexModel } from '../hooks/row-index'
 import type { RowNavigation } from '../hooks/use-row-navigation'
 import type { ResolvedComponents } from '../types/components'
 import type {
@@ -67,6 +68,12 @@ export interface DataTableContextValue<TData> {
   renderExpandedRow: ((row: Row<TData>) => ReactNode) | undefined
 
   navigation: RowNavigation
+  /**
+   * Each rendered row's position in the whole table, for `aria-rowindex`.
+   * Optional so a hand-built provider keeps working; without it rows carry
+   * no index.
+   */
+  rowIndex?: RowIndexModel
   /** Base id used to build stable ids for captions, descriptions and details rows. */
   tableId: string
 }
@@ -110,6 +117,24 @@ export function useDataTable<TData = unknown>(): DataTableContextValue<TData> {
     )
   }
   return context as unknown as DataTableContextValue<TData>
+}
+
+/**
+ * The context when there is one, `null` otherwise. For parts that also work in
+ * a bare engine table, such as the injected columns.
+ */
+export function useOptionalDataTable<TData = unknown>(): DataTableContextValue<TData> | null {
+  return useContext(TableContext) as unknown as DataTableContextValue<TData> | null
+}
+
+/**
+ * The id of a row's detail row. Scoped by the table's id: row ids repeat across
+ * tables (`"0"`, `"1"`… without `getRowId`), and two expandable tables on one
+ * page would otherwise point `aria-controls` at each other's rows.
+ */
+export function expandedRowId(tableId: string | undefined, rowId: string): string {
+  const id = `${rowId}-expanded`
+  return tableId ? `${tableId}-${id}` : id
 }
 
 /** The resolved component map: defaults merged with the user's overrides. */

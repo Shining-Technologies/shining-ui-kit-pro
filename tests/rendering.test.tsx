@@ -1,4 +1,4 @@
-import { DataTable } from '@shining-ui-kit/react'
+import { DataTable } from '@shining-technologies/ui-kit-react'
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { userColumns, users } from './fixtures'

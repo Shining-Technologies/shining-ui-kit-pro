@@ -6,6 +6,7 @@ import {
   AvatarFallback,
   AvatarGroup,
   Badge,
+  BreakdownList,
   Button,
   Card,
   CardAction,
@@ -13,20 +14,83 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
+  CardIcon,
   CardTitle,
   Empty,
+  MetricGrid,
+  MetricTile,
   Progress,
+  SegmentedBar,
   Separator,
   Skeleton,
   Sparkline,
   Spinner,
   Stat,
   StatsCard,
+  StatusDot,
+  StatusFlow,
+  StepCard,
+  SummaryCard,
   UserAvatar,
   initialsFrom,
-} from '@shining-ui-kit/react'
-import { PEOPLE, SPARK_SERIES } from '../data'
+} from '@shining-technologies/ui-kit-react'
+import type { ReactNode } from 'react'
+import {
+  FLEET_BREAKDOWN,
+  PEOPLE,
+  SPARK_SERIES,
+  TICKET_BREAKDOWN,
+  WORK_ORDER_STATUSES,
+} from '../data'
 import { Demo } from './Demo'
+
+/* Gallery-only glyphs. The kit's cards take any node, so these are just SVG. */
+function Glyph({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="1em"
+      height="1em"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  )
+}
+
+const TicketGlyph = () => (
+  <Glyph>
+    <path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4Z" />
+    <path d="M13 6v2M13 11v2M13 16v2" />
+  </Glyph>
+)
+
+const TruckGlyph = () => (
+  <Glyph>
+    <path d="M3 6h11v9H3zM14 9h4l3 3v3h-7" />
+    <circle cx="7" cy="17" r="2" />
+    <circle cx="17" cy="17" r="2" />
+  </Glyph>
+)
+
+const ClipboardGlyph = () => (
+  <Glyph>
+    <rect x="5" y="4" width="14" height="17" rx="2" />
+    <path d="M9 4V3h6v1M9 11h6M9 15h4" />
+  </Glyph>
+)
+
+const ShieldGlyph = () => (
+  <Glyph>
+    <path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6Z" />
+    <path d="m9 12 2 2 4-4" />
+  </Glyph>
+)
 
 export function Surfaces() {
   return (
@@ -140,6 +204,224 @@ export function Surfaces() {
         </div>
       </Demo>
 
+      <Demo
+        title="Summary card"
+        note="Icon header, a strip of headline figures and a count per status — the block every module's dashboard ends up with. Zero buckets still render, stepped back, and an empty list says so in one quiet line."
+        inline={false}
+      >
+        <div className="grid-2">
+          <SummaryCard
+            icon={<TicketGlyph />}
+            iconTone="info"
+            title="Support queue"
+            description="Tickets raised by customers and crews"
+            action={
+              <Badge tone="neutral" variant="soft">
+                30 days
+              </Badge>
+            }
+            metrics={[
+              { label: 'Total tickets', value: 87 },
+              { label: 'New (7d)', value: 12, delta: '+4', trend: 'down' },
+            ]}
+            breakdown={TICKET_BREAKDOWN}
+            breakdownProps={{ showSummary: true }}
+          />
+
+          <SummaryCard
+            icon={<ShieldGlyph />}
+            iconTone="warning"
+            title="Compliance checks"
+            description="Licences and insurance awaiting review"
+            metrics={[
+              { label: 'Total checks', value: 0 },
+              { label: 'Due this week', value: 0 },
+              { label: 'Contractors with lapsed documents', value: 0, span: 'full' },
+            ]}
+            breakdown={[]}
+            breakdownProps={{ empty: 'Nothing waiting for review.' }}
+          />
+
+          <SummaryCard
+            icon={<ClipboardGlyph />}
+            title="Work orders"
+            description="Loading — every figure and row holds its place"
+            metrics={[
+              { label: 'Open', value: 0 },
+              { label: 'Overdue', value: 0 },
+            ]}
+            breakdown={TICKET_BREAKDOWN}
+            loading
+          />
+
+          <Card>
+            <CardHeader>
+              <CardIcon tone="primary">
+                <TruckGlyph />
+              </CardIcon>
+              <CardTitle>Field crews</CardTitle>
+              <CardDescription>
+                Composed from the parts, with shares and percentages
+              </CardDescription>
+              <CardAction>
+                <StatusDot tone="success" label="Live" pulse />
+              </CardAction>
+            </CardHeader>
+            <CardContent className="stack-sm">
+              <MetricGrid columns={3}>
+                <MetricTile label="Rostered" value={42} />
+                <MetricTile label="Utilisation" value="71%" delta="+6pt" trend="up" />
+                <MetricTile label="Late starts" value={3} tone="destructive" />
+              </MetricGrid>
+              <BreakdownList title="Right now" items={FLEET_BREAKDOWN} showShare showPercent />
+            </CardContent>
+          </Card>
+        </div>
+      </Demo>
+
+      <Demo
+        title="Metric tiles"
+        note="Filled rather than bordered, for figures that live inside a card. A tone paints an accent rule on the leading edge; span='full' takes a whole row."
+        inline={false}
+      >
+        <Card>
+          <CardContent>
+            <MetricGrid columns={4}>
+              <MetricTile label="Quotes sent" value="128" hint="this month" />
+              <MetricTile label="Accepted" value="74" delta="+9" trend="up" tone="success" />
+              <MetricTile label="Changes requested" value="11" tone="warning" />
+              <MetricTile label="Win rate" value="58%" loading />
+              <MetricTile
+                label="Average time to accept"
+                value="2.4 days"
+                delta="−0.6 days"
+                trend="up"
+                hint="faster than last quarter"
+                span="full"
+              />
+            </MetricGrid>
+          </CardContent>
+        </Card>
+      </Demo>
+
+      <Demo
+        title="Status flow"
+        note="A lifecycle, drawn with the same vocabulary as StatusBadge, so a workflow's documentation cannot drift from its chips. Set current and it becomes a tracker: done steps get a check, what is still to come is outlined."
+        inline={false}
+      >
+        <div className="stack-sm">
+          <StatusFlow
+            label="Work order lifecycle"
+            statuses={WORK_ORDER_STATUSES}
+            steps={['requested', 'scheduled', 'in_progress', 'completed', 'invoiced']}
+            alternates={['on_hold', 'cancelled']}
+          />
+          <Separator />
+          <StatusFlow
+            label="Work order WO-3318"
+            statuses={WORK_ORDER_STATUSES}
+            steps={['requested', 'scheduled', 'in_progress', 'completed', 'invoiced']}
+            current={2}
+          />
+          <Separator />
+          <StatusFlow
+            size="sm"
+            steps={[
+              { status: 'draft', tone: 'neutral' },
+              { status: 'review', label: 'In review', tone: 'info' },
+              { status: 'published', tone: 'success' },
+            ]}
+            alternates={[{ status: 'archived', tone: 'neutral' }]}
+            alternatesLabel="Also:"
+          />
+        </div>
+      </Demo>
+
+      <Demo
+        title="Step cards"
+        note="One stage of a process and the rule that ends it. The condition is pinned to the bottom, so a row of steps lines their rules up whatever the copy length."
+        inline={false}
+      >
+        <div className="stack">
+          <div className="grid-3">
+            <StepCard
+              step={1}
+              title="Intake"
+              description="A customer or a crew reports the job."
+              condition="A coordinator books a visit."
+            >
+              <StatusFlow
+                statuses={WORK_ORDER_STATUSES}
+                steps={['requested', 'scheduled']}
+                alternates={['cancelled']}
+              />
+            </StepCard>
+            <StepCard
+              step={2}
+              title="On site"
+              description="The crew does the work and logs parts and hours against it."
+              condition="The crew signs the job off with photos."
+            >
+              <StatusFlow
+                statuses={WORK_ORDER_STATUSES}
+                steps={['in_progress', 'completed']}
+                alternates={['on_hold']}
+              />
+            </StepCard>
+            <StepCard
+              step={3}
+              title="Billing"
+              description="Accounts raises the invoice."
+              condition="Payment clears and the order closes."
+            >
+              <StatusFlow statuses={WORK_ORDER_STATUSES} steps={['invoiced']} />
+            </StepCard>
+          </div>
+
+          <div className="grid-3">
+            <StepCard
+              step={1}
+              state="done"
+              title="Documents uploaded"
+              description="Licence, insurance and ABN on file."
+            />
+            <StepCard
+              step={2}
+              state="current"
+              title="Compliance review"
+              description="Someone in operations checks each document."
+              condition="Every document is approved."
+            />
+            <StepCard
+              step={3}
+              state="upcoming"
+              title="Induction"
+              description="A site walkthrough with a supervisor."
+            />
+          </div>
+        </div>
+      </Demo>
+
+      <Demo
+        title="Status dot and segmented bar"
+        note="The smallest state marker, and a whole split by share. The bar is one image to a screen reader, named with the counts spelled out."
+        inline={false}
+      >
+        <div className="stack-sm" style={{ maxWidth: '32rem' }}>
+          <div className="demo__body demo__body--inline">
+            <StatusDot tone="success" label="Operational" />
+            <StatusDot tone="warning" label="Degraded" />
+            <StatusDot tone="destructive" label="Outage" />
+            <StatusDot tone="neutral" label="Paused" />
+            <StatusDot tone="info" label="Syncing" pulse />
+            <StatusDot tone="chart-1" size="lg" label="Recording" pulse />
+          </div>
+          <SegmentedBar label="Tickets by status" segments={TICKET_BREAKDOWN} />
+          <SegmentedBar size="lg" label="Crews by state" segments={FLEET_BREAKDOWN} />
+          <SegmentedBar size="sm" label="Nothing yet" segments={[]} />
+        </div>
+      </Demo>
+
       <Demo title="Alert" inline={false}>
         <div className="stack-sm">
           <Alert tone="info">
@@ -228,6 +510,16 @@ export function Surfaces() {
                 <Spinner />
                 <span className="muted">Loading jobs…</span>
               </div>
+              <Separator />
+              <Empty
+                variant="inline"
+                title="No notes on this job yet."
+                actions={
+                  <Button size="sm" variant="ghost">
+                    Add note
+                  </Button>
+                }
+              />
             </CardContent>
           </Card>
 

@@ -1,4 +1,4 @@
-import { OrdersTable, UserManagementTable } from '@shining-ui-kit/examples'
+import { OrdersTable, UserManagementTable } from '@shining-technologies/ui-kit-examples'
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 

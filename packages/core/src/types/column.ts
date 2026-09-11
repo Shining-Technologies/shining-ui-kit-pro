@@ -8,7 +8,7 @@ import type { ColumnFilterConfig } from './filter'
  * Applications add their own fields by augmenting this interface:
  *
  * ```ts
- * declare module '@shining-ui-kit/core' {
+ * declare module '@shining-technologies/ui-kit-core' {
  *   interface ColumnMeta {
  *     currency?: string
  *   }
@@ -24,7 +24,11 @@ export interface ColumnMeta {
   headerClassName?: string
   /** Short label used by the column picker and the mobile card layout. */
   label?: string
-  /** Viewport-dependent visibility. Implemented in CSS, so it needs no JS listener. */
+  /**
+   * Viewport-dependent visibility. A default applied as table state (so the
+   * column picker can bring the column back), with matching CSS classes so the
+   * server render and first paint already agree with the viewport.
+   */
   responsive?: ColumnResponsive
   /**
    * Let this column's content wrap onto several lines.
@@ -59,7 +63,7 @@ export type SortingFnOption<TValue> = BuiltInSortingFn | ValueComparator<TValue>
 /**
  * The behavioural half of a column definition.
  *
- * Rendering (`header`, `cell`, `footer`) lives in `@shining-ui-kit/react` so that
+ * Rendering (`header`, `cell`, `footer`) lives in `@shining-technologies/ui-kit-react` so that
  * this package stays framework-free.
  */
 export interface ColumnBehavior<TData, TValue = unknown> {

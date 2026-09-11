@@ -5,6 +5,7 @@ import {
   renderRowActions,
   type RowActionSpec,
 } from '../components/cells/row-action'
+import { expandedRowId, useOptionalDataTable } from '../context/table-context'
 import { ChevronRightIcon, ListIcon } from '../lib/icons'
 import { Checkbox } from '../primitives/checkbox'
 
@@ -115,27 +116,30 @@ export function createExpanderColumn<TData>(): EngineColumnDef<TData, unknown> {
         <span className="sui-sr-only">Details</span>
       </>
     ),
-    cell: ({ row }) => {
-      if (!row.getCanExpand()) return null
-      const expanded = row.getIsExpanded()
-      return (
-        <button
-          type="button"
-          className="sui-expander"
-          data-expanded={expanded || undefined}
-          aria-expanded={expanded}
-          aria-controls={`${row.id}-expanded`}
-          aria-label={expanded ? 'Collapse row details' : 'Expand row details'}
-          onClick={(event) => {
-            event.stopPropagation()
-            row.toggleExpanded()
-          }}
-        >
-          <ChevronRightIcon className="sui-expander__icon" />
-        </button>
-      )
-    },
+    cell: ({ row }) => (row.getCanExpand() ? <ExpanderButton row={row} /> : null),
   }
+}
+
+function ExpanderButton<TData>({ row }: { row: Row<TData> }) {
+  // Optional: the column also works in a bare engine table, outside <DataTable />.
+  const tableId = useOptionalDataTable()?.tableId
+  const expanded = row.getIsExpanded()
+  return (
+    <button
+      type="button"
+      className="sui-expander"
+      data-expanded={expanded || undefined}
+      aria-expanded={expanded}
+      aria-controls={expandedRowId(tableId, row.id)}
+      aria-label={expanded ? 'Collapse row details' : 'Expand row details'}
+      onClick={(event) => {
+        event.stopPropagation()
+        row.toggleExpanded()
+      }}
+    >
+      <ChevronRightIcon className="sui-expander__icon" />
+    </button>
+  )
 }
 
 export interface ActionsColumnOptions {

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { cn } from '../lib/cn'
 import { Button, type ButtonProps } from '../primitives/button'
 import { Spinner } from './feedback'
@@ -39,7 +39,21 @@ export interface ConfirmDialogProps {
   onConfirm?: () => void | Promise<unknown>
   /** Paints the confirm button as destructive and adds the usual friction. */
   destructive?: boolean
+  /**
+   * Called when an action throws or its promise rejects. The dialog stays open
+   * with every choice enabled again, so the person can retry or cancel. Without
+   * it the error is rethrown, as an unhandled rejection.
+   */
+  onError?: (error: unknown, action: ConfirmAction) => void
   className?: string
+}
+
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  return (
+    value !== null &&
+    (typeof value === 'object' || typeof value === 'function') &&
+    typeof (value as PromiseLike<unknown>).then === 'function'
+  )
 }
 
 /**
@@ -63,9 +77,13 @@ export function ConfirmDialog({
   cancelLabel = 'Cancel',
   onConfirm,
   destructive = false,
+  onError,
   className,
 }: ConfirmDialogProps) {
   const [pending, setPending] = useState<number | null>(null)
+  // The guard reads a ref, not the state: a double-click can deliver its second
+  // click before the re-render that would have disabled the button.
+  const busy = useRef(false)
 
   const resolved: ConfirmAction[] = actions ?? [
     { label: cancelLabel, variant: 'outline' },
@@ -73,24 +91,31 @@ export function ConfirmDialog({
   ]
 
   async function run(action: ConfirmAction, index: number) {
-    if (pending !== null) return
+    if (busy.current) return
+    busy.current = true
     try {
       const result = action.onClick?.()
-      if (result instanceof Promise) {
+      // Any thenable, not only a native `Promise` — a promise from another
+      // realm or a query library's own type must hold the dialog open too.
+      if (isThenable(result)) {
         setPending(index)
         await result
       }
       if (!action.keepOpen) onOpenChange(false)
+    } catch (error) {
+      if (!onError) throw error
+      onError(error, action)
     } finally {
+      busy.current = false
       setPending(null)
     }
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={(next) => pending === null && onOpenChange(next)}>
+    <AlertDialog open={open} onOpenChange={(next) => !busy.current && onOpenChange(next)}>
       <AlertDialogContent
         className={cn('sui-confirm', className)}
-        onEscapeKeyDown={(event) => pending !== null && event.preventDefault()}
+        onEscapeKeyDown={(event) => busy.current && event.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -105,6 +130,7 @@ export function ConfirmDialog({
               key={index}
               variant={action.variant ?? 'outline'}
               disabled={action.disabled || (pending !== null && pending !== index)}
+              aria-busy={pending === index || undefined}
               onClick={() => void run(action, index)}
             >
               {pending === index ? <Spinner size="sm" label={null} /> : action.icon}

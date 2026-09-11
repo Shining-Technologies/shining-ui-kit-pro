@@ -1,0 +1,785 @@
+/*
+ * The dashboard sidebar: `Sidebar`, `SidebarNav` and their parts.
+ *
+ * Items read a handful of private custom properties (`--_sb-*`) rather than
+ * the sidebar tokens directly. The same markup renders in two places — the
+ * sidebar itself, and a flyout portalled out of the rail onto a popover
+ * surface — and a light label on a light popover is invisible. Each surface
+ * sets the properties once; nothing below needs to know which it is on.
+ */
+
+.sui-sidebar,
+.sui-sidebar-flyout {
+  --_sb-fg: var(--sui-sidebar-foreground);
+  --_sb-muted: color-mix(in srgb, var(--sui-sidebar-foreground) 58%, transparent);
+  --_sb-hover: color-mix(in srgb, var(--sui-sidebar-accent) 60%, transparent);
+  --_sb-active-bg: var(--sui-sidebar-accent);
+  --_sb-active-fg: var(--sui-sidebar-accent-foreground);
+  --_sb-line: var(--sui-sidebar-border);
+  --_sb-badge: color-mix(in srgb, var(--sui-sidebar-foreground) 10%, transparent);
+}
+
+.sui-sidebar[data-appearance='primary'] {
+  --_sb-active-bg: color-mix(in srgb, var(--sui-sidebar-primary) 14%, transparent);
+  --_sb-active-fg: var(--sui-sidebar-primary);
+}
+
+.sui-sidebar-flyout {
+  --_sb-fg: var(--sui-popover-foreground);
+  --_sb-muted: color-mix(in srgb, var(--sui-popover-foreground) 58%, transparent);
+  --_sb-hover: color-mix(in srgb, var(--sui-accent) 60%, transparent);
+  --_sb-active-bg: var(--sui-accent);
+  --_sb-active-fg: var(--sui-accent-foreground);
+  --_sb-line: var(--sui-border);
+  --_sb-badge: color-mix(in srgb, var(--sui-popover-foreground) 10%, transparent);
+}
+
+/* ------------------------------------------------------------------- panel */
+
+.sui-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: var(--sui-sidebar-width, 16rem);
+  height: 100dvh;
+  /* The rail animates its width; the text it is hiding must not spill out. */
+  overflow: hidden;
+  border-inline-end: var(--sui-border-width) solid var(--sui-sidebar-border);
+  background: var(--sui-sidebar);
+  color: var(--_sb-fg);
+  outline: none;
+  transition: width 200ms ease;
+}
+
+.sui-sidebar[data-collapsed] {
+  width: var(--sui-sidebar-rail-width, 3.75rem);
+}
+
+/* In the shell the sidebar sizes its own column, so the rail animates. */
+.sui-shell:has(> .sui-sidebar) {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'sidebar header'
+    'sidebar content';
+}
+
+.sui-shell > .sui-sidebar {
+  grid-area: sidebar;
+}
+
+/*
+ * Keyed on the attribute rather than a media query: the breakpoint is a prop,
+ * and the stylesheet cannot know what it was set to.
+ */
+.sui-shell:has(> .sui-sidebar[data-mobile]) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'header'
+    'content';
+}
+
+.sui-sidebar__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.75rem;
+  padding: 0.625rem;
+  border-bottom: var(--sui-border-width) solid var(--sui-sidebar-border);
+}
+
+/* Only the middle scrolls: the brand and the account stay where muscle memory left them. */
+.sui-sidebar__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--_sb-line) transparent;
+}
+
+.sui-sidebar__footer {
+  padding: 0.5rem 0.625rem;
+  border-top: var(--sui-border-width) solid var(--sui-sidebar-border);
+}
+
+/* ------------------------------------------------------------------ drawer */
+
+.sui-sidebar[data-mobile] {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 70;
+  width: min(calc(var(--sui-sidebar-width, 16rem) + 2rem), 85vw);
+  box-shadow: var(--sui-shadow-overlay);
+  transform: translateX(-100%);
+  /* Hidden, not merely off-screen, so a closed drawer is out of the tab order. */
+  visibility: hidden;
+  transition:
+    transform 220ms ease,
+    visibility 0s linear 220ms;
+}
+
+.sui-sidebar[data-mobile]:dir(rtl) {
+  transform: translateX(100%);
+}
+
+.sui-sidebar[data-mobile][data-open] {
+  transform: none;
+  visibility: visible;
+  transition: transform 220ms ease;
+}
+
+/*
+ * Server HTML, before hydration: script has not measured the viewport yet, so
+ * the element says so, and at the default breakpoint (`DEFAULT_BREAKPOINT`)
+ * a phone gets the closed drawer from the first paint instead of a desktop
+ * column that snaps away when the bundle arrives.
+ */
+@media (max-width: 48rem) {
+  .sui-sidebar[data-breakpoint-pending] {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 70;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: none;
+  }
+
+  .sui-shell:has(> .sui-sidebar[data-breakpoint-pending]) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'header'
+      'content';
+  }
+}
+
+.sui-sidebar__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 69;
+  background: color-mix(in srgb, #000 45%, transparent);
+  animation: sui-fade-in 180ms ease-out;
+}
+
+/* ---------------------------------------------------------- brand & account */
+
+.sui-sidebar-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.375rem;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+:is(button, a).sui-sidebar-identity {
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+:is(button, a).sui-sidebar-identity:hover,
+.sui-sidebar-identity[data-state='open'] {
+  background: var(--_sb-hover);
+}
+
+.sui-sidebar-identity__media {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  overflow: hidden;
+  border-radius: var(--sui-radius-control);
+}
+
+.sui-sidebar-identity__media > :is(img, svg) {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.sui-sidebar-identity__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--sui-sidebar-primary);
+  color: var(--sui-sidebar-primary-foreground);
+  font-weight: 700;
+}
+
+.sui-sidebar-identity__text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.sui-sidebar-identity__title,
+.sui-sidebar-identity__subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-sidebar-identity__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sui-sidebar-identity__subtitle {
+  color: var(--_sb-muted);
+  font-size: 0.75rem;
+}
+
+.sui-sidebar-identity__chevron {
+  flex: none;
+  color: var(--_sb-muted);
+}
+
+.sui-sidebar-identity__menu {
+  min-width: max(var(--radix-dropdown-menu-trigger-width, 0px), 12rem);
+}
+
+/* ------------------------------------------------------------------ search */
+
+.sui-sidebar-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  /* Bleeds over the nav's padding so content scrolling under it is covered. */
+  margin: -0.75rem -0.625rem 0;
+  padding: 0.75rem 0.625rem 0.25rem;
+  background: var(--sui-sidebar);
+}
+
+.sui-sidebar-search__field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.125rem;
+  padding-inline: 0.625rem 0.25rem;
+  border: var(--sui-border-width) solid var(--_sb-line);
+  border-radius: var(--sui-radius-control);
+  background: color-mix(in srgb, var(--sui-sidebar-foreground) 3%, transparent);
+  color: var(--_sb-muted);
+  cursor: text;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.sui-sidebar-search__field:focus-within {
+  border-color: var(--sui-sidebar-ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sui-sidebar-ring) 22%, transparent);
+}
+
+.sui-sidebar-search__icon {
+  flex: none;
+}
+
+.sui-sidebar-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--_sb-fg);
+  font: inherit;
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.sui-sidebar-search__input::placeholder {
+  color: var(--_sb-muted);
+}
+
+/* The field has its own clear button, which is keyboard-reachable; this one is not. */
+.sui-sidebar-search__input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.sui-sidebar-search__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--sui-radius-control) - 2px);
+  background: transparent;
+  color: var(--_sb-muted);
+  cursor: pointer;
+}
+
+.sui-sidebar-search__clear:hover {
+  background: var(--_sb-hover);
+  color: var(--_sb-fg);
+}
+
+.sui-sidebar-mark {
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--sui-warning) 32%, transparent);
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------- nav */
+
+.sui-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.75rem 0.625rem 1rem;
+}
+
+.sui-sidebar-nav__empty {
+  margin: 0;
+  padding: 0.5rem 0.625rem;
+  color: var(--_sb-muted);
+  font-size: 0.8125rem;
+}
+
+.sui-sidebar-separator {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: var(--sui-border-width) solid var(--_sb-line);
+}
+
+/* ----------------------------------------------------------------- section */
+
+.sui-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sui-sidebar-section__header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sui-sidebar-section__label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 1.75rem;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--_sb-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-align: start;
+  text-transform: uppercase;
+}
+
+button.sui-sidebar-section__label {
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+button.sui-sidebar-section__label:hover {
+  color: var(--_sb-fg);
+}
+
+.sui-sidebar-section__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.25rem;
+  font-size: 1rem;
+  /* A toned section paints its icon in the area's hue; an untoned one stays muted. */
+  color: var(--sui-tone, currentColor);
+}
+
+.sui-sidebar-section__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-sidebar-section__chevron {
+  flex: none;
+  transition: transform 150ms ease;
+}
+
+.sui-sidebar-section__label[aria-expanded='false'] .sui-sidebar-section__chevron {
+  transform: rotate(-90deg);
+}
+
+.sui-sidebar-section__label[aria-expanded='false']:dir(rtl) .sui-sidebar-section__chevron {
+  transform: rotate(90deg);
+}
+
+.sui-sidebar-section__action {
+  display: inline-flex;
+  flex: none;
+}
+
+/* -------------------------------------------------------------------- item */
+
+.sui-sidebar-menu,
+.sui-sidebar-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * A level down: indented to the centre of the parent's icon, with a guide line
+ * there. The indent is small on purpose — the tree can go as deep as the data
+ * does, and at 1.25rem a level, five levels still leave room for a label.
+ */
+.sui-sidebar-sub {
+  margin-block: 0.125rem;
+  margin-inline-start: var(--sui-sidebar-indent, 1.1875rem);
+  padding-inline-start: 0.25rem;
+  border-inline-start: var(--sui-border-width) solid var(--_sb-line);
+  animation: sui-sidebar-sub-in 160ms ease-out;
+}
+
+.sui-sidebar-sub--flyout {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  animation: none;
+}
+
+@keyframes sui-sidebar-sub-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+}
+
+.sui-sidebar-item {
+  position: relative;
+  min-width: 0;
+}
+
+.sui-sidebar-item__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.sui-sidebar-item__link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding: 0.375rem 0.625rem;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--_sb-fg);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.sui-sidebar-sub .sui-sidebar-item__link {
+  padding-inline: 0.5rem;
+}
+
+.sui-sidebar-item__link:hover:not(:disabled) {
+  background: var(--_sb-hover);
+}
+
+.sui-sidebar-item__link[aria-current='page'] {
+  background: var(--_sb-active-bg);
+  color: var(--_sb-active-fg);
+  font-weight: 500;
+}
+
+/* The branch the current page is in: findable at a glance without a second highlight. */
+.sui-sidebar-item[data-active-trail] > .sui-sidebar-item__row > .sui-sidebar-item__link {
+  font-weight: 600;
+}
+
+.sui-sidebar-item__link:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Room for the separate open/close button of a branch that is also a link. */
+.sui-sidebar-item__link--split {
+  padding-inline-end: 2.25rem;
+}
+
+.sui-sidebar-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.125rem;
+}
+
+.sui-sidebar-item__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-sidebar-item__external {
+  flex: none;
+  color: var(--_sb-muted);
+  font-size: 0.75rem;
+}
+
+.sui-sidebar-item__badge {
+  flex: none;
+  min-width: 1.25rem;
+  padding: 0 0.375rem;
+  border-radius: 999px;
+  background: var(--_sb-badge);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.sui-sidebar-item__badge[class*='sui-tone--'] {
+  background: color-mix(in srgb, var(--sui-tone) 16%, transparent);
+  color: var(--sui-tone);
+}
+
+.sui-sidebar-item__chevron {
+  flex: none;
+  color: var(--_sb-muted);
+  font-size: 1rem;
+  transform: rotate(-90deg);
+  transition: transform 150ms ease;
+}
+
+.sui-sidebar-item__chevron:dir(rtl) {
+  transform: rotate(90deg);
+}
+
+.sui-sidebar-item[data-expanded] > .sui-sidebar-item__row .sui-sidebar-item__chevron {
+  transform: none;
+}
+
+.sui-sidebar-item__toggle {
+  position: absolute;
+  inset-inline-end: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--sui-radius-control) - 2px);
+  background: transparent;
+  color: var(--_sb-muted);
+  cursor: pointer;
+}
+
+.sui-sidebar-item__toggle:hover {
+  background: var(--_sb-hover);
+  color: var(--_sb-fg);
+}
+
+/* Hover actions sit over the badge and replace it while the pointer is there. */
+.sui-sidebar-item__actions {
+  position: absolute;
+  inset-inline-end: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.sui-sidebar-item__link--split ~ .sui-sidebar-item__actions {
+  inset-inline-end: 2.25rem;
+}
+
+.sui-sidebar-item__row:is(:hover, :focus-within) > .sui-sidebar-item__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sui-sidebar-item__row:has(> .sui-sidebar-item__actions):is(:hover, :focus-within)
+  .sui-sidebar-item__badge {
+  visibility: hidden;
+}
+
+/* -------------------------------------------------------------------- rail */
+
+/*
+ * Labels are hidden visually, not with `display: none`: the rail's links keep
+ * their accessible names, and a screen reader hears the same sidebar as ever.
+ */
+.sui-sidebar[data-collapsed]
+  :is(.sui-sidebar-identity__text, .sui-sidebar-item__label, .sui-sidebar-item__external) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sui-sidebar[data-collapsed] .sui-sidebar__header,
+.sui-sidebar[data-collapsed] .sui-sidebar__footer {
+  justify-content: center;
+  padding-inline: 0.5rem;
+}
+
+.sui-sidebar[data-collapsed] .sui-sidebar-identity {
+  justify-content: center;
+  padding: 0.25rem;
+}
+
+.sui-sidebar[data-collapsed] .sui-sidebar-identity__chevron {
+  display: none;
+}
+
+.sui-sidebar[data-collapsed] .sui-sidebar-nav {
+  padding-inline: 0.5rem;
+}
+
+.sui-sidebar[data-collapsed] .sui-sidebar-search {
+  margin-inline: -0.5rem;
+  padding-inline: 0.5rem;
+}
+
+/* A tracked-out word in a 3.75rem rail is a smudge; a rule says "new area" in less. */
+.sui-sidebar[data-collapsed] .sui-sidebar-section__header {
+  display: none;
+}
+
+.sui-sidebar[data-collapsed] .sui-sidebar-section + .sui-sidebar-section {
+  padding-top: 1rem;
+  border-top: var(--sui-border-width) solid var(--_sb-line);
+}
+
+.sui-sidebar[data-collapsed] .sui-sidebar-item__link {
+  justify-content: center;
+  gap: 0;
+  padding-inline: 0;
+}
+
+.sui-sidebar[data-collapsed] .sui-sidebar-item__icon {
+  font-size: 1.125rem;
+}
+
+/* The current page is hidden in a flyout, so the branch holding it stands in for it. */
+.sui-sidebar[data-collapsed]
+  .sui-sidebar-item[data-active-trail]
+  > .sui-sidebar-item__row
+  > .sui-sidebar-item__link {
+  background: var(--_sb-active-bg);
+  color: var(--_sb-active-fg);
+}
+
+/* The count becomes a dot on the icon: still "something here", in a quarter of the room. */
+.sui-sidebar[data-collapsed] .sui-sidebar-item__badge {
+  position: absolute;
+  top: 0.3125rem;
+  inset-inline-end: 0.4375rem;
+  width: 0.5rem;
+  min-width: 0;
+  height: 0.5rem;
+  padding: 0;
+  overflow: hidden;
+  background: var(--sui-tone, var(--sui-sidebar-primary));
+  color: transparent;
+  font-size: 0;
+  box-shadow: 0 0 0 2px var(--sui-sidebar);
+}
+
+/* A branch in the rail: a notch in the corner says "there is more behind this". */
+.sui-sidebar[data-collapsed] .sui-sidebar-item[data-expandable] > .sui-sidebar-item__row::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: 0.25rem;
+  bottom: 0.25rem;
+  width: 0;
+  height: 0;
+  border-inline-start: 0.25rem solid transparent;
+  border-bottom: 0.25rem solid var(--_sb-muted);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ flyout */
+
+.sui-sidebar-flyout.sui-popover {
+  min-width: 13rem;
+  max-width: 18rem;
+  max-height: min(28rem, var(--radix-popover-content-available-height, 28rem));
+  overflow-y: auto;
+  padding: 0.375rem;
+}
+
+.sui-sidebar-flyout__title {
+  margin: 0;
+  padding: 0.375rem 0.625rem 0.375rem;
+  color: var(--_sb-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sui-sidebar,
+  .sui-sidebar[data-mobile],
+  .sui-sidebar-sub,
+  .sui-sidebar__backdrop,
+  .sui-sidebar-item__chevron,
+  .sui-sidebar-section__chevron {
+    animation: none;
+    transition: none;
+  }
+}

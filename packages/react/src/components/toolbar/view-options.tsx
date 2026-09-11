@@ -53,7 +53,9 @@ export function DefaultViewOptions<TData>({ table }: ViewOptionsProps<TData>) {
         {hiddenCount > 0 ? (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => table.resetColumnVisibility()}>
+            {/* Explicitly on, not reset: a reset returns columns to their
+                defaults, which include the ones hidden at this screen width. */}
+            <DropdownMenuItem onSelect={() => table.toggleAllColumnsVisible(true)}>
               Show all columns
             </DropdownMenuItem>
           </>

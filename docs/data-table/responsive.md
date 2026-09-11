@@ -22,10 +22,14 @@ column stays visible:
 <DataTable responsiveMode="cards" />
 ```
 
-Below the `md` breakpoint each row becomes a card and each cell prints its column name. This
-is done entirely in CSS — the cell already carries `data-label`, and a media query does the
-rest. There is no second render path, no resize listener, and nothing that can disagree with
-the table version.
+Below the `md` breakpoint each row becomes a card and each cell prints its column name. The
+name is a real `.sui-td__label` element in the cell, not a `::before`, so a screen reader reads
+it with the value. The table layout hides it, and a media query shows it. `data-label` remains
+on the cell for styling only. There is no second render path, no resize listener, and nothing
+that can disagree with the table version.
+
+A custom `Cell` component must render its `children` to keep the label, because the label
+arrives there with the cell's content.
 
 ## Container-aware cards
 
@@ -45,11 +49,19 @@ Fine-tune what appears on a card:
 
 ```tsx
 meta: {
-  hideInCards: true,        // leave this column out of the card entirely
-  hideLabelInCards: true,   // show the value without its column name
+  hideInCards: true,        // leave this column out of the card entirely, footer cell included
+  hideLabelInCards: true,   // show the value without its column name (still read aloud)
   label: 'Unit price',      // the name to print
+  responsive: { priority: 1 }, // cards list prioritised fields first, lowest first
 }
 ```
+
+Cards have no header row, so in either card mode a small bar above the cards takes over what
+the header did: a **Sort by** picker with a direction toggle, and **Select all** when multiple
+selection is on. It is shown by the same CSS that switches to cards, so it never appears
+next to a table layout. Selection, hover and expanded details keep their styling on cards,
+the checkbox and expander share the card's first line with its first field, and footer
+totals get a card of their own, each labelled with its column.
 
 ## Responsive columns
 
@@ -64,11 +76,15 @@ Hide a column below or above a breakpoint:
 ```
 
 Breakpoints are `sm` (640), `md` (768), `lg` (1024), `xl` (1280), `2xl` (1536), matching
-Tailwind's scale. This is also CSS — `sui-hide-below-md` — so it costs nothing at runtime and
-works whether or not your app uses Tailwind.
+Tailwind's scale, and work whether or not your app uses Tailwind.
 
-Users can still bring a hidden column back through the **Columns** menu; responsive hiding is
-about default density, not permission.
+Responsive hiding is a _default_, applied as table state: the column is removed from the
+table (so pinned offsets and the column count stay correct), the **Columns** menu shows it as
+hidden, and ticking it there brings it back at every width. The default is never written into
+your `columnVisibility` state, so it follows the window as it resizes, and
+`onColumnVisibilityChange` only reports what the user actually changed. The
+`sui-hide-below-md` classes are still emitted, so a server render and the first paint already
+match the viewport.
 
 ## A fixed frame with scrolling rows
 
@@ -80,6 +96,9 @@ about default density, not permission.
 its bottom, and the rows are the only part that moves. Both are on by default inside a frame
 (`stickyHeader`, `stickyFooter`), and a grouped header sticks row by row rather than stacking
 every row at the top.
+
+The header sticks to the table's own frame, so `stickyHeader` needs a `maxHeight` to do
+anything: without one the rows scroll with the page, and the header goes with them.
 
 The chrome only reacts when there is something to react to. The header lifts off the rows —
 a shadow — once they have scrolled under it, and a pinned column casts its shadow only while
@@ -102,6 +121,13 @@ long value cannot make a row three lines tall. Let a specific column wrap instea
 
 `auto` hands sizing back to the browser for data you cannot measure in advance; declared
 sizes then become hints and pinned offsets approximate.
+
+## Touch screens
+
+There is no hover on a touch screen, so the column menu (`⋮`) is always shown there, in space
+reserved at the end of the header rather than drawn over the label, and the resize grip is
+widened for a finger. In `auto` mode the toolbar and pagination also compact themselves by
+the table's own width, not only the window's.
 
 ## What not to do
 

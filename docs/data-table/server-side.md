@@ -21,7 +21,7 @@ GraphQL, React Query, SWR or server actions, and it never imports any of them.
 
 `mode="server"` switches sorting, filtering and pagination to manual: the engine keeps the
 state and reports it, but leaves the rows alone. `rowCount` is what lets it work out the page
-count.
+count. `data` accepts a readonly array, so a frozen or `as const` result passes as it is.
 
 ## The query
 
@@ -35,8 +35,17 @@ interface DataTableQuery {
 }
 ```
 
-`onQueryChange` fires once on mount (so it can drive the initial load) and then only when one
-of those five things actually changes. Unrelated re-renders do not trigger a fetch.
+`onQueryChange` fires once on mount (so it can drive the initial load) and then once per real
+change to one of those five things. Unrelated re-renders do not trigger a fetch.
+
+- **A new sort, filter or search returns to page 0 in the same update**, so the change and
+  the page reset arrive as one query, not two — and never as page 5 of a different result.
+- **`columnFilters` only lists filters that have a value.** Picking an operator in an empty
+  filter changes nothing on the server, so it neither fires a query nor resets the page.
+- **A shrinking total steps back.** When `rowCount` drops under the current page — the last
+  row of the last page deleted — the table moves to the page that now ends the result. When
+  `rowCount` settles at 0, that is page 0. It waits until `loading` is false, so a stale total
+  mid-fetch does not move it.
 
 ## A complete example
 
@@ -88,26 +97,34 @@ page-2 one.
 
 ## With React Query
 
+The recommended pattern:
+
 ```tsx
+const EMPTY: User[] = []   // module level: one array, not a new one per render
+
 const [query, setQuery] = useState<DataTableQuery | null>(null)
 const { data, isFetching, error, refetch } = useQuery({
   queryKey: ['users', query],
   queryFn: () => api.users(query!),
-  enabled: query !== null,
+  enabled: !!query,                    // wait for the table's first query
   placeholderData: keepPreviousData,   // avoids a flash of empty rows while paging
 })
 
 <DataTable
-  data={data?.rows ?? []}
+  data={data?.rows ?? EMPTY}
   columns={columns}
   mode="server"
-  rowCount={data?.total ?? 0}
+  rowCount={data?.total}
   loading={isFetching}
   error={error}
   onRetry={refetch}
   onQueryChange={setQuery}
+  getRowId={(row) => row.id}
 />
 ```
+
+Prefer `rowCount={data?.total}` to `?? 0`: undefined says "not known yet", while `0` claims an
+empty result before the first page has even arrived.
 
 ## Mixing modes
 
@@ -136,6 +153,18 @@ features={{ filtering: { debounceMs: 500 } }}
 Pass `getRowId` so selection is keyed by a real id, not by array position — otherwise a
 refetch silently selects different rows.
 
+## Exporting to CSV
+
+The table holds one page, so a CSV export of it holds one page. Fetch the full set and pass
+it through `@shining-technologies/ui-kit-export-csv`'s `data` option:
+
+```ts
+downloadTableCsv(table, { data: allRows, filename: 'users.csv' })
+```
+
+The rows go through the table's own columns. With `rows: 'selected'`, selections made on other
+pages are included, matched by `getRowId`.
+
 ## Translating the query
 
 Filter values are `{ operator, value }` pairs, which map cleanly onto most query languages:
@@ -147,5 +176,5 @@ const where = query.columnFilters.map(({ id, value }) => {
 })
 ```
 
-`normalizeFilterValue` and the operator registry are exported from `@shining-ui-kit/core`, so
+`normalizeFilterValue` and the operator registry are exported from `@shining-technologies/ui-kit-core`, so
 your server can share the same vocabulary.

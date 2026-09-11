@@ -84,17 +84,24 @@ export const UserAvatar = forwardRef<HTMLSpanElement, UserAvatarProps>(function 
       className={cn(userAvatarVariants({ size }), className)}
       {...props}
     >
+      {/* The visible parts are hidden from assistive tech: the name is spoken
+          once, from the text below, rather than as "image, Ana Ortiz" or as
+          the initials "A O" followed by the name again. */}
       <Avatar
         className="sui-user-avatar__avatar"
+        aria-hidden="true"
         style={tint ? { ['--sui-user-avatar-tint' as string]: tint } : undefined}
       >
-        {src ? <AvatarImage src={src} alt={name} /> : null}
+        {src ? <AvatarImage src={src} alt="" /> : null}
         <AvatarFallback className="sui-user-avatar__fallback" delayMs={src ? 200 : 0}>
           {initialsFrom(name)}
         </AvatarFallback>
       </Avatar>
       {status ? (
-        <span className={cn('sui-user-avatar__presence', `sui-user-avatar__presence--${status}`)} />
+        <span
+          aria-hidden="true"
+          className={cn('sui-user-avatar__presence', `sui-user-avatar__presence--${status}`)}
+        />
       ) : null}
       <span className="sui-visually-hidden">
         {name}

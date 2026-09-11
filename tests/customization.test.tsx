@@ -9,7 +9,7 @@ import {
   type CellProps,
   type ColumnDef,
   type RowProps,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'

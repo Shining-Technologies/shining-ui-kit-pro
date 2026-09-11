@@ -20,9 +20,10 @@ import {
   ToastProvider,
   UserAvatar,
   useToast,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { useState } from 'react'
 import { Demo } from './Demo'
+import { DashboardSidebarPreview, DrawerSidebarPreview } from './SidebarDemo'
 
 const NAV = [
   {
@@ -228,6 +229,21 @@ export function Shell() {
         inline={false}
       >
         <ShellPreview />
+      </Demo>
+
+      <Demo
+        title="Dashboard sidebar"
+        note="Sections with their own hue, destinations nested to any depth, hover actions, badges and a filter. Collapse it: the rail keeps every page reachable through tooltips and flyouts. Arrow keys walk the tree."
+        inline={false}
+      >
+        <DashboardSidebarPreview />
+      </Demo>
+
+      <Demo
+        title="Sidebar drawer"
+        note="Below its breakpoint the same sidebar becomes an off-canvas drawer — forced on here so it shows on a desktop. Escape, the backdrop or choosing a page closes it."
+      >
+        <DrawerSidebarPreview />
       </Demo>
 
       <Demo

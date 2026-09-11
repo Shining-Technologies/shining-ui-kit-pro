@@ -4,7 +4,7 @@ import {
   type DataMode,
   type DataTableFeatures,
   type PinnedSide,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import type { DataTableProps } from '../types/props'
 
 /** Every feature flag with its defaults filled in. Nothing downstream sees `undefined`. */

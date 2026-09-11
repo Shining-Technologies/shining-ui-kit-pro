@@ -108,10 +108,32 @@ the padding simply is not wrapped in `CardContent`.
 `CardAction` sits at the top right of the header and spans both title rows, so it does not
 get dragged down by a long description.
 
+`CardTitle` renders a `div` unless told otherwise, and a `div` is invisible to a screen
+reader's heading list. Pick the level that fits the page outline — `<CardTitle as="h2">` under
+the page's `h1` — so people can jump from card to card. `SummaryCard` and `StepCard` take the
+same choice as `titleAs`.
+
 | Prop          |                                                                           |
 | ------------- | ------------------------------------------------------------------------- |
 | `variant`     | `default` · `flat` (no shadow) · `ghost` (no chrome at all)               |
 | `interactive` | Adds hover affordance. Only set it when the card actually does something. |
+
+`CardIcon` is a tinted glyph tile. Put it first inside `CardHeader` and it takes its own
+column, spanning the title and description; a `CardAction` still lands at the far right.
+
+```tsx
+<CardHeader>
+  <CardIcon tone="info">
+    <TicketIcon />
+  </CardIcon>
+  <CardTitle>Support queue</CardTitle>
+  <CardDescription>Tickets raised by customers and crews</CardDescription>
+</CardHeader>
+```
+
+`tone` takes any `AccentTone`: the six status tones (`neutral` · `primary` · `success` ·
+`warning` · `destructive` · `info`) plus `chart-1` … `chart-5`, for categories that outnumber
+the statuses. Sizes `sm` · `default` · `lg`.
 
 ### Stat
 
@@ -152,6 +174,13 @@ Sizes: `sm` · `default` · `lg` · `xl`. `AvatarGroup` overlaps them with a rin
 colour. It carries no role — a row of faces is decoration around a list that should already
 be readable another way.
 
+`max` shows that many avatars and a `+n` chip for the rest, announced as "n more";
+`moreClassName` styles the chip, usually with the avatars' size (`sui-avatar--sm`).
+
+```tsx
+<AvatarGroup max={3} moreClassName="sui-avatar--sm">{crew.map(…)}</AvatarGroup>
+```
+
 ### Progress, Spinner, Skeleton, Empty, Kbd
 
 ```tsx
@@ -175,6 +204,37 @@ Press <Kbd>⌘</Kbd> <Kbd>K</Kbd> to search
 The indeterminate progress bar animates because there is no value to show. The spinner
 inherits `currentColor`, so one inside a primary button is legible without being told a
 colour, and with motion suppressed it becomes a pulsing dot rather than a spinning ring.
+
+`<Empty variant="inline" title="No records yet." />` is the same statement at the volume of a
+sentence — for a list that is empty _inside_ a card whose other figures are still worth
+reading, where a centred panel would shout over them.
+
+`Skeleton` renders a `div`; `as="span"` gives the same block inside a button, a link or a label,
+where a `div` is invalid HTML.
+
+### StatusDot, SegmentedBar
+
+```tsx
+<StatusDot tone="success" label="Operational" />
+<StatusDot tone="info" label="Syncing" pulse />      {/* "live", not just "on" */}
+
+<SegmentedBar
+  label="Tickets by status"
+  segments={[
+    { label: 'Open', value: 14, tone: 'info' },
+    { label: 'Resolved', value: 61, tone: 'success' },
+  ]}
+/>
+```
+
+A `StatusDot` with no `label` and no `aria-label` is hidden from assistive tech, on the
+assumption that the text beside it already says what it means — the colour is never the only
+signal. The pulse becomes a steady halo when motion is reduced.
+
+`SegmentedBar` answers "how is the lot distributed" where `Progress` answers "how far along is
+one thing". Segments size by `flex-grow` on their raw values, so rounding can never leave the
+bar short, and the whole bar is one `role="img"` named with the counts spelled out. A segment's
+`key` is optional; without one it is keyed by position, not by label.
 
 ---
 
@@ -202,10 +262,38 @@ wrong, and the part screen-reader users depend on.
 | `orientation`                 | `vertical` (default) or `horizontal`, which puts the label after the control — for a checkbox or switch. |
 | `htmlFor`                     | Override the generated id, e.g. to match a form library's field name.                                    |
 
+`<label for>` only reaches native form elements and buttons, so a control that is a `div` with
+a role — `RadioGroup`, `RatingInput`, the `OtpInput` group — is named from the field's label
+through `aria-labelledby` instead. `SelectTrigger`, `RadioGroup`, `Checkbox` and `Switch` join a
+field like the rest: described, marked invalid, disabled and required by it — so an unticked "I
+accept the terms" is announced as required and, with an error, as invalid. Do not pass
+`aria-label` to a control inside a `Field`: it overrides the visible label, and a screen reader
+then hears a different name from the one on screen.
+
+A `Slider`'s thumbs are what take focus, so they are what joins: each is named from the field's
+label — a range's two read "Price Minimum" and "Price Maximum" — and takes the description, the
+invalid state and `disabled`. `required` is not announced: a slider always holds a value, and
+`aria-required` is not valid on `role="slider"`.
+
+Every control that holds a value follows one rule: it is controlled when `value` is not
+`undefined`, and uncontrolled (`defaultValue`) otherwise. The empty value is spelled out rather
+than left `undefined`:
+
+| Empty value | Controls                                                         |
+| ----------- | ---------------------------------------------------------------- |
+| `''`        | `Input`, `PasswordInput`, `PhoneInput`, `OtpInput`, `ColorInput` |
+| `null`      | `NumberInput`, `Combobox`                                        |
+| `[]`        | `TagsInput`, `MultiCombobox`, `FileUpload`, `ImageUpload`        |
+| `0`         | `RatingInput`                                                    |
+
+Which controls take a form library's `register()` and which need a controlled wrapper — the
+Radix-built `Checkbox`, `Switch`, `Select` and `RadioGroup` among them — is covered in
+[Forms](../guide/forms.md), along with native submission and value formats.
+
 Building your own control that participates:
 
 ```tsx
-import { useFieldControl } from '@shining-ui-kit/react'
+import { useFieldControl } from '@shining-technologies/ui-kit-react'
 
 function MyInput(props) {
   const field = useFieldControl() // {} outside a Field, so it still works standalone
@@ -254,6 +342,13 @@ off is the deliberate act. `strength` mounts [`PasswordStrengthIndicator`](#pass
 under the field and feeds it the value even when the field is uncontrolled. Caps Lock is
 warned about while typing, because it is the commonest password typo there is.
 
+A `hint` and the strength verdict are added to the input's `aria-describedby`, after the field's
+own description. With `strength` set the input asks for `autoComplete="new-password"` (otherwise
+`current-password`), which is what makes a password manager offer to generate one; your own
+`autoComplete` wins. The meter reads the input itself, not only its own `onChange`, so it follows
+a react-hook-form `reset()` and a native `form.reset()` rather than scoring the password that was
+just cleared.
+
 ### PhoneInput
 
 ```tsx
@@ -264,13 +359,24 @@ warned about while typing, because it is the commonest password typo there is.
 
 The country is a control rather than four characters to type, because `+61` and `+1` decide
 how the rest of the number is parsed — and a flag makes a wrong one obvious at a glance. The
-list is searchable by name, alpha-2 code or dialling code.
+list is searchable by name, alpha-2 code or dialling code, and driven from the keyboard: the
+arrows move through it and Enter picks.
 
-What `onValueChange` receives is always E.164 (`+61412345678`) plus the parts, so neither has
-to be re-derived; the spacing in the field is presentation and never reaches the value. A
-value passed in selects its own country, so a saved `+1…` number shows the right flag with no
-extra prop. Deliberately not libphonenumber: that is 150 kB to place brackets, and nothing
-here ever _rejects_ a number it formats oddly.
+The value is always E.164 (`+61412345678`), and `''` when the field is empty. `onValueChange`
+receives `(e164, { country, national })`, so neither half has to be re-derived; the spacing in
+the field is presentation and never reaches the value. `defaultValue` takes the same E.164
+form, and `name` submits it through a hidden input.
+
+A value passed in selects its own country, so a saved `+44…` number shows the right flag with
+no extra prop — but the country already selected wins a code it shares, so `+1` for someone who
+picked Canada stays Canada. Pasting or autofilling `+44 …` into the field picks the country
+too. A trunk `0` typed before the national number, the way it is written at home (`0412…` in
+Australia, `07…` in the UK), stays visible but is dropped from the value: `+61412…`. Italy, San
+Marino, the Vatican, Côte d'Ivoire and the Republic of the Congo keep their leading `0`,
+because there it is part of the number.
+
+Deliberately not libphonenumber: that is 150 kB to place brackets, and nothing here ever
+_rejects_ a number it formats oddly.
 
 The country list is exported on its own as `COUNTRIES`, `countryByCode`, `countryByDial` and
 `flagFor` for forms that need the same names elsewhere.
@@ -288,6 +394,21 @@ focused one changes the value. This is a text field that accepts only numeric in
 from the buttons and the arrow keys, and rounds and clamps on blur. A half-typed `-`, `1.` or
 empty string survives while it is being typed.
 
+The value is `number | null` and never `NaN`: a draft that is not yet a number is `null`.
+`onValueChange` fires on every keystroke with what the draft stands for, and again on blur
+with the rounded, clamped result; once the field is left, `precision` decimals are shown, so
+`12.5` reads as `12.50`. `name` submits the plain number through a hidden input, never the
+grouped text (`1,250.00`) the field displays.
+
+The decimal separator is `locale`'s (a BCP 47 tag), else the runtime's: `locale="de-DE"` types
+and shows `1.250,5`. A `.` is always accepted as the decimal point too — it is the only one on
+many keypads — unless the locale's own separator is also present, when it is read as grouping.
+Pass `locale` when server rendering, so the server and the browser format alike.
+
+The phone keypad follows the range. `inputMode` is `text` when negatives are allowed (no `min`,
+or one below zero), because the numeric pads have no minus key; otherwise `decimal`, or `numeric`
+with `precision={0}`. Your own `inputMode` wins.
+
 ### OtpInput
 
 ```tsx
@@ -297,8 +418,19 @@ empty string survives while it is being typed.
 
 One box per character, because that is what makes an SMS autofill and a password-manager
 paste land correctly on every platform — but it behaves as one control: typing advances,
-Backspace retreats, arrows move, and pasting the whole code fills every box rather than
-putting six characters in the first one.
+arrows move, and pasting the whole code fills every box rather than putting six characters in
+the first one. A full-length paste replaces the code whichever box has the caret; anything
+shorter is written from the focused box onwards.
+
+Deleting keeps positions. Backspace and Delete empty the box where it stands (Backspace in an
+empty box empties the one before and moves there), and nothing slides left into the hole. The
+value is the characters in order with empty boxes skipped — clearing the third box of `1234`
+gives `'124'` — so the code is complete exactly when `value.length === length`, and
+`onComplete` fires only then.
+
+`defaultValue` makes it uncontrolled, and `name` submits the whole code through one hidden
+input. Inside a `Field` the first box takes the field's id, so the label's `for` lands on it,
+and the group is named by the label.
 
 ### TagsInput
 
@@ -310,7 +442,15 @@ putting six characters in the first one.
 For short values typed one after another — skills, recipients, labels. Everything a
 comma-separated text field gets wrong is handled here: a finished tag is a chip, removing one
 is a click rather than text surgery, and pasting `a, b, c` produces three tags. `delimiters`
-defaults to Enter and comma; an unfinished tag is committed on blur.
+defaults to Enter and comma, and the same characters split pasted text (Enter and Tab standing
+for a line break and a tab); a line break always splits, so a column copied from a spreadsheet
+is one tag per line. A paste lands at the caret, so text already typed in the box joins the list
+rather than being thrown away. An unfinished tag is committed on blur. An Enter that confirms an
+IME composition does not end the tag, so a Japanese or Chinese word is not cut in half.
+
+`defaultValue` makes it uncontrolled. `name` renders one hidden input per tag, so the server
+reads them with `formData.getAll(name)`. Inside a `Field` the label names the text box — which
+is why an `aria-label` does not belong there.
 
 ### ColorInput
 
@@ -324,6 +464,10 @@ reimplementing — with a hex field beside it, because a brand colour arrives as
 design file far more often than it is chosen by eye. `normalizeHex()` is exported: it expands
 `#abc` and returns `null` for anything that is not a hex colour.
 
+Controlled with `value`, or uncontrolled with `defaultValue` (black when neither is given).
+`value=""` is no colour: the swatch shows its empty state and `name` submits `''`; otherwise
+`name` submits the normalised `#rrggbb`.
+
 ### RatingInput
 
 ```tsx
@@ -335,6 +479,9 @@ A `slider` under the surface, which is where the keyboard comes from: arrows mov
 a half), Home and End jump to the ends, and the value is announced as "3 of 5 stars" rather
 than as an unlabelled button press. The filled star is the same glyph clipped to a fraction,
 so a half needs no second icon.
+
+Controlled or uncontrolled (`defaultValue`), with `name` submitting the number through a hidden
+input. Inside a `Field` the slider is named by the label through `aria-labelledby`.
 
 ### DateField, TimeField, DateTimeField
 
@@ -355,8 +502,39 @@ so it is fully usable from the keyboard without touching the face.
 
 `DateTimeField` puts both in one panel behind one Done, so the field is either empty or
 complete rather than half-set. Values are local strings with no timezone attached:
-`yyyy-mm-dd`, `HH:mm` and `yyyy-mm-ddTHH:mm`, with `toIso`/`fromIso`, `toTime`/`fromTime`,
-`formatTime` and `splitDateTime`/`joinDateTime` exported to move between them.
+`yyyy-mm-dd`, `HH:mm` and `yyyy-mm-ddTHH:mm` (the `IsoDate`, `IsoTime` and `IsoDateTime`
+types), with `toIso`/`fromIso`, `toTime`/`fromTime`, `formatTime` and
+`splitDateTime`/`joinDateTime` exported to move between them. Do not pass the output of
+`toISOString()`: that is UTC, and moves the day by one for half the planet every evening —
+`toIso(date)` reads the local parts instead. Seconds are accepted on the way in and dropped.
+`fromIso('2026-02-31')` is `null`, not 3 March.
+
+`DateTimeField`'s `defaultTime` (`'09:00'` unless set) is the time a day gets when it is picked
+before any time is, and the time the clock opens on — so what the dial shows is what is stored.
+A time picked before a day lands on today.
+
+`label` is optional. It names the field when it stands alone (without it the trigger is just
+"Date", "Time" or "Date and time"). Inside a `Field`, leave it out: the trigger is then named by
+the field's label together with the value it shows ("Service date 12 Mar 2026"), where a `label`
+would override the visible one with a second name.
+
+```tsx
+<Field label="Service date" error={errors.date}>
+  <DateField value={date} onChange={setDate} />
+</Field>
+```
+
+All three read a surrounding `Field` (id, description, invalid, disabled, required) and forward
+their ref to the trigger button. `id` overrides the field's; `onBlur` fires when the trigger
+loses focus, which is where a form library records "touched"; `name` submits the string through
+a hidden input. `required` only sets `aria-required` — a hidden input cannot be validated by
+the browser, so it does not block submission; validate it yourself.
+
+In the calendar, days outside `min`/`max` are `aria-disabled` rather than `disabled`, so the
+arrow keys move through them instead of stalling, and the grid keeps its one tab stop on a day
+that is on screen after the month buttons move the view. The "Last 7 days" preset in
+`DATE_RANGE_PRESETS` counts calendar days, so a daylight-saving change does not land it a day
+out.
 
 ### ImageUpload
 
@@ -369,10 +547,19 @@ complete rather than half-set. Values are local strings with no timezone attache
 filename, since `screenshot-2024-11-03-final-v2.png` tells nobody which screenshot it is. A
 grid of removable thumbnails with the add tile last, and the whole grid is the drop target.
 
-Previews are object URLs, revoked when the tile goes — a `FileReader` preview holds every
-image in memory as base64 for the life of the page, which is how an upload form quietly costs
-200 MB. An item may carry a remote `url` instead of a `file`, for images already on the
-server; those are never revoked.
+Previews are object URLs, revoked when their item leaves the value — by the remove button, or
+by a parent that replaces the list. A `FileReader` preview holds every image in memory as base64
+for the life of the page, which is how an upload form quietly costs 200 MB. Only URLs the
+component created are revoked: an item may carry a remote `url` instead of a `file`, for images
+already on the server, and that is never touched.
+
+On unmount the URLs go only if the field is uncontrolled. A controlled parent that keeps its
+items across an unmount and remount (a tab switch, a wizard step) still has working thumbnails;
+one that discards such items itself releases them with `URL.revokeObjectURL(item.url)`.
+
+Drops are checked against `accept` as well as the picker, so `accept="image/png"` refuses a
+dropped JPEG with `onFileRejected(file, 'type')`. `name` mirrors the new files (not remote
+items) into a hidden file input, as `FileUpload` does.
 
 ---
 
@@ -455,8 +642,21 @@ control; the data table has its own row pagination.
 Sizes: `sm` · `default` · `lg` · `xl`. On a narrow screen the footer stacks and reverses, so
 the primary action is the one nearest the thumb.
 
-Dialogs are portalled to the document body, so they only inherit the theme when the provider
-runs in `scope="global"`. An app that uses dialogs should prefer that scope.
+Dialogs are portalled — into the provider's own wrapper in the default `local` scope, and into
+`<body>` in `scope="global"`, where the tokens are on `<html>` — so they are themed in either.
+The same goes for `Sheet`, `AlertDialog`, `Popover`, `DropdownMenu`, `HoverCard`, `Tooltip` and
+`Select`. For a Radix portal of your own, pass `usePortalContainer()` as its `container`.
+
+On close, focus goes back to the element that opened the dialog — or to the menu's trigger when
+it was opened from a `DropdownMenuItem`, which has unmounted by then. That holds for a controlled
+dialog with no `DialogTrigger` and for `ConfirmDialog`, which would otherwise leave focus on
+`<body>`, and for `Sheet` and `AlertDialog` alike. To send it elsewhere, pass `onCloseAutoFocus`
+and call `event.preventDefault()`.
+
+In development, a `Dialog`, `Sheet` or `AlertDialog` panel with no title and no `aria-label` logs
+a console warning, since a screen reader would announce only "dialog". To keep a title off
+screen, wrap it in `VisuallyHidden`. `DialogHeader`, `DialogBody`, `DialogFooter` and the sheet
+and alert-dialog headers and footers forward their refs.
 
 ### AlertDialog
 
@@ -464,21 +664,29 @@ A dialog that must be answered: the close button and outside-click dismissal are
 removed, because "clicked somewhere else" is not an answer to "delete this permanently?".
 
 ```tsx
-<AlertDialogContent>
-  <AlertDialogHeader>
-    <AlertDialogTitle>Delete this job?</AlertDialogTitle>
-    <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
-  </AlertDialogHeader>
-  <AlertDialogFooter>
-    <AlertDialogCancel asChild>
-      <Button variant="ghost">Keep it</Button>
-    </AlertDialogCancel>
-    <AlertDialogAction asChild>
-      <Button variant="destructive">Delete</Button>
-    </AlertDialogAction>
-  </AlertDialogFooter>
-</AlertDialogContent>
+<AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button variant="destructive">Delete</Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Delete this job?</AlertDialogTitle>
+      <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel asChild>
+        <Button variant="ghost">Keep it</Button>
+      </AlertDialogCancel>
+      <AlertDialogAction asChild>
+        <Button variant="destructive">Delete</Button>
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
 ```
+
+Your own `onPointerDownOutside` or `onInteractOutside` runs first, and the guard still applies
+after it, so a handler added for logging does not bring back dismiss-by-outside-click.
 
 ### Sheet, Popover, HoverCard, DropdownMenu, Tooltip
 
@@ -491,8 +699,62 @@ a dialog's semantics — modal, focus-trapped, escape-dismissable — and differ
 it comes from.
 
 Reach for a **popover** when the content is interactive and should take focus, and a **hover
-card** when it is a preview. Tooltips are a convenience only: every control that carries one
-also has an accessible name of its own, so nothing is lost on touch.
+card** when it is a preview. `PopoverAnchor` positions the panel against something other than
+the trigger.
+
+**Menus** are composed from parts: `DropdownMenuItem` (with `destructive`),
+`DropdownMenuCheckboxItem`, `DropdownMenuRadioGroup` and `DropdownMenuRadioItem` for a
+one-of-n choice, `DropdownMenuGroup`, `DropdownMenuLabel`, `DropdownMenuSeparator`, and
+`DropdownMenuSub` with `DropdownMenuSubTrigger` (which draws its own chevron) and
+`DropdownMenuSubContent` for a submenu.
+
+```tsx
+<DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button variant="outline">View</Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent>
+    <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+    <DropdownMenuRadioGroup value={sort} onValueChange={setSort}>
+      <DropdownMenuRadioItem value="date">Date</DropdownMenuRadioItem>
+      <DropdownMenuRadioItem value="amount">Amount</DropdownMenuRadioItem>
+    </DropdownMenuRadioGroup>
+    <DropdownMenuSeparator />
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>Export</DropdownMenuSubTrigger>
+      <DropdownMenuSubContent>
+        <DropdownMenuItem onSelect={exportCsv}>CSV</DropdownMenuItem>
+        <DropdownMenuItem onSelect={exportPdf}>PDF</DropdownMenuItem>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
+  </DropdownMenuContent>
+</DropdownMenu>
+```
+
+`Select` groups its options the same way, with `SelectGroup` and `SelectLabel`.
+
+**Tooltips** are a convenience only: every control that carries one also has an accessible
+name of its own, so nothing is lost on touch.
+
+```tsx
+<Tooltip content="Archive">
+  <Button size="icon" aria-label="Archive"><ArchiveIcon /></Button>
+</Tooltip>
+
+<Tooltip content="Only owners can delete jobs">
+  <span tabIndex={0}>
+    <Button disabled>Delete</Button>
+  </span>
+</Tooltip>
+```
+
+A `Tooltip` works without a `TooltipProvider`; under one it inherits the shared
+`delayDuration` and skip-delay, so moving between tooltips does not wait again. It also takes
+`side`, `align`, `sideOffset`, `delayDuration` and, for a controlled one, `open`, `defaultOpen`
+and `onOpenChange`. An empty `content` renders only the trigger. The child must accept a ref
+and spread props onto its element — every kit control does. A disabled button gets no pointer
+events, so a tooltip explaining _why_ it is disabled goes on a focusable `<span tabIndex={0}>`
+wrapped around it.
 
 ---
 
@@ -525,6 +787,13 @@ tokens, so the two sit on one page as one thing. `density` · `striped` · `bord
 is logical (`start` · `center` · `end`), and `numeric` on a cell adds tabular figures and
 right-aligns it. The wrapper scrolls, never the document.
 
+`containerClassName` and `containerProps` (a `ref` included) reach that scrolling wrapper. A
+table wider than its column needs its scroll region reachable from the keyboard:
+
+```tsx
+<Table containerProps={{ tabIndex: 0, role: 'region', 'aria-label': 'Invoices' }}>…</Table>
+```
+
 > The engine's table-instance type is exported as `TableInstance`; the bare `Table` name
 > belongs to this component.
 
@@ -556,8 +825,125 @@ Sizes `sm` · `md` · `lg`; tones `neutral` · `primary` · `success` · `warnin
 
 `Stat` is the bare figure for a card you are already composing; this is the whole tile.
 `trend` is explicit for the same reason as `Stat`'s. `onClick` upgrades the element to a real
-`<button>` rather than putting a handler on a `<div>`. `chart` renders full-bleed under the
-figure.
+`<button>` rather than putting a handler on a `<div>`, and everything inside it — `chart`
+included — is then phrasing content, the only kind a button may hold. `chart` renders
+full-bleed under the figure.
+
+### MetricTile, MetricGrid
+
+```tsx
+<MetricGrid columns={2}>
+  <MetricTile label="Total requests" value={49} />
+  <MetricTile label="New (30d)" value={48} delta="+6" trend="up" tone="success" />
+  <MetricTile label="Average time to accept" value="2.4 days" span="full" />
+</MetricGrid>
+```
+
+The headline figures _inside_ a card. `StatsCard` is a card of its own and would put a box in a
+box here, so a tile is filled rather than bordered. `tone` paints an accent rule on the leading
+edge; `span="full"` takes the whole row; `loading` swaps the figure for a placeholder.
+`columns` is `1`–`4` (one column on a phone-width screen) or `auto`.
+
+### BreakdownList
+
+```tsx
+<BreakdownList
+  title="By status"
+  items={[
+    { key: 'pending', label: 'Pending', value: 2, tone: 'info' },
+    { key: 'rejected', label: 'Rejected', value: 0, tone: 'destructive' },
+    { key: 'converted', label: 'Converted', value: 47, tone: 'success' },
+  ]}
+  showShare
+  showPercent
+/>
+```
+
+A count per bucket: dot, label, figure. A zero still renders, stepped back — "none rejected"
+is information, and a row that vanishes at zero shifts the layout every time it returns.
+`showShare` draws a bar under each row (clamped to 100%, so a `total` smaller than the sum
+cannot overflow it), `showPercent` prints the share, `showSummary` puts a
+`SegmentedBar` of the whole distribution on top. `total` overrides the sum; `formatValue`
+renders the figures; `empty` is the inline line shown when `items` is empty; `loading` shows
+placeholder rows. An item's `key` is optional; without one the row is keyed by position, not by
+label.
+
+### SummaryCard
+
+```tsx
+<SummaryCard
+  icon={<TicketIcon />}
+  iconTone="info"
+  title="Support queue"
+  description="Tickets raised by customers and crews"
+  metrics={[
+    { label: 'Total tickets', value: 87 },
+    { label: 'New (7d)', value: 12 },
+  ]}
+  breakdown={ticketsByStatus}
+  breakdownProps={{ showSummary: true }}
+/>
+```
+
+The dashboard block every module ends up with, assembled from `CardIcon`, `MetricTile` and
+`BreakdownList`. A card that outgrows the props is recomposed from those same exported parts
+rather than rebuilt. `loading` puts every figure and row into its placeholder state; `action`,
+`footer` and `children` fill the usual slots. `titleAs` picks the title's heading level, as
+`as` does on `CardTitle`.
+
+### StatusFlow
+
+```tsx
+<StatusFlow
+  type="quote"
+  label="Quote lifecycle"
+  steps={['draft', 'sent', 'seen', 'accepted']}
+  alternates={['changes_requested', 'rejected']}
+/>
+
+<StatusFlow type="quote" steps={['draft', 'sent', 'seen', 'accepted']} current={2} />
+
+<StatusFlow
+  type="quote"
+  steps={['draft', 'sent', 'seen', 'accepted']}
+  alternates={['changes_requested', 'rejected']}
+  current="rejected"
+  reached="seen"
+/>
+```
+
+A lifecycle drawn with `StatusBadge`'s vocabulary — `type` and `statuses` resolve exactly as
+they do on the badge — so the documentation of a workflow cannot drift from its chips. Steps
+may also be `{ status, label?, tone? }`. With `current` it becomes a tracker: earlier steps get
+a check, the current one a ring and `aria-current="step"`, later ones are outlined. Arrows
+belong to the chip before them, so a wrapped flow never opens a line on an arrow. A status may
+appear more than once — `sent → changes_requested → sent` is a real lifecycle.
+
+`current` takes an index or a status. A status may name one of the `alternates` — a quote that
+is sitting in "rejected" — and that chip becomes the current one. `reached`, an index or a
+status, then says how far the main path got before the record left it; it defaults to every
+step but the last, since an alternate usually stands in for the final outcome.
+
+### StepCard
+
+```tsx
+<StepCard
+  step={1}
+  title="Quote request"
+  description="The customer asks for a price."
+  condition="A quote is created from it."
+>
+  <StatusFlow type="quoteRequest" steps={['pending', 'quote_created', 'quote_sent']} />
+</StepCard>
+
+<StepCard step={2} state="current" title="Compliance review" />
+```
+
+One stage of a process and the rule that ends it. The condition footer is pinned to the
+bottom, so a row of steps lines their rules up whatever the copy length; `conditionLabel`
+changes its lead-in (default `Moves on when:`). `state` — `upcoming` · `current` · `done` —
+turns the number into a marker for tracking a live record. `titleAs` picks the title's heading
+level (default `div`).
 
 ### PageHeader
 
@@ -592,9 +978,10 @@ route does not leave the tab renamed. The kit has no router: `onBack` is yours t
 
 Not `Tabs`. These usually change the route, and a tablist owns its panels — claiming that
 relationship when the content is a separate page makes a screen reader promise something the
-app does not deliver. So it is a group of buttons with `aria-current`, and the arrow-key
-behaviour of real tabs is deliberately absent. `appearance`: `underline` (sections) · `pills`
-(a filter).
+app does not deliver. So it is a set of buttons, the current one marked `aria-current="page"`,
+and the arrow-key behaviour of real tabs is deliberately absent. Without `value` or
+`defaultValue` the first tab is current. `appearance`: `underline` (sections) · `pills` (a
+filter).
 
 ### Combobox, MultiCombobox
 
@@ -609,9 +996,32 @@ is local until `onSearch` is passed, at which point the same component asks the 
 list that outgrows the client does not have to be rewritten. Options may carry a
 `description`, an `icon`, a `group` and `disabled`.
 
+`onSearch` is called once per settled query (after `searchDebounce`, 250 ms) while the list is
+open, through a stable callback — an inline `(query) => fetchRegions(query)` is fine and does
+not re-fire on every parent render. An option you picked stays in the trigger after a later
+search drops it from `options`. For a value that arrives from outside — a saved record shown
+before async options load — pass `selectedOption` (`selectedOptions` on the multi variant) to
+label it; it labels the trigger only and is not added to the list. A value no option describes
+shows as its raw value, never as the placeholder, since the field is not empty.
+
+```tsx
+<Combobox
+  options={results}
+  value={record.regionId}
+  selectedOption={record.region}
+  onSearch={search}
+/>
+```
+
+Both are controlled when `value` is defined — `null` and `[]` are their empty selections — and
+uncontrolled with `defaultValue`. The trigger is a button, so `name` puts the value in a
+hidden input for a native form — `MultiCombobox` submits one entry per selected value, read with
+`formData.getAll(name)`. With `clearable`, Backspace or Delete on the focused trigger clears it,
+the keyboard's way to the ✕.
+
 The multi variant keeps the list open while you pick, and renders selections as removable
-chips: removing one is the thing people actually want, and a comma-joined string makes them
-clear the field and start again.
+chips (`maxChips`, default 3, then a `+n`): removing one is the thing people actually want, and
+a comma-joined string makes them clear the field and start again.
 
 ### FileUpload
 
@@ -628,10 +1038,17 @@ clear the field and start again.
 />
 ```
 
-The styled drop zone is a label for a real `<input type="file">`, so the keyboard, form resets
-and the OS picker all work. Validation happens here; _reporting_ it does not — the component
-rejects a file and tells you why, and you decide whether that is a toast, an inline error or
-nothing. `UploadItem.progress` drives a bar per file for a real upload.
+The styled drop zone is a label for a real `<input type="file">`, so the keyboard and the OS
+picker work. Validation happens here; _reporting_ it does not — the component rejects a file
+and tells you why, and you decide whether that is a toast, an inline error or nothing.
+`UploadItem.progress` drives a bar per file for a real upload.
+
+The visible input is emptied after every pick, so it never carries the selection into a form.
+Pass `name` and the selection is mirrored into a hidden file input of that name, so a native
+submission — a server action, a plain POST — receives the files; that needs a constructible
+`DataTransfer`, which every current browser has. A form reset does not clear the component's
+React state: clear `value` yourself, or remount an uncontrolled one with a new `key`. Without `multiple`, a second pick replaces the file rather
+than being refused. A disabled `Field` disables it.
 
 ### PasswordStrengthIndicator
 
@@ -664,10 +1081,17 @@ sentence, not four coloured bars.
 ```
 
 Built on `AlertDialog` — no close button, no dismiss-by-overlay — because a question worth
-interrupting someone for is worth an explicit answer. Actions may be async: the dialog holds
-itself open, disables every choice and shows the pending one as busy, which is what stops the
-double-submit a hand-rolled confirm eventually allows. Pass `actions` for more than two
-choices.
+interrupting someone for is worth an explicit answer. It is always parent-controlled: `open`
+and `onOpenChange` are required. Actions may be async — any thenable, not only a native
+`Promise`: the dialog holds itself open, disables every other choice and shows the pending one
+with a spinner and `aria-busy`, which is what stops the double-submit a hand-rolled confirm
+eventually allows. While it is pending, Escape, cancel and outside clicks are ignored, and a
+double-click runs the action once. Pass `actions` for more than two choices; `keepOpen` on one
+leaves the dialog up after it runs.
+
+If an action throws or rejects, `onError(error, action)` hears about it and the dialog stays
+open with every choice enabled again, so the person can retry or cancel. Without `onError` the
+error is rethrown, as an unhandled rejection.
 
 ### CopyButton, HoldButton
 
@@ -678,10 +1102,28 @@ choices.
 <HoldButton onHoldComplete={destroy} holdingLabel="Keep holding…">Hold to delete</HoldButton>
 ```
 
-The tick is the whole point of the copy button: without feedback, people press it twice.
+The tick is the whole point of the copy button: without feedback, people press it twice. Your
+own `onClick` runs first and composes with the copy rather than replacing it (call
+`event.preventDefault()` to skip the copy). Where the async clipboard is missing or refused — a
+plain-HTTP origin, an iframe without `clipboard-write` — it falls back to
+`document.execCommand('copy')`. If both fail the label stays put and `onCopyError(error)` is
+the only place the failure surfaces.
+
 `HoldButton` is the alternative to a dialog for something destructive but not rare — the
 friction is in the gesture rather than in a second screen, so an operator doing this fifty
-times a day is not asked fifty questions. Space and Enter stand in for a hold on a keyboard.
+times a day is not asked fifty questions. Space and Enter stand in for a hold on a keyboard,
+and a held key fires once, not again on auto-repeat. Only the primary pointer button arms it,
+so a right-click cannot. Your pointer, key and blur handlers and your `style` are composed
+with its own.
+
+A screen reader in browse mode and voice control activate a button with a bare click — nothing
+goes down, so there is nothing to hold. A click with no press behind it opens a `ConfirmDialog`
+instead, and confirming runs `onHoldComplete`: the friction survives, in the one form those
+users can get through. `confirmTitle` defaults to the label as a question ("Delete?" for "Hold to
+delete") and `confirmLabel` to its verb ("Delete"); a label that is not plain text falls back to
+"Are you sure?" and "Confirm". `confirmDescription` adds a line. `instructions` is the
+description exposed through `aria-describedby` — by default, that it can be held, or activated
+and confirmed. `confirmOnClick={false}` ignores such clicks, as the button used to.
 
 ### UserAvatar
 
@@ -724,12 +1166,19 @@ toast({ tone: 'success', title: 'Invoice sent', action: { label: 'Undo', onClick
 ```
 
 The store is per-provider, not a module singleton: two providers on one page — a gallery, a
-preview pane, a test — get two independent stacks. Reuse an `id` to replace a toast in place,
-a "Saving…" that becomes "Saved". `duration: 0` keeps one up until it is dismissed.
+preview pane, a test — get two independent stacks. `useToast` and `Toaster` throw outside a
+`ToastProvider` rather than failing silently. Reuse an `id` to replace a toast in place, keeping
+its position — a "Saving…" that becomes "Saved". `duration: 0` keeps one up until it is
+dismissed.
+
+Hovering or focusing any toast pauses every timer, and each resumes with the time it had left,
+so a message cannot vanish while someone is reading it or reaching for its action. The context
+exposes the same `pause()` and `resume()` for a custom stack, which should call them too.
 
 `Toaster` renders inline rather than through a portal, so it stays inside whatever scope the
 provider painted; a portalled stack would escape a scoped `UIKitProvider` and come out in the
-default palette. The region is polite — a toast never steals focus.
+default palette. The region is an `aria-live="polite"` region, mounted before any toast
+arrives so the first one is announced — and a toast never steals focus.
 
 ---
 
@@ -780,9 +1229,164 @@ to be able to say so.
 
 ---
 
+## Dashboard sidebar
+
+```tsx
+const NAV: SidebarNavEntry[] = [
+  {
+    type: 'section',
+    id: 'ops',
+    label: 'Operations',
+    icon: <BriefcaseIcon />,
+    tone: 'success',
+    items: [
+      { id: 'status', label: 'Status guide', href: '/status', icon: <HelpIcon /> },
+      {
+        id: 'residential',
+        label: 'Residential',
+        icon: <HomeIcon />,
+        children: [
+          { id: 'quotes', label: 'Quotes', href: '/residential/quotes', badge: 3 },
+          {
+            id: 'orders',
+            label: 'Orders',
+            href: '/residential/orders',
+            children: [{ id: 'archive', label: 'Archive', href: '/residential/orders/archive' }],
+          },
+        ],
+      },
+    ],
+  },
+  { type: 'separator' },
+  { id: 'help', label: 'Help centre', href: 'https://help.example.com', external: true },
+]
+
+<SidebarProvider storageKey="admin-nav" shortcut="b">
+  <AppShell>
+    <Sidebar
+      header={<SidebarBrand logo={<Logo />} name="Acme" description="Operations" menu={workspaces} />}
+      footer={<SidebarUser name={me.name} description={me.email} menu={accountMenu} />}
+    >
+      <SidebarNav
+        items={NAV}
+        currentPath={pathname}
+        searchable
+        renderLink={({ href, ...props }) => <Link to={href} {...props} />}
+      />
+    </Sidebar>
+
+    <AppShellHeader start={<SidebarTrigger />} />
+    <AppShellContent id="main">…</AppShellContent>
+  </AppShell>
+</SidebarProvider>
+```
+
+`AppShellSidebar` is a frame around a flat list; `Sidebar` is the navigation an admin console
+actually has. There is no depth limit: an item with `children` is a branch, and its children can
+have children. Each level indents to the centre of its parent's icon along a guide line, so a
+deep tree stays readable.
+
+**The current page.** Pass `activeId`, or `currentPath` and the item with the matching — or
+longest enclosing — `href` lights up, so `/residential/orders/1042` marks "Orders". The branches
+above it open by themselves, once; the user can still close them. `getSidebarTrail(items, id)`
+returns the same chain for a breadcrumb or a page title. `matchSidebarPath(items, path)` is the
+matcher on its own: it accepts a full URL (`https://app.test/orders/?page=2` is `/orders`),
+treats a hash route (`#/orders`) as a path, and ignores `href`s such as `#` or `?tab=2` that
+name no path and would otherwise match every page.
+
+**Branches.** A branch without an `href` is a button that opens it. A branch with one is a link
+with its own open/close button beside it. `accordion` closes siblings when one opens;
+`expanded` / `defaultExpanded` / `onExpandedChange` take the open branches by id.
+
+**Sections** take a `label`, an `icon` and a `tone` (the six status tones or `chart-1` …
+`chart-5`), which colours the icon — one hue per product area. `collapsible` makes the heading a
+button; `action` puts a control at its end.
+
+**Items** take `icon`, `badge` (with `badgeTone`), `disabled`, `external`, `keywords` for search,
+and `actions` — controls revealed on hover and focus, such as a "+" to create one.
+
+**The rail.** `SidebarTrigger`, `collapsed` or the opt-in ⌘/Ctrl shortcut narrows the sidebar to
+icons. Labels are hidden visually, not removed, so the links keep their accessible names. Leaves
+show their label as a tooltip, branches open their subtree in a flyout, badges become a dot, and
+the branch holding the current page is highlighted in its place. In the rail a branch's row is
+the flyout's trigger, so a branch that is also a page (it has an `href`) lists that page first
+in its flyout.
+
+**Search.** `searchable` puts a filter above the tree. It keeps matching items and their
+ancestors, opens those ancestors, highlights the match and says so when nothing matches. A
+matching branch keeps everything under it. Escape clears it.
+
+**Keyboard.** Tab works as usual. ↑/↓ step through the visible items, → opens a branch or enters
+it, ← closes it or goes up to the parent, and Home/End jump to either end. Right and left swap in
+RTL.
+
+**Phones.** Below `mobileBreakpoint` (default `48rem`; `false` to disable) the sidebar leaves the
+grid and becomes an off-canvas drawer with a backdrop. The same `SidebarTrigger` opens it.
+While open it is a modal dialog (`role="dialog"`, `aria-modal`) named by the sidebar's
+`aria-label`, else its `SidebarBrand`'s name, else "Navigation". The rest of the page is inert
+and the body does not scroll, and both are restored when it closes. Focus moves into it and Tab
+wraps inside it. Escape, the backdrop or choosing a destination closes it, and focus goes back
+to the trigger. As a column the panel is a `<div role="complementary">`, named "Sidebar" by
+default, rather than an `<aside>`: the element never changes, because an `<aside>` cannot take
+the dialog role, and swapping it would remount the contents.
+
+**State.** `SidebarProvider` shares the rail and drawer state with controls outside the sidebar.
+A `Sidebar` without one makes its own. `storageKey` remembers the rail and the open branches in
+`localStorage`; `useSidebar()` reads it all, including the `mobileBreakpoint` in force.
+
+**Server rendering.** The server has neither `localStorage` nor a viewport. Remembered state is
+read once the page has hydrated, so the server HTML and the first client render agree and the
+stored rail state and open branches apply one commit later. Server HTML is the desktop column,
+yet a phone sees the closed drawer from the first paint at any breakpoint: the default `48rem`
+is in the stylesheet, and a custom `mobileBreakpoint` is server-rendered as a small `<style>`
+scoped to the sidebar, carrying the provider's `nonce`.
+
+**Routers.** `renderLink` receives every prop the default `<a>` would have had, so a router's
+link drops in without losing the active state or the keyboard handling. It must forward its ref
+to the `<a>` — the rail's tooltips and flyouts position against it. Next.js's `Link` and React
+Router's `Link` both do.
+
+```tsx
+// Next.js (App Router)
+const pathname = usePathname()
+<SidebarNav items={NAV} currentPath={pathname} renderLink={(props) => <Link {...props} />} />
+
+// React Router
+const { pathname } = useLocation()
+<SidebarNav
+  items={NAV}
+  currentPath={pathname}
+  renderLink={({ href, ...props }) => <Link to={href} {...props} />}
+/>
+```
+
+**By hand.** `SidebarSection` and `SidebarMenuItem` are the parts `SidebarNav` renders with.
+Nest `SidebarMenuItem`s as `children` to any depth and put anything you like between them. An
+item keeps its own open state, or the nav's when you give it a `value`.
+
+```tsx
+<SidebarNav>
+  <SidebarSection label="Marketing" icon={<TargetIcon />} tone="chart-4" collapsible>
+    <SidebarMenuItem label="Campaigns" icon={<MailIcon />} defaultExpanded>
+      <SidebarMenuItem label="Email" href="/campaigns/email" active />
+      <SidebarMenuItem label="SMS" href="/campaigns/sms" badge="New" badgeTone="success" />
+    </SidebarMenuItem>
+  </SidebarSection>
+</SidebarNav>
+```
+
+`appearance="primary"` tints the current page with the project's primary colour instead of the
+neutral fill; `width`, `railWidth` and `--sui-sidebar-indent` adjust the geometry. Everything
+paints from `--sui-sidebar*`, and flyouts switch to the popover tokens because they sit on a
+different surface.
+
+---
+
 ## Charts
 
-See [charts](./charts.md).
+See [charts](./charts.md). The dependency-free `LineChart`, `BarChart` and `PieChart` take
+`ariaLabel` for their accessible name (a summary is generated when it is omitted), and a `null`
+in a line or bar series is a gap, not a zero.
 
 ## Data table
 
@@ -793,3 +1397,17 @@ See [quick start](../guide/quick-start.md) and the table pages listed in the [RE
 `<ProjectSwitcher />`, `<ColorModeToggle />`, `<ProjectEditor />` and `<TokenSwatchGrid />`
 ship with the kit so an application can expose project switching and editing without
 rebuilding that UI. See [Projects](../guide/projects.md).
+
+`ColorModeToggle` and the preset picker in `ProjectEditor` are radio groups with a single tab
+stop: the arrows move and select, wrapping at the ends (left and right swap in right-to-left),
+and Home and End jump to either end.
+
+On `UIKitProvider` itself, `className` and `style` go on the wrapper in the default `local`
+scope. `scope="global"` has no wrapper, so `className` is added to `<html>` and `style` is set
+on it property by property; both are removed on unmount, and a class the app had already set is
+left alone. With nested global providers, the innermost one's apply. A server render in global
+scope carries the tokens, and `style`, in an inline `<style>` so the first paint is already
+themed; `className` arrives at hydration. Local scope with `mode="system"` does the same with a
+`<style>` scoped to its wrapper, holding both palettes, so a dark-OS reader sees no light flash.
+Pass your Content-Security-Policy nonce as `nonce` if the policy forbids inline styles without
+one; it covers both sheets and the sidebar's custom-breakpoint style.

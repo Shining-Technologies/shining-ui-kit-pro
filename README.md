@@ -1,8 +1,8 @@
 # Shining UI Kit
 
-[![npm](https://img.shields.io/npm/v/@shining-ui-kit/react.svg)](https://www.npmjs.com/package/@shining-ui-kit/react)
-[![CI](https://github.com/ikramulSoHeL/shining-ui-kit-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/ikramulSoHeL/shining-ui-kit-pro/actions/workflows/ci.yml)
-[![license](https://img.shields.io/npm/l/@shining-ui-kit/react.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@shining-technologies/ui-kit-react.svg)](https://www.npmjs.com/package/@shining-technologies/ui-kit-react)
+[![CI](https://github.com/Shining-Technologies/shining-ui-kit-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Shining-Technologies/shining-ui-kit-pro/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/@shining-technologies/ui-kit-react.svg)](LICENSE)
 [![types](https://img.shields.io/badge/types-included-blue.svg)](docs/guide/installation.md#typescript)
 
 A React component library whose entire appearance comes from a **project** — a named set of
@@ -12,12 +12,18 @@ Buttons, cards, forms, overlays, charts and a production-grade data table, all p
 one generated token set. Switch project and every component follows.
 
 ```tsx
-import { UIKitProvider, Button, Card, CardContent, LineChart } from '@shining-ui-kit/react'
-import '@shining-ui-kit/react/styles.css'
+import {
+  UIKitProvider,
+  Button,
+  Card,
+  CardContent,
+  LineChart,
+} from '@shining-technologies/ui-kit-react'
+import '@shining-technologies/ui-kit-react/styles.css'
 
 export function App() {
   return (
-    <UIKitProvider defaultProject="shining" scope="global">
+    <UIKitProvider preset="shining" scope="global">
       <Card>
         <CardContent>
           <LineChart data={revenue} xKey="month" series={[{ key: 'total' }]} area />
@@ -63,7 +69,7 @@ A project is plain data, so it round-trips through JSON — into localStorage, a
 or a config file in the app that consumes it.
 
 ```tsx
-import { ProjectRegistry, UIKitProvider, ProjectSwitcher, ProjectEditor } from '@shining-ui-kit/react'
+import { ProjectRegistry, UIKitProvider, ProjectSwitcher, ProjectEditor } from '@shining-technologies/ui-kit-react'
 
 const registry = new ProjectRegistry() // persists to localStorage
 
@@ -77,22 +83,35 @@ const registry = new ProjectRegistry() // persists to localStorage
 Editing a shipped preset forks it rather than mutating it, so the presets stay a stable
 starting point and the user still gets their change.
 
-**Shipped palettes:** `shining` (the Shining Services house style), `slate`, `midnight`,
-`violet`, `ember`, `forest`, `rose`, `mono`.
+**Shipped presets:** `shining` (the Shining Services house style), `slate`, `midnight`,
+`violet`, `ember`, `forest`, `rose`, `mono`, `darwind` (indigo, sharp, dense) and `unn`
+(teal, round, airy).
 
-`scope="global"` writes the tokens onto `<html>`, which is what an application wants —
-portalled surfaces (dialogs, dropdowns, tooltips) then inherit them too. `scope="local"`
-wraps the subtree instead, so several projects can be previewed side by side.
+Most apps only need a preset and, optionally, their brand on top of it:
+
+```tsx
+<UIKitProvider preset="darwind" scope="global">
+<UIKitProvider preset="unn" brand="#be123c" scope="global">
+<UIKitProvider preset="unn" brand={{ primary: '#be123c', radius: '0.5rem' }} scope="global">
+```
+
+`scope="global"` writes the tokens onto `<html>`, which is what an application wants. `scope="local"`
+wraps the subtree instead, so several projects can be previewed side by side. Dialogs,
+dropdowns and tooltips are themed in both.
 
 ## Install
 
 ```bash
-pnpm add @shining-ui-kit/react react react-dom
+npm install @shining-technologies/ui-kit-react react react-dom
 ```
 
 ```tsx
-import '@shining-ui-kit/react/styles.css'
+import '@shining-technologies/ui-kit-react/styles.css'
 ```
+
+Optional peers, only for the entry point that needs them: `recharts` (2.15+ or 3) for
+`@shining-technologies/ui-kit-react/recharts`, and
+`@tanstack/react-virtual@^3` for `@shining-technologies/ui-kit-react/virtualized`.
 
 The stylesheet is plain, framework-free CSS built from `--sui-*` custom properties, so
 components look right with **no Tailwind configuration** in your app, and with no provider
@@ -105,14 +124,14 @@ Types are included; both ESM and CommonJS builds ship, and every entry point res
 `'use client'` banner, so they work unchanged in the Next.js App Router. Full notes:
 [Installation](docs/guide/installation.md).
 
-| Package                             | For                                                           |
-| ----------------------------------- | ------------------------------------------------------------- |
-| `@shining-ui-kit/react`             | Every component, the provider and the theming UI              |
-| `@shining-ui-kit/core`              | Tokens, the colour engine, the project system, no React       |
-| `@shining-ui-kit/themes`            | Shipped presets: project palettes and table chrome themes     |
-| `@shining-ui-kit/export-csv`        | CSV/TSV export, kept out of the main bundle                   |
-| `@shining-ui-kit/react/recharts`    | The Recharts chart set (optional peer: `recharts`)            |
-| `@shining-ui-kit/react/virtualized` | Row virtualisation (optional peer: `@tanstack/react-virtual`) |
+| Package                                          | For                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------- |
+| `@shining-technologies/ui-kit-react`             | Every component, the provider and the theming UI              |
+| `@shining-technologies/ui-kit-core`              | Tokens, the colour engine, the project system, no React       |
+| `@shining-technologies/ui-kit-themes`            | Shipped presets: project palettes and table chrome themes     |
+| `@shining-technologies/ui-kit-export-csv`        | CSV/TSV export, kept out of the main bundle                   |
+| `@shining-technologies/ui-kit-react/recharts`    | The Recharts chart set (optional peer: `recharts`)            |
+| `@shining-technologies/ui-kit-react/virtualized` | Row virtualisation (optional peer: `@tanstack/react-virtual`) |
 
 Most applications install only the first. See [Packages](docs/reference/packages.md) for what
 belongs in each.
@@ -122,8 +141,9 @@ belongs in each.
 **Actions** — Button (6 variants × 6 sizes), ButtonGroup, Toggle, ToggleGroup, Badge
 (6 tones × 3 variants), DropdownMenu, Tooltip.
 
-**Surfaces** — Card and its parts, Stat, Alert (5 tones), Avatar and AvatarGroup, Separator,
-Skeleton, Spinner, Progress, Empty, Kbd.
+**Surfaces** — Card and its parts (including a tinted CardIcon), Stat, Alert (5 tones), Avatar
+and AvatarGroup, Separator, Skeleton, Spinner, Progress, SegmentedBar, StatusDot, Empty (panel or
+inline), Kbd.
 
 **Form inputs** — Field (label, control, help text and error, wired together), Fieldset,
 Label, Input, InputGroup, Textarea (optional auto-grow and counter), Checkbox, RadioGroup,
@@ -139,7 +159,8 @@ Pagination.
 **Overlays** — Dialog, AlertDialog, Sheet (4 sides), Popover, HoverCard.
 
 **Composites** — Table (the plain one, for a fixed handful of rows), StatusBadge (registry-driven,
-so the vocabulary stays in your app), StatsCard, PageHeader, SectionTabs, Combobox and
+so the vocabulary stays in your app), StatsCard, MetricTile and MetricGrid, BreakdownList,
+SummaryCard, StatusFlow (a lifecycle drawn in the badge vocabulary), StepCard, PageHeader, SectionTabs, Combobox and
 MultiCombobox (local filtering until you pass `onSearch`), PasswordStrengthIndicator,
 ConfirmDialog, CopyButton, HoldButton, UserAvatar, FloatingFormActions, and toasts
 (`ToastProvider`, `useToast`, `Toaster`).
@@ -149,9 +170,14 @@ SidebarGroup and SidebarItem, BottomNavItem, SkipToContent and ScrollToTop. One 
 differently by a field app and an admin console; below 48rem the rail becomes a bottom bar
 without switching components.
 
+**Dashboard sidebar** — Sidebar, SidebarNav, SidebarSection and SidebarMenuItem: toned sections,
+destinations nested to any depth, an icon rail with tooltips and flyouts, a filter, arrow-key
+navigation, a phone drawer, SidebarBrand / SidebarUser menus and remembered state. Feed it a tree
+or write it by hand.
+
 **Charts** — two sets, one palette. `LineChart`, area, `BarChart` (grouped and stacked),
 `PieChart`, donut and `Sparkline` are dependency-free SVG in the base package. For a richer
-set, `@shining-ui-kit/react/recharts` adds `TrendChart`, `BarChart`, `DonutChart`,
+set, `@shining-technologies/ui-kit-react/recharts` adds `TrendChart`, `BarChart`, `DonutChart`,
 `GaugeChart`, `ScatterChart` and `StatTile` on Recharts — a subpath export with `recharts` as
 an optional peer dependency, so it costs nothing until you import it. Both draw from
 `--sui-chart-1..5`, so a chart belongs to its project the same way a button does.
@@ -282,15 +308,18 @@ publishes. Details in [Releasing](docs/contributing/releasing.md).
 
 Full index: **[docs/README.md](docs/README.md)**
 
-| Guide                                        |                                                         |
-| -------------------------------------------- | ------------------------------------------------------- |
-| [Installation](docs/guide/installation.md)   | Packages, peer dependencies, the stylesheet, frameworks |
-| [Quick start](docs/guide/quick-start.md)     | The provider, your first components, your first table   |
-| [Projects](docs/guide/projects.md)           | Seeds, palettes, the registry, custom colours           |
-| [Theming](docs/guide/theming.md)             | Tokens, variants, density, dark mode                    |
-| [Customization](docs/guide/customization.md) | Slots, component overrides, classes                     |
-| [Accessibility](docs/guide/accessibility.md) | What the kit guarantees, and what you owe it            |
-| [Performance](docs/guide/performance.md)     | Stable references, memoisation, virtualisation          |
+| Guide                                            |                                                         |
+| ------------------------------------------------ | ------------------------------------------------------- |
+| [Installation](docs/guide/installation.md)       | Packages, peer dependencies, the stylesheet, frameworks |
+| [Quick start](docs/guide/quick-start.md)         | The provider, your first components, your first table   |
+| [Forms](docs/guide/forms.md)                     | React Hook Form, native submission, value formats       |
+| [Next.js and SSR](docs/guide/nextjs.md)          | App Router setup, no theme flash, routing, CSP          |
+| [Projects](docs/guide/projects.md)               | Seeds, palettes, the registry, custom colours           |
+| [Theming](docs/guide/theming.md)                 | Tokens, variants, density, dark mode                    |
+| [Customization](docs/guide/customization.md)     | Slots, component overrides, classes                     |
+| [Accessibility](docs/guide/accessibility.md)     | What the kit guarantees, and what you owe it            |
+| [Performance](docs/guide/performance.md)         | Stable references, memoisation, virtualisation          |
+| [Troubleshooting](docs/guide/troubleshooting.md) | Install errors, styles, TypeScript, tests, the table    |
 
 | Components                                               |                                                |
 | -------------------------------------------------------- | ---------------------------------------------- |

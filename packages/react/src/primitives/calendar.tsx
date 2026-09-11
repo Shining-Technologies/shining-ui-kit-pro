@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon } from '../lib/icons'
 import { cn } from '../lib/cn'
+import { useHydrated } from '../lib/use-hydrated'
 
 /** A calendar day, as `yyyy-mm-dd` in the viewer's own timezone. */
 export type IsoDate = string
@@ -21,8 +22,6 @@ export interface CalendarProps {
   className?: string
 }
 
-const DAY = 86_400_000
-
 /**
  * Format a `Date` as `yyyy-mm-dd` from its *local* parts.
  *
@@ -41,8 +40,16 @@ export function fromIso(value: string | undefined | null): Date | null {
   if (!value) return null
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (!match) return null
-  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-  return Number.isNaN(date.getTime()) ? null : date
+  const year = Number(match[1])
+  const month = Number(match[2]) - 1
+  const day = Number(match[3])
+  const date = new Date(year, month, day)
+  // `Date` rolls an impossible day over (31 February is 2 or 3 March), so a
+  // date that does not read back as what was written was never a date.
+  if (Number.isNaN(date.getTime()) || date.getMonth() !== month || date.getDate() !== day) {
+    return null
+  }
+  return date
 }
 
 const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1)
@@ -50,6 +57,8 @@ const addDays = (date: Date, days: number) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate() + days)
 const addMonths = (date: Date, months: number) =>
   new Date(date.getFullYear(), date.getMonth() + months, 1)
+const sameMonthAs = (date: Date, month: Date) =>
+  date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear()
 
 /**
  * A month grid.
@@ -72,11 +81,30 @@ export function Calendar({
   className,
 }: CalendarProps) {
   const selected = fromIso(value)
-  const today = useMemo(() => new Date(new Date().toDateString()), [])
-  const [cursor, setCursor] = useState(() => startOfMonth(selected ?? today))
-  // The day the grid's single tab stop sits on.
-  const [focused, setFocused] = useState(() => selected ?? today)
+  // "Today" belongs to the browser's clock and timezone, which the server does
+  // not share: marking it in server HTML would disagree with the hydrating
+  // client for part of every day. So nothing is marked until after hydration.
+  const hydrated = useHydrated()
+  const today = useMemo(() => (hydrated ? new Date(new Date().toDateString()) : null), [hydrated])
+  // Without a value the grid opens on the current month. (Around midnight on
+  // the last day of a month, server and browser can still disagree on which
+  // month that is; pass `value` to pin it.)
+  const [cursor, setCursor] = useState(() => startOfMonth(selected ?? new Date()))
+  // The day the grid's single tab stop sits on, once the user has moved it.
+  const [focused, setFocused] = useState<Date | null>(() => selected)
   const gridRef = useRef<HTMLDivElement>(null)
+
+  // Follow a value set from outside while mounted — a preset, a parent's
+  // reset — by showing its month, as the grid does when it first opens. Done
+  // during render rather than in an effect, so the old month never flashes.
+  const [followed, setFollowed] = useState(value)
+  if (value !== followed) {
+    setFollowed(value)
+    if (selected) {
+      setFocused(selected)
+      if (!sameMonthAs(selected, cursor)) setCursor(startOfMonth(selected))
+    }
+  }
 
   const monthLabel = useMemo(
     () => new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(cursor),
@@ -108,11 +136,25 @@ export function Calendar({
     (lower !== null && date.getTime() < lower.getTime()) ||
     (upper !== null && date.getTime() > upper.getTime())
 
+  // The grid's one tab stop has to be a day that is on screen: after the month
+  // buttons move the view, the remembered day may be in another month, and a
+  // tab stop that is not rendered leaves the grid unreachable from the keyboard.
+  // A choosable day is preferred; when `min`/`max` rule out the whole month,
+  // the stop falls back to a day of the month anyway — `aria-disabled` days
+  // still take focus, and the arrows lead from there to one that can be chosen.
+  const sameMonth = (date: Date | null): date is Date => date !== null && sameMonthAs(date, cursor)
+  const candidates = [focused, selected, today, ...days]
+  const tabStop =
+    candidates.find((date): date is Date => sameMonth(date) && !isDisabled(date)) ??
+    candidates.find(sameMonth) ??
+    startOfMonth(cursor)
+  const tabStopIso = toIso(tabStop)
+  // Where the arrow keys move from: the day with focus, or the tab stop.
+  const active = focused ?? tabStop
+
   const moveFocus = (date: Date) => {
     setFocused(date)
-    if (date.getMonth() !== cursor.getMonth() || date.getFullYear() !== cursor.getFullYear()) {
-      setCursor(startOfMonth(date))
-    }
+    if (!sameMonthAs(date, cursor)) setCursor(startOfMonth(date))
     // The button for the new day may not exist until after this render.
     requestAnimationFrame(() => {
       gridRef.current?.querySelector<HTMLButtonElement>(`[data-day="${toIso(date)}"]`)?.focus()
@@ -128,21 +170,21 @@ export function Calendar({
     }
     if (event.key in moves) {
       event.preventDefault()
-      moveFocus(addDays(focused, moves[event.key]!))
+      moveFocus(addDays(active, moves[event.key]!))
       return
     }
     if (event.key === 'Home' || event.key === 'End') {
       event.preventDefault()
-      const offset = (focused.getDay() - weekStartsOn + 7) % 7
-      moveFocus(addDays(focused, event.key === 'Home' ? -offset : 6 - offset))
+      const offset = (active.getDay() - weekStartsOn + 7) % 7
+      moveFocus(addDays(active, event.key === 'Home' ? -offset : 6 - offset))
       return
     }
     if (event.key === 'PageUp' || event.key === 'PageDown') {
       event.preventDefault()
-      const next = addMonths(focused, event.key === 'PageUp' ? -1 : 1)
+      const next = addMonths(active, event.key === 'PageUp' ? -1 : 1)
       // Clamp to the target month's length: 31 January + 1 month is not 3 March.
       const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()
-      moveFocus(new Date(next.getFullYear(), next.getMonth(), Math.min(focused.getDate(), lastDay)))
+      moveFocus(new Date(next.getFullYear(), next.getMonth(), Math.min(active.getDate(), lastDay)))
     }
   }
 
@@ -198,15 +240,21 @@ export function Calendar({
                     type="button"
                     data-day={iso}
                     data-outside={outside || undefined}
-                    data-today={toIso(today) === iso || undefined}
+                    data-today={(today !== null && toIso(today) === iso) || undefined}
                     data-selected={isSelected || undefined}
                     className="sui-calendar__day"
-                    disabled={disabled}
+                    // `aria-disabled` rather than `disabled`: a disabled button
+                    // cannot take focus, so the arrow keys would stall on it
+                    // instead of moving through it to the next choosable day.
+                    aria-disabled={disabled || undefined}
+                    data-disabled={disabled || undefined}
                     // One tab stop for the whole grid; arrows do the rest.
-                    tabIndex={toIso(focused) === iso ? 0 : -1}
+                    tabIndex={tabStopIso === iso ? 0 : -1}
                     aria-label={new Intl.DateTimeFormat(locale, { dateStyle: 'full' }).format(date)}
                     onFocus={() => setFocused(date)}
-                    onClick={() => onChange(iso)}
+                    onClick={() => {
+                      if (!disabled) onChange(iso)
+                    }}
                   >
                     {date.getDate()}
                   </button>
@@ -237,11 +285,13 @@ export const DATE_RANGE_PRESETS: DateRangePreset[] = [
   },
   {
     label: 'Last 7 days',
-    range: () => [toIso(new Date(Date.now() - 6 * DAY)), toIso(new Date())],
+    // Calendar days, not 24-hour blocks: across a daylight-saving change a
+    // day is 23 or 25 hours long, and subtracting n × 24 hours lands a day out.
+    range: () => [toIso(addDays(new Date(), -6)), toIso(new Date())],
   },
   {
     label: 'Last 30 days',
-    range: () => [toIso(new Date(Date.now() - 29 * DAY)), toIso(new Date())],
+    range: () => [toIso(addDays(new Date(), -29)), toIso(new Date())],
   },
   {
     label: 'This month',

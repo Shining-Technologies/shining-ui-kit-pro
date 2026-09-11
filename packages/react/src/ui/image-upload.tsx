@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type DragEvent,
@@ -12,7 +13,8 @@ import {
 import { cn } from '../lib/cn'
 import { useFieldControl } from '../lib/field-context'
 import { CloseIcon, ImageIcon } from '../lib/icons'
-import { formatBytes } from './file-upload'
+import { useControllableState } from '../lib/use-controllable-state'
+import { accepts, formatBytes, useFormFiles } from './file-upload'
 
 export interface ImageItem {
   /** Absent for an image that is already on the server. */
@@ -27,6 +29,7 @@ export interface ImageItem {
 }
 
 export interface ImageUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  /** Controlled items when defined; `[]` is the empty list. */
   value?: ImageItem[]
   onValueChange?: (items: ImageItem[]) => void
   /** Called with whatever survived validation. */
@@ -42,7 +45,29 @@ export interface ImageUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   disabled?: boolean
   hint?: ReactNode
   children?: ReactNode
+  /**
+   * Submitted with a native `<form>`: the new files (not remote `url` items)
+   * are mirrored into a file input of this name.
+   */
+  name?: string
 }
+
+/**
+ * Object URLs minted by any `ImageUpload`, across instances.
+ *
+ * Only these are ever revoked — a remote `url`, or an object URL the caller
+ * made, is not ours to kill. Module-wide rather than per instance so that an
+ * instance remounted over items an earlier one created (a wizard step coming
+ * back) can still revoke them when they are removed.
+ */
+const MINTED = new Set<string>()
+
+function revokeMinted(url: string) {
+  if (!MINTED.delete(url)) return
+  URL.revokeObjectURL(url)
+}
+
+const NONE: ImageItem[] = []
 
 /**
  * Images, with the picture shown rather than the filename.
@@ -51,9 +76,13 @@ export interface ImageUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, '
  * a file list is the wrong shape for images: this is a grid of the images
  * themselves, each removable, with the add tile last.
  *
- * Previews are object URLs made here and revoked when the item goes — a preview
- * built with `FileReader` holds the whole image in memory as base64 for as long
- * as the page lives, which is how an upload form quietly costs 200 MB.
+ * Previews are object URLs made here and revoked when the item leaves the
+ * value — a preview built with `FileReader` holds the whole image in memory as
+ * base64 for as long as the page lives, which is how an upload form quietly
+ * costs 200 MB. On unmount they are revoked only when the field is
+ * uncontrolled: a controlled parent keeps its items, and they must still show
+ * when the component is mounted again. A parent that discards such items for
+ * good releases them with `URL.revokeObjectURL(item.url)`.
  */
 export const ImageUpload = forwardRef<HTMLDivElement, ImageUploadProps>(function ImageUpload(
   {
@@ -67,44 +96,51 @@ export const ImageUpload = forwardRef<HTMLDivElement, ImageUploadProps>(function
     maxSize,
     maxFiles,
     shape = 'square',
-    disabled = false,
+    disabled: disabledProp = false,
     hint,
     children,
+    name,
     ...props
   },
   ref,
 ) {
   const field = useFieldControl()
+  const disabled = disabledProp || Boolean(field.disabled)
   const generatedId = useId()
   const inputId = field.id ?? generatedId
   const [dragging, setDragging] = useState(false)
-  const [internal, setInternal] = useState<ImageItem[]>([])
-  const items = value ?? internal
-  // Only the URLs this component minted may be revoked; a remote one must not be.
-  const owned = useRef(new Set<string>())
+  const [items, commit] = useControllableState<ImageItem[]>({
+    value,
+    defaultValue: NONE,
+    onChange: onValueChange,
+  })
 
+  // The minted URLs among the items on screen, and whether the component is
+  // controlled — both read when it unmounts.
+  const shown = useRef(new Set<string>())
+  const controlled = useRef(value !== undefined)
+  controlled.current = value !== undefined
+
+  // An object URL goes when its item leaves the value — however it left: the
+  // remove button, or a parent that replaced the list. Revoking on the value
+  // actually shown rather than on the list emitted means a controlled parent
+  // that refuses a removal is not left with a dead thumbnail.
   useEffect(() => {
-    const urls = owned.current
-    return () => {
-      urls.forEach((url) => URL.revokeObjectURL(url))
-      urls.clear()
+    const present = new Set(items.map((item) => item.url))
+    for (const url of shown.current) {
+      if (!present.has(url)) revokeMinted(url)
     }
-  }, [])
+    shown.current = new Set([...present].filter((url) => MINTED.has(url)))
+  }, [items])
 
-  const commit = useCallback(
-    (next: ImageItem[]) => {
-      // Anything dropped from the list takes its object URL with it.
-      const kept = new Set(next.map((item) => item.url))
-      for (const url of owned.current) {
-        if (!kept.has(url)) {
-          URL.revokeObjectURL(url)
-          owned.current.delete(url)
-        }
-      }
-      if (value === undefined) setInternal(next)
-      onValueChange?.(next)
+  // On unmount only an uncontrolled field takes its URLs with it: its items
+  // die with it. A controlled parent still holds its items — a wizard step,
+  // a tab — and the thumbnails must work when the component comes back.
+  useEffect(
+    () => () => {
+      if (!controlled.current) shown.current.forEach(revokeMinted)
     },
-    [onValueChange, value],
+    [],
   )
 
   const add = useCallback(
@@ -114,7 +150,9 @@ export const ImageUpload = forwardRef<HTMLDivElement, ImageUploadProps>(function
       const limit = maxFiles ?? (multiple ? Infinity : 1)
 
       for (const file of Array.from(incoming)) {
-        if (!file.type.startsWith('image/')) {
+        // Images only, and then whatever narrower list `accept` names — the
+        // picker honours it, but a drop does not go through the picker.
+        if (!file.type.startsWith('image/') || !accepts(file, accept)) {
           onFileRejected?.(file, 'type')
           continue
         }
@@ -132,14 +170,17 @@ export const ImageUpload = forwardRef<HTMLDivElement, ImageUploadProps>(function
       if (accepted.length === 0) return
       const created = accepted.map((file) => {
         const url = URL.createObjectURL(file)
-        owned.current.add(url)
+        MINTED.add(url)
         return { file, url, name: file.name, size: file.size }
       })
       commit(multiple ? [...items, ...created] : created)
       onFilesAccepted?.(accepted)
     },
-    [commit, disabled, items, maxFiles, maxSize, multiple, onFileRejected, onFilesAccepted],
+    [accept, commit, disabled, items, maxFiles, maxSize, multiple, onFileRejected, onFilesAccepted],
   )
+
+  const files = useMemo(() => items.flatMap((item) => (item.file ? [item.file] : [])), [items])
+  const formRef = useFormFiles(files)
 
   const full = maxFiles !== undefined && items.length >= maxFiles
   const showAdd = multiple ? !full : items.length === 0
@@ -206,6 +247,7 @@ export const ImageUpload = forwardRef<HTMLDivElement, ImageUploadProps>(function
               multiple={multiple}
               disabled={disabled}
               aria-describedby={field['aria-describedby']}
+              aria-invalid={field['aria-invalid']}
               onChange={(event) => {
                 if (event.target.files) add(event.target.files)
                 // Clear it so picking the same file twice still fires a change.
@@ -219,6 +261,19 @@ export const ImageUpload = forwardRef<HTMLDivElement, ImageUploadProps>(function
           </div>
         ) : null}
       </div>
+
+      {name ? (
+        <input
+          ref={formRef}
+          type="file"
+          name={name}
+          multiple={multiple}
+          disabled={disabled}
+          hidden
+          tabIndex={-1}
+          aria-hidden="true"
+        />
+      ) : null}
 
       {hint ??
         (maxSize ? (

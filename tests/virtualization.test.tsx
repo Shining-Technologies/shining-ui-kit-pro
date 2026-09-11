@@ -1,5 +1,5 @@
-import { VirtualizedDataTable } from '@shining-ui-kit/react/virtualized'
-import { render, screen, waitFor } from '@testing-library/react'
+import { VirtualizedDataTable } from '@shining-technologies/ui-kit-react/virtualized'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { makeUsers, userColumns } from './fixtures'
 
@@ -84,7 +84,56 @@ describe('virtualization', () => {
     )
 
     expect(screen.queryByRole('navigation', { name: 'Table pagination' })).not.toBeInTheDocument()
-    expect(screen.getByRole('table')).toHaveAttribute('aria-rowcount', '5000')
+    // Every row of the table: the header row and 5,000 data rows.
+    expect(screen.getByRole('table')).toHaveAttribute('aria-rowcount', '5001')
+  })
+
+  it('gives each rendered row its position in the whole table', async () => {
+    render(
+      <VirtualizedDataTable
+        data={manyRows}
+        columns={userColumns}
+        label="Virtualized users"
+        maxHeight={400}
+      />,
+    )
+    await waitFor(() => expect(bodyRows().length).toBeGreaterThan(0))
+    const scroller = document.querySelector<HTMLElement>('[data-sui-scroll]')!
+    act(() => {
+      scroller.scrollTop = ROW * 1_000
+      scroller.dispatchEvent(new Event('scroll'))
+    })
+    await waitFor(() =>
+      expect(Number((bodyRows()[0] as HTMLElement).dataset.index)).toBeGreaterThan(0),
+    )
+    for (const row of bodyRows()) {
+      const index = Number((row as HTMLElement).dataset.index)
+      expect(row).toHaveAttribute('aria-rowindex', String(index + 2))
+    }
+  })
+
+  it('keeps the tab stop on a rendered row once the focused one scrolls away', async () => {
+    render(
+      <VirtualizedDataTable
+        data={manyRows}
+        columns={userColumns}
+        label="Virtualized users"
+        maxHeight={400}
+        enableRowSelection
+      />,
+    )
+    await waitFor(() => expect(bodyRows().length).toBeGreaterThan(0))
+    const scroller = document.querySelector<HTMLElement>('[data-sui-scroll]')!
+    act(() => {
+      scroller.scrollTop = ROW * 1_000
+      scroller.dispatchEvent(new Event('scroll'))
+    })
+    await waitFor(() =>
+      expect(Number((bodyRows()[0] as HTMLElement).dataset.index)).toBeGreaterThan(0),
+    )
+    // Row 0 held the tab stop and is no longer in the DOM; one that is has it.
+    const stops = Array.from(bodyRows()).filter((row) => row.getAttribute('tabindex') === '0')
+    expect(stops).toHaveLength(1)
   })
 
   it('still renders the header, the toolbar and the empty state', async () => {

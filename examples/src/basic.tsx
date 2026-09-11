@@ -1,4 +1,4 @@
-import { DataTable, type ColumnDef } from '@shining-ui-kit/react'
+import { DataTable, type ColumnDef } from '@shining-technologies/ui-kit-react'
 import { users, type User } from './data'
 
 /**

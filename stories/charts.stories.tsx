@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { Card, CardContent } from '@shining-ui-kit/react'
+import { Card, CardContent } from '@shining-technologies/ui-kit-react'
 import {
   BarChart,
   DonutChart,
@@ -8,7 +8,7 @@ import {
   Sparkline,
   StatTile,
   TrendChart,
-} from '@shining-ui-kit/react/recharts'
+} from '@shining-technologies/ui-kit-react/recharts'
 
 /**
  * # Charts

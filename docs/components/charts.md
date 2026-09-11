@@ -24,22 +24,30 @@ in bundle size beyond the components used.
 />
 ```
 
-| Prop                               |                                                                                                            |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `data`                             | An array of objects.                                                                                       |
-| `xKey`                             | The key holding each datum's category or time label.                                                       |
-| `series`                           | `{ key, label?, color? }[]`. `key` indexes into each datum.                                                |
-| `height`                           | Drawing height in pixels; width always fills the container. Default `220`.                                 |
-| `legend`                           | `true` · `false` · `'interactive'` (click to hide a series). Default `'interactive'` for cartesian charts. |
-| `startAtZero`                      | Force the value axis to include zero. Default `true`.                                                      |
-| `showGrid` `showXAxis` `showYAxis` | Default `true`.                                                                                            |
-| `valueFormatter`                   | Default is compact: `1.2M`, `52k`. The exact figure goes in the tooltip.                                   |
-| `labelFormatter`                   | Applied to the x-axis labels and the tooltip heading.                                                      |
-| `margin`                           | `{ top, right, bottom, left }`, partial.                                                                   |
-| `emptyMessage`                     | Shown instead of an empty box when there is nothing to plot.                                               |
+| Prop                               |                                                                                                             |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `data`                             | An array of objects.                                                                                        |
+| `xKey`                             | The key holding each datum's category or time label.                                                        |
+| `series`                           | `{ key, label?, color? }[]`. `key` indexes into each datum.                                                 |
+| `height`                           | Drawing height in pixels; width always fills the container. Default `220`.                                  |
+| `legend`                           | `true` · `false` · `'interactive'` (click to hide a series). Default `'interactive'` for cartesian charts.  |
+| `startAtZero`                      | Keep zero on the value axis — at the top for all-negative data. Default `true`.                             |
+| `showGrid` `showXAxis` `showYAxis` | Default `true`.                                                                                             |
+| `valueFormatter`                   | Default is compact: `1.2M`, `52k`. The exact figure goes in the tooltip.                                    |
+| `labelFormatter`                   | Applied to the x-axis labels and the tooltip heading.                                                       |
+| `margin`                           | `{ top, right, bottom, left }`, partial.                                                                    |
+| `emptyMessage`                     | Shown instead of an empty box when there is nothing to plot.                                                |
+| `ariaLabel`                        | The chart's accessible name. Default: a generated summary — "Line chart of Bookings, 12 points from Jan…".  |
+| `showTableToggle`                  | Put every plotted value in a table, visually hidden until a "Show data" toggle reveals it. Default `false`. |
+| `tableToggleLabel`                 | `[show, hide]` labels for that toggle. Default `['Show data', 'Hide data']`.                                |
 
 `color` on a series is any CSS colour, but leaving it unset is usually right: the default is
 `--sui-chart-N`, which the project generator derives from your brand colours.
+
+A `null`, missing or non-finite value is **no reading**, not a zero: nothing is plotted for it,
+the tooltip shows "—", and a line (and its area) breaks at the gap rather than dipping to the
+baseline — the same as the Recharts set. Pass `connectNulls` to `LineChart` to join the readings
+either side instead. A single datum is centred rather than pinned to the left edge.
 
 ---
 
@@ -74,6 +82,10 @@ blinks out between marks.
 full-height hover target, so the tooltip appears anywhere in the column and not only over the
 bar itself. Stacking handles negative values by growing downward from the baseline.
 
+`BarChart` declares a `horizontal` prop, but it is **not implemented** — it is ignored and the
+bars stay vertical. For horizontal bars use `BarChart` from
+[`@shining-technologies/ui-kit-react/recharts`](./charts-recharts.md) with `orientation="bars"`.
+
 ## Pie and donut
 
 ```tsx
@@ -82,7 +94,8 @@ bar itself. Stacking handles negative values by growing downward from the baseli
 <PieChart data={slices} centerLabel="4,812" centerCaption="new customers" />
 ```
 
-`data` is `{ key, label?, value, color? }[]`.
+`data` is `{ key, label?, value, color? }[]`. It takes `ariaLabel`, `showTableToggle` and
+`tableToggleLabel` like the cartesian charts; the table lists each slice's value and share.
 
 The default is a donut because the eye compares arc lengths better than it compares wedge
 areas, and the hole gives the total somewhere to live. Slices start at twelve o'clock — a
@@ -100,6 +113,12 @@ Sized in its own `viewBox` rather than measured, because a sparkline lives insid
 or a stat card and has to render correctly on the first paint. The distortion a stretched
 viewBox causes is invisible here since there is no type to stretch.
 
+`height` (default `28`) is applied inline, so it wins over the stylesheet's `2rem`, and a `style`
+you pass merges with it rather than replacing it. Non-finite values are skipped, and a single
+reading is drawn as a level line across the box, since one point has no trend. A sparkline
+is `aria-hidden` — decoration beside a figure that already says the number. If it stands
+alone, pass `role="img"` and an `aria-label`.
+
 ---
 
 ## Sizing and SSR
@@ -112,6 +131,26 @@ Width comes from a `ResizeObserver`. Where one is unavailable — server renderi
 environment — the chart draws at `FALLBACK_CHART_WIDTH` (640) instead of rendering nothing,
 so the markup is always complete. In a browser the callback ref runs during commit, so the
 real width is known before the first paint and the fallback is never seen.
+
+## Accessibility
+
+Every full chart's `<svg>` is `role="application"` with a name: `ariaLabel` if you pass one,
+or a generated summary of what is plotted. Pass a sentence that says what the chart _shows_ —
+"Bookings rose every month" — rather than what it is. An application rather than an image,
+because that is what makes a screen reader hand the arrow keys to the chart instead of reading
+on past it.
+
+- **Keyboard.** The plot is one tab stop. Left/Right step through the data (Up/Down too on a
+  pie, which has no horizontal), Home/End jump to the ends, and Escape clears the point. The
+  keyboard's point shows the same marker and tooltip as a hover, and is announced through a
+  polite live region — "Feb: Booked 3, Completed 1". A pie steps only through its drawn
+  slices.
+- **The numbers in text.** `showTableToggle` renders every plotted value as a real table, in the
+  accessibility tree whenever it is on and visually hidden until the "Show data" toggle reveals
+  it. It is off by default here (the [Recharts set](./charts-recharts.md) has it on) — turn it
+  on wherever the figures matter, because the drawing is one picture to a screen reader.
+- **Legends are a plain list** unless series can be hidden. Then each entry is a `<button>`
+  with `aria-pressed`, rather than a disabled button announced as "unavailable".
 
 ## The chart palette
 
@@ -143,7 +182,7 @@ import {
   areaPath,
   arcPath,
   formatCompact,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 
 ;<ChartContainer height={240} series={series} legend="interactive">
   {({ width, height }) => (

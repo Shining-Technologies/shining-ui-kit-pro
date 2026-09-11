@@ -1,4 +1,4 @@
-import type { ColumnFilterConfig } from '@shining-ui-kit/core'
+import type { ColumnFilterConfig } from '@shining-technologies/ui-kit-core'
 import type { Column } from '@tanstack/react-table'
 import { useId } from 'react'
 import { DateField } from '../../primitives/date-field'

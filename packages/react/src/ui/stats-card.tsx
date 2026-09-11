@@ -73,9 +73,12 @@ export const StatsCard = forwardRef<HTMLDivElement, StatsCardProps>(function Sta
   const clickable = Boolean(onClick)
   const TrendIcon = trend === 'up' ? TrendUpIcon : trend === 'down' ? TrendDownIcon : null
 
+  // Spans throughout, laid out as blocks by the stylesheet: the same markup
+  // goes inside a `<button>` when the card is clickable, and a button may only
+  // hold phrasing content — a `div` in one is invalid HTML.
   const content = (
     <>
-      <div className="sui-stats-card__head">
+      <span className="sui-stats-card__head">
         <span className="sui-stats-card__label">{label}</span>
         {badge ? <span className="sui-stats-card__badge">{badge}</span> : null}
         {icon ? (
@@ -83,16 +86,16 @@ export const StatsCard = forwardRef<HTMLDivElement, StatsCardProps>(function Sta
             {icon}
           </span>
         ) : null}
-      </div>
+      </span>
 
       {loading ? (
-        <Skeleton className="sui-stats-card__value-skeleton" />
+        <Skeleton as="span" className="sui-stats-card__value-skeleton" />
       ) : (
         <span className="sui-stats-card__value">{value}</span>
       )}
 
       {change !== undefined || description ? (
-        <div className="sui-stats-card__foot">
+        <span className="sui-stats-card__foot">
           {change !== undefined ? (
             <span className={cn('sui-stats-card__change', `sui-stats-card__change--${trend}`)}>
               {TrendIcon ? <TrendIcon /> : null}
@@ -100,10 +103,10 @@ export const StatsCard = forwardRef<HTMLDivElement, StatsCardProps>(function Sta
             </span>
           ) : null}
           {description ? <span className="sui-stats-card__note">{description}</span> : null}
-        </div>
+        </span>
       ) : null}
 
-      {chart ? <div className="sui-stats-card__chart">{chart}</div> : null}
+      {chart ? <span className="sui-stats-card__chart">{chart}</span> : null}
     </>
   )
 
@@ -115,6 +118,7 @@ export const StatsCard = forwardRef<HTMLDivElement, StatsCardProps>(function Sta
         onClick={onClick}
         data-slot="stats-card"
         data-trend={trend}
+        aria-busy={loading || undefined}
         className={cn(statsCardVariants({ size, interactive: true }), 'sui-focusable', className)}
         {...(props as HTMLAttributes<HTMLButtonElement>)}
       >
@@ -128,6 +132,7 @@ export const StatsCard = forwardRef<HTMLDivElement, StatsCardProps>(function Sta
       ref={ref}
       data-slot="stats-card"
       data-trend={trend}
+      aria-busy={loading || undefined}
       className={cn(statsCardVariants({ size, interactive }), className)}
       {...props}
     >

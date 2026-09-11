@@ -1,4 +1,4 @@
-import { DataTable, type DataTableQuery, type PaginationState } from '@shining-ui-kit/react'
+import { DataTable, type DataTableQuery, type PaginationState } from '@shining-technologies/ui-kit-react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'

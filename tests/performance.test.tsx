@@ -1,4 +1,4 @@
-import { DataTable, type ColumnDef } from '@shining-ui-kit/react'
+import { DataTable, type ColumnDef } from '@shining-technologies/ui-kit-react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { memo, useState } from 'react'

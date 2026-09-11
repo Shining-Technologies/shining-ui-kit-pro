@@ -18,7 +18,7 @@ import {
   Sparkline,
   TrendChart,
   type ChartDatum,
-} from '@shining-ui-kit/react/recharts'
+} from '@shining-technologies/ui-kit-react/recharts'
 
 const BOX = { width: 800, height: 320 }
 const original = window.ResizeObserver

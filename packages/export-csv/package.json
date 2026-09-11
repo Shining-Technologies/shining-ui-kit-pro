@@ -1,5 +1,5 @@
 {
-  "name": "@shining-ui-kit/export-csv",
+  "name": "@shining-technologies/ui-kit-export-csv",
   "version": "0.1.0",
   "description": "Optional CSV/TSV export for the Shining UI Kit data table. Zero runtime dependencies.",
   "keywords": [
@@ -14,14 +14,14 @@
   ],
   "license": "MIT",
   "author": "Shining Technologies",
-  "homepage": "https://github.com/ikramulSoHeL/shining-ui-kit-pro#readme",
+  "homepage": "https://github.com/Shining-Technologies/shining-ui-kit-pro#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ikramulSoHeL/shining-ui-kit-pro.git",
+    "url": "git+https://github.com/Shining-Technologies/shining-ui-kit-pro.git",
     "directory": "packages/export-csv"
   },
   "bugs": {
-    "url": "https://github.com/ikramulSoHeL/shining-ui-kit-pro/issues"
+    "url": "https://github.com/Shining-Technologies/shining-ui-kit-pro/issues"
   },
   "engines": {
     "node": ">=18.18"

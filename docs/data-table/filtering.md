@@ -128,7 +128,7 @@ everything else, with the full ARIA grid keyboard — arrows by day, `PageUp` / 
 month, `Home` / `End` across the week. It is exported, so it can be used outside a filter:
 
 ```tsx
-import { Calendar, DateField } from '@shining-ui-kit/react'
+import { Calendar, DateField } from '@shining-technologies/ui-kit-react'
 
 ;<DateField label="Start date" value={from} onChange={setFrom} max={to} />
 ```
@@ -193,7 +193,7 @@ operator list are unchanged — see [server-side](./server-side.md).
 
 ## Replacing the filter UI
 
-The UI reads the operator registry from `@shining-ui-kit/core`; it never invents semantics. So
+The UI reads the operator registry from `@shining-technologies/ui-kit-core`; it never invents semantics. So
 you can replace it wholesale and filtering still behaves identically:
 
 ```tsx
@@ -212,7 +212,7 @@ Inside your panel, `useColumnFilter(column, config)` gives you `filter`, `operat
 Every predicate is exported and pure, so the same rules can run on a server:
 
 ```ts
-import { matchesFilter, isFilterActive } from '@shining-ui-kit/core'
+import { matchesFilter, isFilterActive } from '@shining-technologies/ui-kit-core'
 
 rows.filter((row) => matchesFilter(row.status, 'select', { operator: 'equals', value: 'active' }))
 ```

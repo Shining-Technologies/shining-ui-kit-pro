@@ -85,3 +85,54 @@ export const INVOICES = [
   { id: 'INV-2043', client: 'Kingsley Group', status: 'overdue', amount: 7355, due: '02 Aug' },
   { id: 'INV-2044', client: 'Northline Facilities', status: 'draft', amount: 640, due: '—' },
 ]
+
+/* Summaries, breakdowns and lifecycles for the cards & feedback page. */
+
+export const TICKET_BREAKDOWN = [
+  { key: 'open', label: 'Open', value: 14, tone: 'info' as const },
+  { key: 'waiting', label: 'Waiting on customer', value: 9, tone: 'warning' as const },
+  { key: 'escalated', label: 'Escalated', value: 3, tone: 'destructive' as const },
+  { key: 'on_hold', label: 'On hold', value: 0, tone: 'chart-3' as const },
+  { key: 'resolved', label: 'Resolved', value: 61, tone: 'success' as const },
+]
+
+export const FLEET_BREAKDOWN = [
+  {
+    key: 'on_job',
+    label: 'On a job',
+    value: 18,
+    tone: 'primary' as const,
+    hint: 'Clocked in on site',
+  },
+  {
+    key: 'travelling',
+    label: 'Travelling',
+    value: 7,
+    tone: 'info' as const,
+    hint: 'En route to the next job',
+  },
+  {
+    key: 'idle',
+    label: 'Available',
+    value: 5,
+    tone: 'success' as const,
+    hint: 'Ready to dispatch',
+  },
+  {
+    key: 'offline',
+    label: 'Off shift',
+    value: 12,
+    tone: 'neutral' as const,
+    hint: 'Not rostered today',
+  },
+]
+
+export const WORK_ORDER_STATUSES = {
+  requested: { label: 'Requested', tone: 'warning' as const },
+  scheduled: { label: 'Scheduled', tone: 'info' as const },
+  in_progress: { label: 'In progress', tone: 'primary' as const },
+  completed: { label: 'Completed', tone: 'success' as const },
+  invoiced: { label: 'Invoiced', tone: 'success' as const },
+  on_hold: { label: 'On hold', tone: 'neutral' as const },
+  cancelled: { label: 'Cancelled', tone: 'destructive' as const },
+}

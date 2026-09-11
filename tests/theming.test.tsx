@@ -6,7 +6,7 @@ import {
   resolveProject,
   shiningPalette,
   type ProjectStorage,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import {
   Button,
   Card,
@@ -15,7 +15,7 @@ import {
   ProjectSwitcher,
   UIKitProvider,
   useUIKit,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'

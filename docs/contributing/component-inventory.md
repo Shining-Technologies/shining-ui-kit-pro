@@ -504,12 +504,12 @@ Each phase is independently shippable.
 
 | Phase | Scope                                                                                                                                                                                                       | Output                                      |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **0** | Design-token parity: port the portal's seeds, radii, Inter, area-accent axis, motion tokens into `packages/themes` as a `shining` project. Add `AccentProvider`.                                            | `@shining-ui-kit/themes`                    |
-| **1** | Missing primitives — `calendar`, `command`, `drawer`, `context-menu`, `menubar`, `navigation-menu`, `resizable`, `scroll-area`, `carousel`, `aspect-ratio`, `input-otp`, `item`, `button-group`, `toaster`. | `@shining-ui-kit/react`                     |
-| **2** | P0 composites — `FormField.*`, `StatusBadge`, `PageHeader`, `EmptyState`, `ConfirmDialog`, `StatsCard`.                                                                                                     | new `@shining-ui-kit/forms` + kit additions |
-| **3** | Table reconciliation — decide engine, then land resize-persistence, sticky columns, the 10 column types, the integrated toolbar, and the two server prop bags.                                              | `@shining-ui-kit/react`                     |
-| **4** | P1 composites + `AppShell` / sidebar / breadcrumbs.                                                                                                                                                         | `@shining-ui-kit/layout`                    |
-| **5** | P2/P3 patterns — `ArrayFieldEditor`, `DetailCard`, `ResponsiveDialog`, `ScheduleCalendar`, inbox trio, `Stepper`, `Kanban`.                                                                                 | `@shining-ui-kit/patterns`                  |
+| **0** | Design-token parity: port the portal's seeds, radii, Inter, area-accent axis, motion tokens into `packages/themes` as a `shining` project. Add `AccentProvider`.                                            | `@shining-technologies/ui-kit-themes`                    |
+| **1** | Missing primitives — `calendar`, `command`, `drawer`, `context-menu`, `menubar`, `navigation-menu`, `resizable`, `scroll-area`, `carousel`, `aspect-ratio`, `input-otp`, `item`, `button-group`, `toaster`. | `@shining-technologies/ui-kit-react`                     |
+| **2** | P0 composites — `FormField.*`, `StatusBadge`, `PageHeader`, `EmptyState`, `ConfirmDialog`, `StatsCard`.                                                                                                     | new `@shining-technologies/ui-kit-forms` + kit additions |
+| **3** | Table reconciliation — decide engine, then land resize-persistence, sticky columns, the 10 column types, the integrated toolbar, and the two server prop bags.                                              | `@shining-technologies/ui-kit-react`                     |
+| **4** | P1 composites + `AppShell` / sidebar / breadcrumbs.                                                                                                                                                         | `@shining-technologies/ui-kit-layout`                    |
+| **5** | P2/P3 patterns — `ArrayFieldEditor`, `DetailCard`, `ResponsiveDialog`, `ScheduleCalendar`, inbox trio, `Stepper`, `Kanban`.                                                                                 | `@shining-technologies/ui-kit-patterns`                  |
 | **6** | Portal migration — replace local imports package-by-package, delete duplicates.                                                                                                                             | portal PRs                                  |
 
 Every phase ships: component + types + Storybook story + gallery section + tests
@@ -527,7 +527,7 @@ Every phase ships: component + types + Storybook story + gallery section + tests
 3. **Scope** — all six phases, or start with phases 0–2 only?
 4. **Portal migration** — in scope now, or is the library standalone for now?
 5. **Package layout** — new packages (`forms`, `layout`, `patterns`) or everything
-   into `@shining-ui-kit/react`?
+   into `@shining-technologies/ui-kit-react`?
 
 ---
 

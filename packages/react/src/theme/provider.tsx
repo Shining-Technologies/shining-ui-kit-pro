@@ -1,15 +1,21 @@
 import {
+  applyBrand,
   defaultPalette,
+  paletteById,
   resolveProject,
   themeToCssVars,
+  type BrandInput,
   type ColorMode,
+  type PresetId,
   type ProjectDefinition,
   type ProjectInput,
   type ProjectRegistry,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import {
+  createContext,
   useCallback,
-  useEffect,
+  useContext,
+  useId,
   useInsertionEffect,
   useMemo,
   useRef,
@@ -19,12 +25,41 @@ import {
   type ReactNode,
 } from 'react'
 import { cn } from '../lib/cn'
+import { useHydrated } from '../lib/use-hydrated'
 import { UIKitContext, type ColorModePreference, type UIKitContextValue } from './context'
+import {
+  claimRoot,
+  releaseRoot,
+  rootStyleSheet,
+  scopedStyleSheet,
+  styleDeclarations,
+} from './global-root'
 
 export interface UIKitProviderProps {
   children: ReactNode
   /**
-   * The project to paint with — a definition, or the id of one in `registry`.
+   * A shipped design to start from: colours, shape, density and type.
+   * Defaults to `'shining'`.
+   *
+   * ```tsx
+   * <UIKitProvider preset="darwind" />
+   * ```
+   */
+  preset?: PresetId | (string & Record<never, never>)
+  /**
+   * Your brand on top of `preset`: a primary colour, or a flat object of
+   * colour, shape and type tweaks. Anything you leave out keeps the preset's
+   * value, and contrast is still guaranteed for every colour you pass.
+   *
+   * ```tsx
+   * <UIKitProvider brand="#be123c" />
+   * <UIKitProvider preset="unn" brand={{ primary: '#be123c', radius: '0.5rem' }} />
+   * ```
+   */
+  brand?: BrandInput
+  /**
+   * The full project to paint with — a definition, or the id of a preset or of
+   * a project in `registry`. Takes precedence over `preset` and `brand`.
    * Controlled when supplied together with `onProjectChange`.
    */
   project?: ProjectDefinition | string
@@ -45,17 +80,56 @@ export interface UIKitProviderProps {
 
   /**
    * `'local'` (default) scopes the tokens to a wrapper element, so several
-   * projects can be previewed side by side. `'global'` writes them onto
-   * `<html>` instead, which is what a real application wants — portalled
-   * surfaces (dialogs, dropdowns, tooltips) then inherit them too.
+   * projects can be previewed side by side; dialogs, menus and tooltips render
+   * inside that wrapper so they are themed too. `'global'` writes the tokens
+   * onto `<html>` instead, which also themes the page background and anything
+   * of your own rendered outside the provider.
    */
   scope?: 'local' | 'global'
+  /**
+   * A server render carries the tokens in a `<style>` so the first paint is
+   * already themed — always in `global` scope, and in `local` scope with
+   * `mode="system"`, which an inline style cannot express. Components under
+   * the provider use it too (the sidebar's custom `mobileBreakpoint`). Pass
+   * your Content-Security-Policy nonce here if the policy forbids inline
+   * styles without one.
+   */
+  nonce?: string
 
+  /**
+   * Added to the wrapper in `local` scope, and to `<html>` in `global` scope —
+   * removed again on unmount, without touching classes the app set itself.
+   * With nested global providers the innermost one's classes apply.
+   */
   className?: string
+  /**
+   * Applied to the wrapper in `local` scope, and property by property to
+   * `<html>` in `global` scope, where each is restored on unmount. Custom
+   * properties here override the project's tokens.
+   */
   style?: CSSProperties
 }
 
 const noopSubscribe = () => () => {}
+
+/** How many providers are above this one, so the innermost global one wins `<html>`. */
+const ProviderDepth = createContext(0)
+
+const warned = new Set<string>()
+
+/**
+ * A mistyped id used to fall back to the default palette in silence, which
+ * looks exactly like "the preset did nothing". Say so, once per id.
+ */
+function warnUnknown(prop: string, id: string) {
+  const key = `${prop}:${id}`
+  if (warned.has(key)) return
+  warned.add(key)
+  console.warn(
+    `[shining-ui-kit] <UIKitProvider ${prop}="${id}">: no preset or project has that id. ` +
+      `Falling back to "${defaultPalette.id}". Built-in presets: ${Object.keys(paletteById).join(', ')}.`,
+  )
+}
 
 /** Watch the OS colour preference. Server-rendered as light. */
 function useSystemColorMode(): ColorMode {
@@ -97,6 +171,8 @@ function useRegistryProjects(registry: ProjectRegistry | undefined): ProjectDefi
  */
 export function UIKitProvider({
   children,
+  preset,
+  brand,
   project: controlledProject,
   defaultProject,
   onProjectChange,
@@ -105,32 +181,78 @@ export function UIKitProvider({
   defaultMode = 'system',
   onModeChange,
   scope = 'local',
+  nonce,
   className,
   style,
 }: UIKitProviderProps) {
   const projects = useRegistryProjects(registry)
 
+  /** Registry first (so a user's own projects win), then the shipped presets. */
+  const lookup = useCallback(
+    (id: string): ProjectDefinition | undefined =>
+      registry?.get(id) ?? projects.find((p) => p.id === id) ?? paletteById[id],
+    [registry, projects],
+  )
+
+  // `brand` is usually an inline object literal; key it by value so a
+  // re-render does not regenerate the palette.
+  const brandKey = brand === undefined ? '' : JSON.stringify(brand)
+  const configured = preset !== undefined || brand !== undefined
+  const base = useMemo(() => {
+    const start = (preset !== undefined && lookup(preset)) || defaultPalette
+    if (preset !== undefined && !lookup(preset)) warnUnknown('preset', preset)
+    return brand === undefined ? start : applyBrand(start, brand)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset, brandKey, lookup])
+
   const resolveRef = useCallback(
     (ref: ProjectDefinition | string | undefined): ProjectDefinition | undefined => {
       if (!ref) return undefined
       if (typeof ref !== 'string') return ref
-      return registry?.get(ref) ?? projects.find((p) => p.id === ref)
+      return ref === base.id ? base : lookup(ref)
     },
-    [registry, projects],
+    [base, lookup],
   )
 
-  // Uncontrolled selection lives here; the registry keeps its own active id so
-  // a project chosen in one provider is still chosen after a remount.
-  const [uncontrolledId, setUncontrolledId] = useState(
-    () => resolveRef(defaultProject)?.id ?? registry?.getActiveId(),
-  )
+  // A pick made in this provider. The registry keeps its own active id as
+  // well, so a project chosen in one provider is still chosen after a remount
+  // or a reload.
+  const [uncontrolledId, setUncontrolledId] = useState<string>()
+
+  // The user's choice beats the app's configuration: `defaultProject`,
+  // `preset` and `brand` are where a first visit starts, not an override of
+  // what the user picked last time. That choice may have been restored from
+  // localStorage, which the server never saw, so while hydrating it is left
+  // out — and the registry's initial project stands in for its active one —
+  // so the markup agrees with the server's; the restored project follows in
+  // the very next commit. A client-only app never sees the difference.
+  const hydrated = useHydrated()
+  const chosenId = registry && hydrated ? registry.getChosenActiveId() : undefined
+  const registryActive = registry
+    ? hydrated
+      ? registry.getActive()
+      : (registry.get(registry.getInitialActiveId()) ?? registry.getActive())
+    : undefined
 
   const project =
     resolveRef(controlledProject) ??
     resolveRef(uncontrolledId) ??
+    resolveRef(chosenId) ??
     resolveRef(defaultProject) ??
-    registry?.getActive() ??
-    defaultPalette
+    (configured ? base : registryActive) ??
+    base
+
+  for (const [label, ref] of [
+    ['project', controlledProject],
+    ['defaultProject', defaultProject],
+  ] as const) {
+    if (typeof ref === 'string' && !resolveRef(ref)) warnUnknown(label, ref)
+  }
+
+  // Local scope renders portalled surfaces into its own wrapper, so a dialog
+  // opened from inside the provider is painted with the provider's tokens.
+  const [scopeElement, setScopeElement] = useState<HTMLDivElement | null>(null)
+  const portalContainer = scope === 'local' ? (scopeElement ?? undefined) : undefined
 
   const [uncontrolledMode, setUncontrolledMode] = useState<ColorModePreference>(defaultMode)
   const mode = controlledMode ?? uncontrolledMode
@@ -151,44 +273,73 @@ export function UIKitProvider({
 
   const setProject = useCallback(
     (id: string) => {
-      const next = registry?.get(id) ?? projects.find((p) => p.id === id)
+      const next = resolveRef(id)
       if (!next) return
       registry?.setActive(id)
       if (controlledProject === undefined) setUncontrolledId(id)
       onProjectChange?.(next)
     },
-    [registry, projects, controlledProject, onProjectChange],
+    [registry, resolveRef, controlledProject, onProjectChange],
   )
 
   // ------------------------------------------------------------- global scope
   // Written in an insertion effect so the variables land before the first paint
-  // of anything below, rather than one frame after it.
+  // of anything below, rather than one frame after it. `<html>` is shared by
+  // every global provider on the page; see `global-root.ts`.
+  const depth = useContext(ProviderDepth)
+  const owner = useRef({}).current
+  // There is no wrapper to put `style` on, so it goes onto `<html>` alongside
+  // the tokens — keyed by value, since it is usually an inline literal.
+  const styleKey = style === undefined ? '' : JSON.stringify(style)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const declarations = useMemo(() => styleDeclarations(style), [styleKey])
+  const rootVars = useMemo(() => ({ ...vars, ...declarations }), [vars, declarations])
   useInsertionEffect(() => {
-    if (scope !== 'global' || typeof document === 'undefined') return
-    const root = document.documentElement
-    for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value)
-    return () => {
-      for (const name of Object.keys(vars)) root.style.removeProperty(name)
-    }
-  }, [scope, vars])
+    if (typeof document === 'undefined') return
+    if (scope !== 'global') return releaseRoot(owner)
+    claimRoot(owner, {
+      depth,
+      vars: rootVars,
+      mode: colorMode,
+      project: project.id,
+      density: project.shape.density,
+      className,
+    })
+  }, [owner, scope, depth, rootVars, colorMode, project.id, project.shape.density, className])
+  useInsertionEffect(() => () => releaseRoot(owner), [owner])
 
-  useEffect(() => {
-    if (scope !== 'global' || typeof document === 'undefined') return
-    const root = document.documentElement
-    const hadDark = root.classList.contains('dark')
-    // `.dark` as well as the data attribute: consumers style their own markup
-    // with Tailwind's `dark:` variant, which only looks at the class.
-    root.classList.toggle('dark', colorMode === 'dark')
-    root.dataset.suiMode = colorMode
-    root.dataset.suiProject = project.id
-    root.dataset.suiDensity = project.shape.density
-    return () => {
-      root.classList.toggle('dark', hadDark)
-      delete root.dataset.suiMode
-      delete root.dataset.suiProject
-      delete root.dataset.suiDensity
-    }
-  }, [scope, colorMode, project.id, project.shape.density])
+  // The server never runs the effect above; ship the tokens in its HTML.
+  const rootSheet = useMemo(
+    () =>
+      scope === 'global' && !hydrated
+        ? rootStyleSheet(
+            { ...themeToCssVars(resolved.light), ...declarations },
+            { ...themeToCssVars(resolved.dark), ...declarations },
+            mode,
+          )
+        : null,
+    [scope, hydrated, resolved, mode, declarations],
+  )
+
+  // ------------------------------------------------------------- local scope
+  // An inline style cannot hold a media query, so a server render of
+  // `mode="system"` would paint light and flash on a dark-OS machine. Until
+  // hydration the wrapper instead carries both palettes in a `<style>` scoped
+  // to it, the dark half behind `prefers-color-scheme`, as global scope does.
+  const scopeId = useId()
+  const pendingSystem = scope === 'local' && mode === 'system' && !hydrated
+  const scopeSheet = useMemo(
+    () =>
+      pendingSystem
+        ? scopedStyleSheet(
+            `.sui-scope[data-sui-scope-id="${scopeId.replace(/["\\]/g, '\\$&')}"]`,
+            themeToCssVars(resolved.light),
+            themeToCssVars(resolved.dark),
+            'system',
+          )
+        : null,
+    [pendingSystem, scopeId, resolved],
+  )
 
   const value = useMemo<UIKitContextValue>(
     () => ({
@@ -200,6 +351,8 @@ export function UIKitProvider({
       density: project.shape.density,
       setMode,
       setProject,
+      portalContainer,
+      nonce,
       registry,
       createProject: registry
         ? (input: ProjectInput) => {
@@ -226,24 +379,56 @@ export function UIKitProvider({
           }
         : undefined,
     }),
-    [project, resolved, projects, mode, colorMode, setMode, setProject, registry],
+    [
+      project,
+      resolved,
+      projects,
+      mode,
+      colorMode,
+      setMode,
+      setProject,
+      portalContainer,
+      nonce,
+      registry,
+    ],
   )
 
   if (scope === 'global') {
-    return <UIKitContext.Provider value={value}>{children}</UIKitContext.Provider>
+    return (
+      <UIKitContext.Provider value={value}>
+        <ProviderDepth.Provider value={depth + 1}>
+          {rootSheet ? (
+            <style data-sui-root="" nonce={nonce} dangerouslySetInnerHTML={{ __html: rootSheet }} />
+          ) : null}
+          {children}
+        </ProviderDepth.Provider>
+      </UIKitContext.Provider>
+    )
   }
 
   return (
     <UIKitContext.Provider value={value}>
-      <div
-        className={cn('sui-scope', colorMode === 'dark' && 'dark', className)}
-        data-sui-mode={colorMode}
-        data-sui-project={project.id}
-        data-sui-density={project.shape.density}
-        style={{ ...(vars as CSSProperties), ...style }}
-      >
-        {children}
-      </div>
+      <ProviderDepth.Provider value={depth + 1}>
+        {scopeSheet ? (
+          <style
+            data-sui-scope-sheet=""
+            nonce={nonce}
+            dangerouslySetInnerHTML={{ __html: scopeSheet }}
+          />
+        ) : null}
+        <div
+          ref={setScopeElement}
+          // While the sheet decides the mode, the wrapper claims neither side.
+          className={cn('sui-scope', !pendingSystem && colorMode === 'dark' && 'dark', className)}
+          data-sui-mode={pendingSystem ? undefined : colorMode}
+          data-sui-scope-id={pendingSystem ? scopeId : undefined}
+          data-sui-project={project.id}
+          data-sui-density={project.shape.density}
+          style={pendingSystem ? style : { ...(vars as CSSProperties), ...style }}
+        >
+          {children}
+        </div>
+      </ProviderDepth.Provider>
     </UIKitContext.Provider>
   )
 }

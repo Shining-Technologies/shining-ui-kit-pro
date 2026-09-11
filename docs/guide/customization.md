@@ -112,7 +112,7 @@ the value for a cell. Render it; do not re-derive it.
 Wrap a default instead of reimplementing it:
 
 ```tsx
-import { DEFAULT_COMPONENTS } from '@shining-ui-kit/react'
+import { DEFAULT_COMPONENTS } from '@shining-technologies/ui-kit-react'
 
 const LoggingRow = (props: RowProps<User>) => {
   useEffect(() => track('row.render', props.row.id), [props.row.id])

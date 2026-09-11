@@ -12,11 +12,21 @@ export {
   CardDescription,
   CardFooter,
   CardHeader,
+  CardIcon,
   CardTitle,
   Stat,
+  cardIconVariants,
   cardVariants,
 } from './card'
-export type { CardFooterProps, CardHeaderProps, CardProps, StatProps } from './card'
+export type {
+  CardFooterProps,
+  CardHeaderProps,
+  CardIconProps,
+  CardProps,
+  CardTitleProps,
+  StatProps,
+} from './card'
+export type { AccentTone } from '../lib/tone'
 
 export { Alert, AlertDescription, AlertTitle, alertVariants } from './alert'
 export type { AlertProps } from './alert'
@@ -31,11 +41,32 @@ export {
 } from './avatar'
 export type { AvatarGroupProps, AvatarProps } from './avatar'
 
-export { Empty, Kbd, Progress, Spinner, progressVariants, spinnerVariants } from './feedback'
-export type { EmptyStateProps, ProgressProps, SpinnerProps } from './feedback'
+export {
+  Empty,
+  Kbd,
+  Progress,
+  SegmentedBar,
+  Spinner,
+  StatusDot,
+  emptyVariants,
+  progressVariants,
+  segmentedBarVariants,
+  spinnerVariants,
+  statusDotVariants,
+} from './feedback'
+export type {
+  EmptyStateProps,
+  ProgressProps,
+  SegmentedBarProps,
+  SegmentedBarSegment,
+  SpinnerProps,
+  StatusDotProps,
+} from './feedback'
 
 export { Field, Fieldset, Label, useFieldControl } from './field'
-export type { FieldProps, FieldsetProps } from './field'
+export type { FieldContextValue, FieldProps, FieldsetProps } from './field'
+/* For building your own control that joins a `<Field>` via `useFieldControl()`. */
+export type { FieldControlProps } from '../lib/field-context'
 
 export {
   InputGroup,
@@ -154,6 +185,21 @@ export type {
 export { StatsCard, statsCardVariants } from './stats-card'
 export type { StatsCardProps, StatsTrend } from './stats-card'
 
+export { MetricGrid, MetricTile } from './metric-tile'
+export type { MetricGridProps, MetricTileData, MetricTileProps } from './metric-tile'
+
+export { BreakdownList } from './breakdown-list'
+export type { BreakdownItem, BreakdownListProps } from './breakdown-list'
+
+export { SummaryCard } from './summary-card'
+export type { SummaryCardProps, SummaryMetric } from './summary-card'
+
+export { StatusFlow } from './status-flow'
+export type { StatusFlowProps, StatusFlowStep, StatusFlowStepState } from './status-flow'
+
+export { StepCard } from './step-card'
+export type { StepCardProps, StepCardState } from './step-card'
+
 export { PageHeader } from './page-header'
 export type { PageHeaderProps } from './page-header'
 
@@ -256,3 +302,30 @@ export type {
   SidebarItemProps,
   SkipToContentProps,
 } from './app-shell'
+
+export { SidebarProvider, useSidebar } from './sidebar-context'
+export type { SidebarContextValue, SidebarProviderProps } from './sidebar-context'
+
+export { Sidebar, SidebarBrand, SidebarTrigger, SidebarUser } from './sidebar'
+export type {
+  SidebarBrandProps,
+  SidebarProps,
+  SidebarTriggerProps,
+  SidebarUserProps,
+} from './sidebar'
+
+export { SidebarMenu, SidebarMenuItem, SidebarNav, SidebarSection } from './sidebar-nav'
+export type {
+  SidebarLinkProps,
+  SidebarMenuItemProps,
+  SidebarNavProps,
+  SidebarSectionProps,
+} from './sidebar-nav'
+
+export { getSidebarTrail, matchSidebarPath } from '../lib/sidebar-tree'
+export type {
+  SidebarNavEntry,
+  SidebarNavItem,
+  SidebarNavSection,
+  SidebarNavSeparator,
+} from '../lib/sidebar-tree'

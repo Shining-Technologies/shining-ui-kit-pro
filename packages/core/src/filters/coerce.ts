@@ -20,11 +20,21 @@ export function toNumber(value: unknown): number | null {
   return null
 }
 
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
+
 /** Milliseconds since epoch, or `null` when the value is not a usable date. */
 export function toTimestamp(value: unknown): number | null {
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.getTime()
   if (typeof value === 'number') return Number.isFinite(value) ? value : null
   if (typeof value === 'string' && value.trim() !== '') {
+    // `Date.parse('2024-03-05')` is midnight *UTC*, which west of Greenwich is
+    // the evening of the 4th — so a date picked in the filter matched the day
+    // before. A calendar date means that day where the user is.
+    const day = DATE_ONLY.exec(value.trim())
+    if (day) {
+      const t = new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])).getTime()
+      return Number.isNaN(t) ? null : t
+    }
     const t = Date.parse(value)
     return Number.isNaN(t) ? null : t
   }

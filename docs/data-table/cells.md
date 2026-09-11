@@ -30,7 +30,7 @@ import {
   CellProgress,
   CellStack,
   CellText,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 ```
 
 | Component      | For                                                                         |
@@ -118,7 +118,7 @@ shuffle from row to row — which is what makes a column of actions scannable.
 Compose them by hand when a row needs something else in the cell:
 
 ```tsx
-import { RowAction, RowActionGroup } from '@shining-ui-kit/react'
+import { RowAction, RowActionGroup } from '@shining-technologies/ui-kit-react'
 
 ;<DataTable
   rowActionsWidth={150}
@@ -148,7 +148,7 @@ row is faster to read and to hit than a `⋮` that hides them. Reach for the men
 more actions than fit on one line, or when they need headings and separators.
 
 ```tsx
-import { RowActions } from '@shining-ui-kit/react'
+import { RowActions } from '@shining-technologies/ui-kit-react'
 
 ;<DataTable
   rowActions={(row) => (

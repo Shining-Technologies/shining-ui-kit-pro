@@ -1,5 +1,10 @@
-import { resolveProject, type ProjectDefinition } from '@shining-ui-kit/core'
-import { useMemo, type CSSProperties, type HTMLAttributes } from 'react'
+import { resolveProject, type ProjectDefinition } from '@shining-technologies/ui-kit-core'
+import {
+  useMemo,
+  type CSSProperties,
+  type HTMLAttributes,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react'
 import { cn } from '../lib/cn'
 import { CheckIcon, MonitorIcon, MoonIcon, PaletteIcon, SunIcon } from '../lib/icons'
 import { Button } from '../primitives/button'
@@ -138,18 +143,30 @@ export interface ColorModeToggleProps extends HTMLAttributes<HTMLDivElement> {
  * workaround, a switch that silently means "system until touched", leaves the
  * user unable to get back to system.
  */
-export function ColorModeToggle({ className, modes, ...props }: ColorModeToggleProps) {
+export function ColorModeToggle({ className, modes, onKeyDown, ...props }: ColorModeToggleProps) {
   const { mode, setMode } = useUIKit()
   const options = modes ? MODES.filter((m) => modes.includes(m.value)) : MODES
+  // One tab stop: the checked radio, or the first when none is (`mode` can be
+  // one this toggle was told not to offer).
+  const tabStop = Math.max(
+    options.findIndex((option) => option.value === mode),
+    0,
+  )
 
   return (
     <div
       role="radiogroup"
       aria-label="Colour mode"
       className={cn('sui-toggle-group', className)}
+      onKeyDown={(event) => {
+        onKeyDown?.(event)
+        if (!event.defaultPrevented) {
+          handleRadioGroupKeys(event, (index) => setMode(options[index]!.value))
+        }
+      }}
       {...props}
     >
-      {options.map((option) => (
+      {options.map((option, index) => (
         <button
           key={option.value}
           type="button"
@@ -157,6 +174,7 @@ export function ColorModeToggle({ className, modes, ...props }: ColorModeToggleP
           aria-checked={mode === option.value}
           aria-label={option.label}
           title={option.label}
+          tabIndex={index === tabStop ? 0 : -1}
           data-state={mode === option.value ? 'on' : 'off'}
           className="sui-toggle sui-toggle--sm sui-focusable"
           onClick={() => setMode(option.value)}
@@ -166,6 +184,51 @@ export function ColorModeToggle({ className, modes, ...props }: ColorModeToggleP
       ))}
     </div>
   )
+}
+
+/**
+ * The radio-group keyboard pattern, for a group whose radios render a roving
+ * `tabIndex` (only the checked one is `0`): the arrows move *and* select,
+ * wrapping at the ends, and Home / End jump to either end. Left and right swap
+ * in a right-to-left layout. `select` gets the index among the group's radios.
+ */
+export function handleRadioGroupKeys(
+  event: ReactKeyboardEvent<HTMLElement>,
+  select: (index: number) => void,
+) {
+  const radios = Array.from(
+    event.currentTarget.querySelectorAll<HTMLElement>('[role="radio"]'),
+  ).filter((radio) => !(radio as HTMLButtonElement).disabled)
+  const index = radios.indexOf(event.target as HTMLElement)
+  if (index < 0 || event.altKey || event.ctrlKey || event.metaKey) return
+  const rtl = getComputedStyle(event.currentTarget).direction === 'rtl'
+  const wrap = (step: number) => (index + step + radios.length) % radios.length
+  let next: number
+  switch (event.key) {
+    case 'ArrowDown':
+      next = wrap(1)
+      break
+    case 'ArrowUp':
+      next = wrap(-1)
+      break
+    case 'ArrowRight':
+      next = wrap(rtl ? -1 : 1)
+      break
+    case 'ArrowLeft':
+      next = wrap(rtl ? 1 : -1)
+      break
+    case 'Home':
+      next = 0
+      break
+    case 'End':
+      next = radios.length - 1
+      break
+    default:
+      return
+  }
+  event.preventDefault()
+  radios[next]!.focus()
+  select(next)
 }
 
 export interface TokenSwatchGridProps extends HTMLAttributes<HTMLDivElement> {

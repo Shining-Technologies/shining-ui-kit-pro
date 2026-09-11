@@ -59,6 +59,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
     hasError: Boolean(error),
     disabled,
     required,
+    labelId: label ? `${id}-label` : undefined,
   }
 
   return (
@@ -75,7 +76,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
         {...props}
       >
         {label ? (
-          <Label htmlFor={id} data-disabled={disabled || undefined}>
+          <Label id={value.labelId} htmlFor={id} data-disabled={disabled || undefined}>
             {label}
             {required ? (
               <span className="sui-field__required" aria-hidden="true">

@@ -1,6 +1,21 @@
 import type { Column, Table } from '@tanstack/react-table'
 import type { CSSProperties } from 'react'
-import { columnSizeValue, columnSizeVar } from './class-names'
+import { columnSizeValue, columnSizeVar, responsiveClass } from './class-names'
+
+/**
+ * The `sui-hide-below-*` classes for a column, unless the user has explicitly
+ * turned the column on — then it stays on at every width.
+ *
+ * Responsive hiding is applied as table state once the page is running; the
+ * classes are what make the server render and first paint agree with it.
+ */
+export function responsiveColumnClass<TData>(
+  table: Table<TData>,
+  column: Column<TData, unknown>,
+): string | undefined {
+  if (table.getState().columnVisibility[column.id] === true) return undefined
+  return responsiveClass(column.columnDef.meta?.responsive)
+}
 
 /**
  * Column widths are published as CSS custom properties on the table element and
@@ -30,6 +45,17 @@ export function buildColumnSizeVars<TData>(table: Table<TData>): CSSProperties {
  */
 export function sizeStyle(columnId: string, kind: 'header' | 'cell'): CSSProperties {
   return { '--sui-cell-size': columnSizeValue(columnId, kind) } as CSSProperties
+}
+
+/**
+ * `meta.responsive.priority`: where a cell sits on its card in the card layout.
+ *
+ * Published as a variable that only the card rules read, so it has no effect
+ * on the table layout. Prioritised cells come first, lowest first; the rest
+ * follow in declared order.
+ */
+export function cardOrderStyle(priority: number | undefined): CSSProperties {
+  return priority === undefined ? {} : ({ '--sui-card-order': priority } as CSSProperties)
 }
 
 /** Sticky offsets for a pinned column, measured from the pinned group's edge. */

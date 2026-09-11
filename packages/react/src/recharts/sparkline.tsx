@@ -1,6 +1,7 @@
 import { useId, useMemo, type HTMLAttributes, type ReactElement, type ReactNode } from 'react'
 import { Area, AreaChart, Line, LineChart, ResponsiveContainer, YAxis } from 'recharts'
 import { cn } from '../lib/cn'
+import { finiteExtent } from './axes'
 import {
   CHART_SURFACE,
   DOT_RADIUS,
@@ -50,10 +51,9 @@ export function Sparkline({
 
   const points = useMemo(() => data.map((value, i) => ({ i, value })), [data])
   const domain = useMemo(() => {
-    const finite = data.filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
-    if (finite.length === 0) return undefined
-    const min = Math.min(...finite)
-    const max = Math.max(...finite)
+    const range = finiteExtent(data.filter((v): v is number => typeof v === 'number'))
+    if (!range) return undefined
+    const [min, max] = range
     // A flat series has no range to scale into; pad it so the line sits in the
     // middle of the box instead of collapsing onto an edge.
     const pad = (max - min || Math.abs(max) || 1) * 0.15

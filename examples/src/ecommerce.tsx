@@ -9,7 +9,7 @@ import {
   TrashIcon,
   createColumnHelper,
   type ColumnDef,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { products, type Product } from './data'
 
 /**

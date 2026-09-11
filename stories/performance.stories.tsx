@@ -1,6 +1,6 @@
-import { makeUsers, type User } from '@shining-ui-kit/examples'
-import { DataTable, type ColumnDef } from '@shining-ui-kit/react'
-import { VirtualizedDataTable } from '@shining-ui-kit/react/virtualized'
+import { makeUsers, type User } from '@shining-technologies/ui-kit-examples'
+import { DataTable, type ColumnDef } from '@shining-technologies/ui-kit-react'
+import { VirtualizedDataTable } from '@shining-technologies/ui-kit-react/virtualized'
 import type { Meta, StoryObj } from '@storybook/react'
 
 const columns: ColumnDef<User>[] = [
@@ -44,7 +44,7 @@ export const Virtualized: Story = {
     <>
       <p className="sb-note">
         50,000 rows, no pagination. <code>VirtualizedDataTable</code> comes from
-        <code> @shining-ui-kit/react/virtualized</code>, a separate entry point, so
+        <code> @shining-technologies/ui-kit-react/virtualized</code>, a separate entry point, so
         <code> @tanstack/react-virtual</code> only ships to apps that import it.
       </p>
       <VirtualizedDataTable<User>

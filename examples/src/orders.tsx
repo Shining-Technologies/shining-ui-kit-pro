@@ -12,7 +12,7 @@ import {
   PencilIcon,
   TrashIcon,
   type ColumnDef,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { orders, type Order } from './data'
 
 /**

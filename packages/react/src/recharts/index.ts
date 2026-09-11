@@ -8,8 +8,8 @@
  * a project switch with no adapter layer.
  *
  * ```tsx
- * import { TrendChart, BarChart } from '@shining-ui-kit/react/recharts'
- * import '@shining-ui-kit/react/styles.css'
+ * import { TrendChart, BarChart } from '@shining-technologies/ui-kit-react/recharts'
+ * import '@shining-technologies/ui-kit-react/styles.css'
  * ```
  *
  * `recharts` is an optional peer dependency: it is only pulled into a bundle

@@ -28,6 +28,11 @@ export function DataTableHeaderCell<TData>({
   if (header.isPlaceholder) return <th {...cellProps} />
 
   const isResizing = header.column.getIsResizing()
+  // A focusable separator is a widget, and ARIA requires it to report its
+  // value — here, the column's width. A group head spans several leaves, so it
+  // has no single min or max of its own.
+  const size = header.getSize()
+  const isLeaf = header.subHeaders.length === 0
 
   // Describe what the click will actually do, including clearing the sort.
   const next = column.getNextSortingOrder()
@@ -59,6 +64,10 @@ export function DataTableHeaderCell<TData>({
           role="separator"
           aria-orientation="vertical"
           aria-label={`Resize ${label}`}
+          aria-valuenow={size}
+          aria-valuemin={isLeaf ? column.columnDef.minSize : undefined}
+          aria-valuemax={isLeaf ? column.columnDef.maxSize : undefined}
+          aria-valuetext={`${size} pixels`}
           tabIndex={0}
           className={cn('sui-resizer', isResizing && 'sui-resizer--active')}
           data-resizing={isResizing || undefined}

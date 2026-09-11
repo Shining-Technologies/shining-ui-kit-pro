@@ -1,6 +1,13 @@
-import { createProject, forkProject, slugify, updateProject } from './create-project'
+import {
+  DEFAULT_SHAPE,
+  DEFAULT_TYPOGRAPHY,
+  createProject,
+  forkProject,
+  slugify,
+  updateProject,
+} from './create-project'
 import { BUILT_IN_PALETTES, defaultPalette } from './palettes'
-import type { ProjectDefinition, ProjectInput } from './types'
+import type { NeutralTint, ProjectDefinition, ProjectInput } from './types'
 
 /**
  * The set of projects an application knows about, plus which one is active.
@@ -23,7 +30,10 @@ export interface ProjectRegistryOptions {
   /** Where user projects persist. Pass `null` for an in-memory registry. */
   storage?: ProjectStorage | null
   storageKey?: string
-  /** Project id selected on first load. */
+  /**
+   * Project id selected on first load. Once the user has picked a project and
+   * it has been persisted, the persisted pick is restored instead.
+   */
   initialProjectId?: string
 }
 
@@ -53,6 +63,14 @@ export class ProjectRegistry {
   private readonly storageKey: string
   private custom: ProjectDefinition[] = []
   private activeId: string
+  private readonly initialActiveId: string
+  /**
+   * Whether `activeId` is a choice — restored from storage or set through
+   * `setActive` — rather than the default. Only a choice is persisted, so a
+   * write triggered by anything else cannot turn the default into a "pick"
+   * that outranks the app's configured starting point on the next load.
+   */
+  private chosen = false
   private listeners = new Set<() => void>()
   /** Rebuilt on every mutation so `useSyncExternalStore` sees a new reference. */
   private snapshot: ProjectDefinition[] = []
@@ -62,11 +80,17 @@ export class ProjectRegistry {
     this.storage = options.storage === null ? null : (options.storage ?? defaultStorage())
     this.storageKey = options.storageKey ?? STORAGE_KEY
 
+    this.initialActiveId = options.initialProjectId ?? this.builtIns[0]?.id ?? defaultPalette.id
     const restored = this.read()
     this.custom = restored?.projects ?? []
-    this.activeId =
-      options.initialProjectId ?? restored?.activeId ?? this.builtIns[0]?.id ?? defaultPalette.id
+    this.activeId = this.initialActiveId
     this.refresh(false)
+    // `initialProjectId` is the first-load default only: the project the user
+    // picked last time wins — as long as it still exists.
+    if (restored?.activeId && this.get(restored.activeId)) {
+      this.activeId = restored.activeId
+      this.chosen = true
+    }
   }
 
   // --------------------------------------------------------------- reading
@@ -81,11 +105,36 @@ export class ProjectRegistry {
   }
 
   getActive(): ProjectDefinition {
-    return this.get(this.activeId) ?? this.builtIns[0] ?? defaultPalette
+    return (
+      this.get(this.activeId) ??
+      this.get(this.initialActiveId) ??
+      this.builtIns[0] ??
+      defaultPalette
+    )
   }
 
   getActiveId(): string {
     return this.activeId
+  }
+
+  /**
+   * The project that is active before anything is restored from storage —
+   * `initialProjectId`, else the first built-in. A server render has no
+   * storage, so this is what it paints; the provider paints it too while
+   * hydrating, then switches to the restored project, so the two agree.
+   */
+  getInitialActiveId(): string {
+    return this.initialActiveId
+  }
+
+  /**
+   * The active id when it is a choice the user made — restored from storage,
+   * or set with `setActive` — and `undefined` while it is still the default.
+   * A provider ranks a choice above its `defaultProject`, `preset` and
+   * `brand`, which are only where a first visit starts.
+   */
+  getChosenActiveId(): string | undefined {
+    return this.chosen ? this.activeId : undefined
   }
 
   // -------------------------------------------------------------- mutating
@@ -142,21 +191,26 @@ export class ProjectRegistry {
     const existing = this.get(id)
     if (!existing || existing.builtIn) return false
     this.custom = this.custom.filter((p) => p.id !== id)
-    if (this.activeId === id) this.activeId = this.builtIns[0]?.id ?? defaultPalette.id
+    if (this.activeId === id) {
+      this.activeId = this.initialActiveId
+      this.chosen = false
+    }
     this.refresh()
     return true
   }
 
   setActive(id: string): void {
-    if (this.activeId === id || !this.get(id)) return
+    if ((this.activeId === id && this.chosen) || !this.get(id)) return
     this.activeId = id
+    this.chosen = true
     this.refresh()
   }
 
-  /** Drop every user project and go back to the shipped presets. */
+  /** Drop every user project and go back to the registry's initial project. */
   reset(): void {
     this.custom = []
-    this.activeId = this.builtIns[0]?.id ?? defaultPalette.id
+    this.activeId = this.initialActiveId
+    this.chosen = false
     this.refresh()
   }
 
@@ -172,12 +226,15 @@ export class ProjectRegistry {
     const parsed = parseState(json)
     if (!parsed) throw new Error('Not a valid project export.')
 
-    const incoming = parsed.projects.map((p) => ({
-      ...p,
-      builtIn: false,
-      id: this.uniqueId(p.id),
-    }))
-    this.custom = replace ? incoming : [...this.custom, ...incoming]
+    // One at a time, so ids are unique within the batch as well as against
+    // what is already here (and only against what `replace` keeps).
+    if (replace) this.custom = []
+    const incoming: ProjectDefinition[] = []
+    for (const p of parsed.projects) {
+      const project = { ...p, builtIn: false, id: this.uniqueId(p.id) }
+      incoming.push(project)
+      this.custom = [...this.custom, project]
+    }
     this.refresh()
     return incoming
   }
@@ -228,7 +285,8 @@ export class ProjectRegistry {
       const state: PersistedState = {
         version: 1,
         projects: this.custom,
-        activeId: this.activeId,
+        // Empty unless chosen; see `chosen`.
+        activeId: this.chosen ? this.activeId : '',
       }
       this.storage.setItem(this.storageKey, JSON.stringify(state))
     } catch {
@@ -244,13 +302,47 @@ function parseState(raw: string): PersistedState | null {
     if (!parsed || typeof parsed !== 'object') return null
     const { projects, activeId } = parsed as Partial<PersistedState>
     if (!Array.isArray(projects)) return null
-    const valid = projects.filter(
-      (p): p is ProjectDefinition =>
-        Boolean(p) && typeof p === 'object' && typeof p.id === 'string' && Boolean(p.seed?.primary),
-    )
+    const valid = projects.map(normalizeProject).filter((p): p is ProjectDefinition => p !== null)
     return { version: 1, projects: valid, activeId: typeof activeId === 'string' ? activeId : '' }
   } catch {
     return null
+  }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+const TINTS: readonly NeutralTint[] = ['pure', 'subtle', 'tinted']
+
+/**
+ * A stored or imported project, made safe to resolve — or `null`.
+ *
+ * Storage outlives the code that wrote it: an older version's export, a
+ * hand-edited file or another app's key can hold a project with no `shape` or
+ * a seed colour that is not a string. Rendering one of those used to throw on
+ * every page load, which is worse than dropping it; filling in the defaults
+ * keeps what can be kept, the same way `createProject` does.
+ */
+function normalizeProject(value: unknown): ProjectDefinition | null {
+  if (!isRecord(value) || typeof value.id !== 'string' || !value.id) return null
+  if (!isRecord(value.seed) || typeof value.seed.primary !== 'string' || !value.seed.primary) {
+    return null
+  }
+  const project = value as unknown as ProjectDefinition
+  const seed = Object.fromEntries(
+    Object.entries(value.seed).filter(([, colour]) => typeof colour === 'string'),
+  ) as unknown as ProjectDefinition['seed']
+  return {
+    ...project,
+    name: typeof value.name === 'string' && value.name ? value.name : value.id,
+    seed,
+    neutralTint: TINTS.includes(project.neutralTint) ? project.neutralTint : 'subtle',
+    shape: { ...DEFAULT_SHAPE, ...(isRecord(value.shape) ? value.shape : null) },
+    typography: {
+      ...DEFAULT_TYPOGRAPHY,
+      ...(isRecord(value.typography) ? value.typography : null),
+    },
+    overrides: isRecord(value.overrides) ? project.overrides : undefined,
   }
 }
 

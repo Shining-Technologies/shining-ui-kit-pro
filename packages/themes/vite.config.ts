@@ -9,7 +9,7 @@ export default defineConfig({
       formats: ['es', 'cjs'],
       fileName: (format, name) => (format === 'es' ? `${name}.js` : `${name}.cjs`),
     },
-    rollupOptions: { external: [/^@tanstack\//, /^@shining-ui-kit\//] },
+    rollupOptions: { external: [/^@tanstack\//, /^@shining-technologies\/ui-kit-/] },
     sourcemap: true,
     target: 'es2021',
   },

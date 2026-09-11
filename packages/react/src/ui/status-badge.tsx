@@ -88,6 +88,25 @@ function prettify(value: string): string {
 }
 
 /**
+ * Local vocabulary → registry → prettified fallback. Shared with the other
+ * components that paint raw status values, so they all agree on the words.
+ * @internal
+ */
+export function resolveStatus(
+  registry: StatusRegistry,
+  status: string,
+  { type, statuses }: { type?: string; statuses?: StatusVocabulary },
+): { definition: StatusDefinition | undefined; label: ReactNode; tone: StatusTone } {
+  const vocabulary = statuses ?? (type ? registry[type] : undefined)
+  const definition = vocabulary?.[status] ?? vocabulary?.[status.toLowerCase()]
+  return {
+    definition,
+    label: definition?.label ?? prettify(status),
+    tone: definition?.tone ?? 'neutral',
+  }
+}
+
+/**
  * A status word, painted by what it means.
  *
  * Resolution runs local → registry → fallback, so a page can override one
@@ -99,11 +118,11 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(functio
   ref,
 ) {
   const registry = useStatusRegistry()
-  const vocabulary = statuses ?? (type ? registry[type] : undefined)
-  const definition = vocabulary?.[status] ?? vocabulary?.[status.toLowerCase()]
+  const resolved = resolveStatus(registry, status, { type, statuses })
+  const definition = resolved.definition
 
-  const resolvedTone = tone ?? definition?.tone ?? 'neutral'
-  const resolvedLabel = label ?? definition?.label ?? prettify(status)
+  const resolvedTone = tone ?? resolved.tone
+  const resolvedLabel = label ?? resolved.label
 
   return (
     <span

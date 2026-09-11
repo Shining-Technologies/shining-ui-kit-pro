@@ -4,7 +4,7 @@ import {
   EcommerceTable,
   OrdersTable,
   UserManagementTable,
-} from '@shining-ui-kit/examples'
+} from '@shining-technologies/ui-kit-examples'
 import {
   Card,
   CardContent,
@@ -23,7 +23,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { INVOICES, STATUS_REGISTRY } from '../data'
 import { Playground } from '../Playground'
 import { QuickStart } from '../QuickStart'

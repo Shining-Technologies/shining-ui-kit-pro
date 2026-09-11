@@ -21,7 +21,7 @@ import {
   TokenSwatchGrid,
   initialsFrom,
   useUIKit,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { CHART_MONTHS, CHANNEL_SPLIT, PEOPLE } from '../data'
 import { Demo } from './Demo'
 

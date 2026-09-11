@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import {
   forwardRef,
   type HTMLAttributes,
+  type Ref,
   type TableHTMLAttributes,
   type TdHTMLAttributes,
   type ThHTMLAttributes,
@@ -25,7 +26,15 @@ export const tableVariants = cva('sui-plain-table', {
 })
 
 export interface TableProps
-  extends TableHTMLAttributes<HTMLTableElement>, VariantProps<typeof tableVariants> {}
+  extends TableHTMLAttributes<HTMLTableElement>, VariantProps<typeof tableVariants> {
+  /** Classes for the scrolling wrapper — a max height, a border, a radius. */
+  containerClassName?: string
+  /**
+   * Anything else for the wrapper: `style`, a `ref`, `tabIndex={0}` and an
+   * `aria-label` to make a wide table's scroll region keyboard-reachable.
+   */
+  containerProps?: HTMLAttributes<HTMLDivElement> & { ref?: Ref<HTMLDivElement> }
+}
 
 /**
  * A plain HTML table on the project's tokens.
@@ -39,11 +48,15 @@ export interface TableProps
  * not be what makes the whole document scroll sideways.
  */
 export const Table = forwardRef<HTMLTableElement, TableProps>(function Table(
-  { className, density, striped, bordered, ...props },
+  { className, density, striped, bordered, containerClassName, containerProps, ...props },
   ref,
 ) {
   return (
-    <div data-slot="table-wrapper" className="sui-plain-table-wrap">
+    <div
+      data-slot="table-wrapper"
+      {...containerProps}
+      className={cn('sui-plain-table-wrap', containerProps?.className, containerClassName)}
+    >
       <table
         ref={ref}
         data-slot="table"

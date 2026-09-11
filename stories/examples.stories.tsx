@@ -5,7 +5,7 @@ import {
   OrdersTable,
   ServerSideTable,
   UserManagementTable,
-} from '@shining-ui-kit/examples'
+} from '@shining-technologies/ui-kit-examples'
 import type { Meta, StoryObj } from '@storybook/react'
 
 /**

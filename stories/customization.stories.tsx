@@ -1,4 +1,4 @@
-import { users, type User } from '@shining-ui-kit/examples'
+import { users, type User } from '@shining-technologies/ui-kit-examples'
 import {
   Badge,
   Button,
@@ -20,8 +20,8 @@ import {
   type ColumnDef,
   type HeaderCellProps,
   type RowProps,
-} from '@shining-ui-kit/react'
-import { downloadTableCsv } from '@shining-ui-kit/export-csv'
+} from '@shining-technologies/ui-kit-react'
+import { downloadTableCsv } from '@shining-technologies/ui-kit-export-csv'
 import type { Meta, StoryObj } from '@storybook/react'
 
 const columns: ColumnDef<User>[] = [

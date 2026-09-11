@@ -1,4 +1,4 @@
-import type { ColumnBehavior, ColumnMeta } from '@shining-ui-kit/core'
+import type { ColumnBehavior, ColumnMeta } from '@shining-technologies/ui-kit-core'
 import type { Cell, Column, Header, Row, Table } from '@tanstack/react-table'
 import type { ReactNode } from 'react'
 

@@ -11,7 +11,7 @@ import {
   ProjectEditor,
   ProjectSwitcher,
   useUIKit,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { useState } from 'react'
 import { ProjectPanel } from './ProjectPanel'
 import type { GallerySection } from './sections'

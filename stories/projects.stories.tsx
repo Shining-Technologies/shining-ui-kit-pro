@@ -18,7 +18,7 @@ import {
   UIKitProvider,
   createProject,
   resolveProject,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { useMemo } from 'react'
 
 /**

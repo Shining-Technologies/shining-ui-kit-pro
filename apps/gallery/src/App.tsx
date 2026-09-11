@@ -1,4 +1,4 @@
-import { globalProjectRegistry, UIKitProvider } from '@shining-ui-kit/react'
+import { globalProjectRegistry, UIKitProvider } from '@shining-technologies/ui-kit-react'
 import { useMemo, useState } from 'react'
 import { GalleryShell } from './GalleryShell'
 import { SECTIONS } from './sections'

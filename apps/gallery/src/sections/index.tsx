@@ -45,7 +45,8 @@ export const SECTIONS: GallerySection[] = [
     id: 'surfaces',
     label: 'Cards & feedback',
     category: 'Components',
-    blurb: 'Cards, stats cards, alerts, avatars, progress, skeletons and empty states.',
+    blurb:
+      'Cards, summary and step cards, metric tiles, breakdowns, status flows, alerts, avatars, progress, skeletons and empty states.',
     render: Surfaces,
   },
   {

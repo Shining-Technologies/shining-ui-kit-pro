@@ -13,15 +13,18 @@ working table.
 
 The path from an empty project to a themed application.
 
-| Page                                    | What it covers                                                   |
-| --------------------------------------- | ---------------------------------------------------------------- |
-| [Installation](guide/installation.md)   | Packages, peer dependencies, the stylesheet, framework notes     |
-| [Quick start](guide/quick-start.md)     | The provider, your first components, your first table            |
-| [Projects](guide/projects.md)           | Seeds, palettes, the registry, creating and forking projects     |
-| [Theming](guide/theming.md)             | The token set, variants, density, dark mode                      |
-| [Customization](guide/customization.md) | Slots, component overrides, class merging                        |
-| [Accessibility](guide/accessibility.md) | What the kit guarantees, and what your application still owes it |
-| [Performance](guide/performance.md)     | Stable references, memoisation, virtualisation                   |
+| Page                                        | What it covers                                                   |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| [Installation](guide/installation.md)       | Packages, peer dependencies, the stylesheet, framework notes     |
+| [Quick start](guide/quick-start.md)         | The provider, your first components, your first table            |
+| [Forms](guide/forms.md)                     | React Hook Form, native `<form>` submission, value formats       |
+| [Next.js and SSR](guide/nextjs.md)          | App Router setup, no theme flash, routing, Server Actions, CSP   |
+| [Projects](guide/projects.md)               | Seeds, palettes, the registry, creating and forking projects     |
+| [Theming](guide/theming.md)                 | The token set, variants, density, dark mode                      |
+| [Customization](guide/customization.md)     | Slots, component overrides, class merging                        |
+| [Accessibility](guide/accessibility.md)     | What the kit guarantees, and what your application still owes it |
+| [Performance](guide/performance.md)         | Stable references, memoisation, virtualisation                   |
+| [Troubleshooting](guide/troubleshooting.md) | Install errors, styles, TypeScript, tests, the table             |
 
 ## Components
 

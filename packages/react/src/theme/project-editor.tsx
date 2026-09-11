@@ -7,12 +7,13 @@ import {
   type ProjectDefinition,
   type ProjectInput,
   type ProjectSeed,
-} from '@shining-ui-kit/core'
+  type ThemeColors,
+} from '@shining-technologies/ui-kit-core'
 import { useEffect, useId, useMemo, useState, type FormEvent, type HTMLAttributes } from 'react'
 import { cn } from '../lib/cn'
 import { Button } from '../primitives/button'
 import { Field, Label } from '../ui/field'
-import { PalettePreview } from './project-switcher'
+import { PalettePreview, handleRadioGroupKeys } from './project-switcher'
 import { useUIKit } from './context'
 
 /** The seed colours the editor exposes. The rest are derived. */
@@ -112,6 +113,8 @@ export function ProjectEditor({
     }),
     [base, name, seed, tint, shape],
   )
+  // Resolved once per edit, not once per colour field per keystroke.
+  const draftColors = useMemo(() => resolveProject(draft).light.colors ?? {}, [draft])
 
   const input: ProjectInput = {
     name: name.trim() || 'Untitled project',
@@ -127,6 +130,12 @@ export function ProjectEditor({
     const saved =
       isEditing && project ? kit.updateProject?.(project.id, input) : kit.createProject?.(input)
     if (saved) onSubmit?.(saved)
+    // A submit button that does nothing at all is the worst way to learn this.
+    else if (!kit.registry) {
+      console.warn(
+        '[shining-ui-kit] <ProjectEditor> has nowhere to save: give <UIKitProvider> a `registry`.',
+      )
+    }
   }
 
   const set = (key: keyof ProjectSeed, value: string) =>
@@ -151,13 +160,27 @@ export function ProjectEditor({
           label="Start from"
           description="A preset fills in every colour; change any of them below."
         >
-          <div className="sui-preset-grid" role="radiogroup" aria-label="Base palette">
-            {BUILT_IN_PALETTES.map((palette) => (
+          <div
+            className="sui-preset-grid"
+            role="radiogroup"
+            aria-label="Base palette"
+            onKeyDown={(event) =>
+              handleRadioGroupKeys(event, (index) => setPreset(BUILT_IN_PALETTES[index]!.id))
+            }
+          >
+            {BUILT_IN_PALETTES.map((palette, index) => (
               <button
                 key={palette.id}
                 type="button"
                 role="radio"
                 aria-checked={preset === palette.id}
+                // One tab stop, on the checked preset (or the first, for none).
+                tabIndex={
+                  preset === palette.id ||
+                  (index === 0 && !BUILT_IN_PALETTES.some((p) => p.id === preset))
+                    ? 0
+                    : -1
+                }
                 className="sui-preset"
                 data-selected={preset === palette.id}
                 onClick={() => setPreset(palette.id)}
@@ -179,7 +202,7 @@ export function ProjectEditor({
               id={`${formId}-${entry.key}`}
               label={entry.label}
               hint={entry.hint}
-              value={seed[entry.key] ?? fallbackFor(draft, entry.key)}
+              value={seed[entry.key] ?? fallbackFor(draftColors, entry.key)}
               onChange={(value) => set(entry.key, value)}
             />
           ))}
@@ -201,7 +224,7 @@ export function ProjectEditor({
                 key={entry.key}
                 id={`${formId}-${entry.key}`}
                 label={entry.label}
-                value={seed[entry.key] ?? fallbackFor(draft, entry.key)}
+                value={seed[entry.key] ?? fallbackFor(draftColors, entry.key)}
                 onChange={(value) => set(entry.key, value)}
               />
             ))}
@@ -296,8 +319,7 @@ export function ProjectEditor({
 }
 
 /** What to show in a colour input the user has not set — the generated value. */
-function fallbackFor(draft: ProjectDefinition, key: keyof ProjectSeed): string {
-  const colors = resolveProject(draft).light.colors ?? {}
+function fallbackFor(colors: Partial<ThemeColors>, key: keyof ProjectSeed): string {
   switch (key) {
     case 'accent':
       return colors.chart2 ?? '#888888'

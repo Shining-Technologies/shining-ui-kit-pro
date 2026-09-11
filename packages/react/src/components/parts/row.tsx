@@ -30,7 +30,7 @@ export function DataTableExpandedRow<TData>({
 }: ExpandedRowProps<TData>) {
   return (
     <tr {...rowProps}>
-      <td colSpan={colSpan} className="sui-expanded__cell">
+      <td role="cell" colSpan={colSpan} className="sui-expanded__cell">
         <div className="sui-expanded__content">{children}</div>
       </td>
     </tr>

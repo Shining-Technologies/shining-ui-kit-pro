@@ -101,6 +101,41 @@ export function categoryAxisProps(options: {
   }
 }
 
+/** One end of a Recharts value-axis domain. */
+export type AxisBound = number | string | ((dataBound: number) => number)
+
+/**
+ * A domain that always contains zero, on whichever side the data is not.
+ *
+ * Recharts' `[0, 'auto']` only pins the *lower* bound, and quietly lowers it
+ * to the data when the data is negative — so an all-negative series got an axis
+ * from -105 to -45, and a bar at -50 was drawn a tenth the length of one at
+ * -100. Data that never rises above zero pins the *upper* bound instead.
+ *
+ * One bound stays `'auto'` on purpose: Recharts only rounds the ticks to nice
+ * steps when a bound is `'auto'`, and two computed bounds give an axis reading
+ * -10, -7, -4, 0.
+ */
+export function zeroBasedDomain(values: readonly number[]): [AxisBound, AxisBound] {
+  const range = finiteExtent(values)
+  return range && range[0] < 0 && range[1] <= 0 ? ['auto', 0] : [0, 'auto']
+}
+
+/**
+ * Smallest and largest finite values, without spreading them into
+ * `Math.min(...)` — which overflows the call stack at around 100k values.
+ */
+export function finiteExtent(values: readonly number[]): [number, number] | null {
+  let min = Infinity
+  let max = -Infinity
+  for (const value of values) {
+    if (!Number.isFinite(value)) continue
+    if (value < min) min = value
+    if (value > max) max = value
+  }
+  return min <= max ? [min, max] : null
+}
+
 /**
  * The value axis.
  *
@@ -118,12 +153,11 @@ export function valueAxisProps(options: {
   hide?: boolean
   /** Set for a horizontal bar chart, where values run along the X axis. */
   horizontal?: boolean
-  domain?: [number | string, number | string]
+  domain?: [AxisBound, AxisBound]
 }) {
   const { size, values, formatter = formatCompact, hide, horizontal, domain } = options
-  const sample = values.length
-    ? [formatter(Math.min(...values)), formatter(Math.max(...values))]
-    : ['0']
+  const range = finiteExtent(values)
+  const sample = range ? [formatter(range[0]), formatter(range[1])] : ['0']
 
   const common = {
     hide,

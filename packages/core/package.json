@@ -1,5 +1,5 @@
 {
-  "name": "@shining-ui-kit/core",
+  "name": "@shining-technologies/ui-kit-core",
   "version": "0.1.0",
   "description": "Framework-agnostic core for Shining UI Kit: design tokens, the OKLCH colour engine, the project system, and the data-table engine.",
   "keywords": [
@@ -17,14 +17,14 @@
   ],
   "license": "MIT",
   "author": "Shining Technologies",
-  "homepage": "https://github.com/ikramulSoHeL/shining-ui-kit-pro#readme",
+  "homepage": "https://github.com/Shining-Technologies/shining-ui-kit-pro#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ikramulSoHeL/shining-ui-kit-pro.git",
+    "url": "git+https://github.com/Shining-Technologies/shining-ui-kit-pro.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/ikramulSoHeL/shining-ui-kit-pro/issues"
+    "url": "https://github.com/Shining-Technologies/shining-ui-kit-pro/issues"
   },
   "engines": {
     "node": ">=18.18"

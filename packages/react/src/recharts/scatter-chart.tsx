@@ -9,7 +9,7 @@ import {
   YAxis,
   ZAxis,
 } from 'recharts'
-import { gridProps, valueAxisProps } from './axes'
+import { finiteExtent, gridProps, valueAxisProps } from './axes'
 import {
   ChartFrame,
   useHiddenSeries,
@@ -115,10 +115,7 @@ export function ScatterChart({
   const yValues = useMemo(() => numbersAt(data, yKey), [data, yKey])
   const sizeRange = useMemo(() => {
     if (!sizeKey) return undefined
-    const values = numbersAt(data, sizeKey)
-    return values.length
-      ? ([Math.min(...values), Math.max(...values)] as [number, number])
-      : undefined
+    return finiteExtent(numbersAt(data, sizeKey)) ?? undefined
   }, [data, sizeKey])
 
   const tableRows = useMemo(
@@ -146,7 +143,7 @@ export function ScatterChart({
       tableColumns={[xLabel ?? xKey, yLabel ?? yKey, ...(sizeKey ? [sizeKey] : [])]}
       valueFormatter={formatFull}
     >
-      {({ size }) => {
+      {({ size, label }) => {
         // Axis titles are the first thing to go: on a narrow card the plot
         // needs the pixels more than the reader needs the axis named twice
         // (the card's title and the tooltip both carry it).
@@ -156,11 +153,13 @@ export function ScatterChart({
         return (
           <ResponsiveContainer width="100%" height="100%">
             <RcScatterChart
+              title={label}
               margin={{
                 ...margin,
                 bottom: showAxisLabels && xLabel ? margin.bottom + 18 : margin.bottom,
                 left: showAxisLabels && yLabel ? margin.left + 10 : margin.left,
               }}
+              accessibilityLayer
             >
               {showGrid ? <CartesianGrid {...gridProps('both')} /> : null}
 

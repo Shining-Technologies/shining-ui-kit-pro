@@ -165,7 +165,18 @@ interface ChartFrameProps extends BaseChartProps {
    */
   tableColumns?: string[]
   valueFormatter?: ValueFormatter
-  children: (context: { size: ChartSize; width: number; height: number }) => ReactNode
+  children: (context: {
+    size: ChartSize
+    width: number
+    height: number
+    /**
+     * A plain-text name for the plot — the `title` when it is a string, else
+     * the frame's `aria-label`. Pass it to the Recharts chart's `title` prop:
+     * its focusable `<svg>` otherwise carries an empty `<title>` and is
+     * announced with no name at all.
+     */
+    label?: string
+  }) => ReactNode
 }
 
 /**
@@ -201,6 +212,18 @@ export function ChartFrame({
   const [ref, width, size] = useChartWidth<HTMLDivElement>()
   const [tableOpen, setTableOpen] = useState(false)
   const tableId = useId()
+  const titleId = useId()
+  const ariaLabel = props['aria-label']
+  const label = typeof title === 'string' ? title : ariaLabel
+  // A titled chart is a figure named by its title, so a screen reader meets
+  // the name before the plot, the legend and the table it groups. Anything the
+  // caller passes for `role` or the label spreads over these.
+  const figureProps = title
+    ? {
+        role: 'figure' as const,
+        'aria-labelledby': ariaLabel || props['aria-labelledby'] ? undefined : titleId,
+      }
+    : {}
 
   const plotHeight =
     typeof height === 'function'
@@ -218,11 +241,15 @@ export function ChartFrame({
   const canShowTable = showTableToggle && !loading && Boolean(tableRows?.length)
 
   return (
-    <div data-slot="chart" className={cn('sui-viz', className)} {...props}>
+    <div data-slot="chart" className={cn('sui-viz', className)} {...figureProps} {...props}>
       {hasHeader ? (
         <div className="sui-viz__header">
           <div className="sui-viz__heading">
-            {title ? <div className="sui-viz__title">{title}</div> : null}
+            {title ? (
+              <div id={titleId} className="sui-viz__title">
+                {title}
+              </div>
+            ) : null}
             {description ? <div className="sui-viz__description">{description}</div> : null}
           </div>
           {actions ? <div className="sui-viz__actions">{actions}</div> : null}
@@ -237,7 +264,7 @@ export function ChartFrame({
         ) : isEmpty ? (
           <div className="sui-viz__empty">{emptyMessage}</div>
         ) : (
-          children({ size, width, height: plotHeight })
+          children({ size, width, height: plotHeight, label })
         )}
       </div>
 
@@ -245,21 +272,32 @@ export function ChartFrame({
         <ul className="sui-viz__legend">
           {series.map((item) => (
             <li key={item.key}>
-              <button
-                type="button"
-                className="sui-viz__legend-item sui-focusable"
-                data-interactive={interactive}
-                data-hidden={item.hidden}
-                aria-pressed={interactive ? !item.hidden : undefined}
-                disabled={!interactive}
-                onClick={interactive ? () => onToggleSeries?.(item.key) : undefined}
-              >
-                <span
-                  className="sui-viz__swatch"
-                  style={{ '--sui-series-color': item.color } as CSSProperties}
-                />
-                <span className="sui-viz__legend-label">{item.label}</span>
-              </button>
+              {/* A button only when there is something to press: a disabled one
+                  is announced as "unavailable", which a key to the colours never is. */}
+              {interactive ? (
+                <button
+                  type="button"
+                  className="sui-viz__legend-item sui-focusable"
+                  data-interactive
+                  data-hidden={item.hidden}
+                  aria-pressed={!item.hidden}
+                  onClick={() => onToggleSeries?.(item.key)}
+                >
+                  <span
+                    className="sui-viz__swatch"
+                    style={{ '--sui-series-color': item.color } as CSSProperties}
+                  />
+                  <span className="sui-viz__legend-label">{item.label}</span>
+                </button>
+              ) : (
+                <span className="sui-viz__legend-item" data-hidden={item.hidden}>
+                  <span
+                    className="sui-viz__swatch"
+                    style={{ '--sui-series-color': item.color } as CSSProperties}
+                  />
+                  <span className="sui-viz__legend-label">{item.label}</span>
+                </span>
+              )}
             </li>
           ))}
         </ul>

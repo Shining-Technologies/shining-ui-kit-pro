@@ -1,4 +1,4 @@
-import type { SelectOption } from '@shining-ui-kit/core'
+import type { SelectOption } from '@shining-technologies/ui-kit-core'
 import { useId, useMemo, useState, type ReactNode } from 'react'
 import { CheckIcon, ChevronDownIcon, SearchIcon } from '../../lib/icons'
 import { cn } from '../../lib/cn'

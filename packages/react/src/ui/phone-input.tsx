@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -36,13 +37,63 @@ function group(digits: string, dial: string): string {
   return digits.replace(/(\d{3})(?=\d)/g, '$1 ').trim()
 }
 
+interface PhoneState {
+  country: Country
+  national: string
+}
+
+/**
+ * Split an international number into country and national digits.
+ *
+ * The country already selected wins a code it shares: `+1` is Canada as much
+ * as the United States, and a Canadian who picked the maple leaf must not see
+ * it swapped for the stars and stripes the moment the value comes back round.
+ */
+function parse(value: string, current: Country): PhoneState {
+  const digits = value.replace(/[^\d]/g, '')
+  if (current.dial && digits.startsWith(current.dial)) {
+    return { country: current, national: digits.slice(current.dial.length) }
+  }
+  const match = countryByDial(digits)
+  return match
+    ? { country: match, national: digits.slice(match.dial.length) }
+    : { country: current, national: digits }
+}
+
+/**
+ * Plans where the leading `0` is part of the subscriber number and survives
+ * into the international form (`+39 06…` is Rome). Everywhere else a leading
+ * `0` is the trunk prefix dialled only inside the country, and E.164 drops it.
+ */
+const KEEPS_LEADING_ZERO = new Set(['IT', 'SM', 'VA', 'CI', 'CG'])
+
+/** The national significant number: what follows the country code in E.164. */
+function significant({ country, national }: PhoneState): string {
+  return KEEPS_LEADING_ZERO.has(country.code) ? national : national.replace(/^0+/, '')
+}
+
+/**
+ * An Australian types `0412 345 678`, because that is how the number is written
+ * at home; the value is `+61412345678`, because that is the number.
+ */
+function toE164(state: PhoneState): string {
+  const digits = significant(state)
+  return digits ? `+${state.country.dial}${digits}` : ''
+}
+
 export interface PhoneInputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
-  'value' | 'onChange' | 'type'
+  'value' | 'defaultValue' | 'onChange' | 'type'
 > {
   /** The full international number, e.g. `'+61412345678'`. */
   value?: string
-  /** Fires with the E.164 number, plus the parts, so neither has to be re-derived. */
+  /** Initial number while uncontrolled, in the same E.164 form as `value`. */
+  defaultValue?: string
+  /**
+   * Fires with the E.164 number, plus the parts, so neither has to be re-derived.
+   * A trunk `0` typed in front of the national number (`0412…` in Australia, `07…`
+   * in the UK) is dropped from both, as E.164 requires; the field keeps showing it.
+   */
   onValueChange?: (value: string, parts: { country: Country; national: string }) => void
   /** Alpha-2 of the country selected before anything is typed. */
   defaultCountry?: string
@@ -62,13 +113,15 @@ export interface PhoneInputProps extends Omit<
  * is parsed — and the flag makes a wrong one obvious at a glance.
  *
  * What the caller receives is always E.164 (`+61412345678`): the spacing is
- * presentation and never reaches the value.
+ * presentation and never reaches the value. With `name`, a hidden input carries
+ * the same E.164 string into a native form submission.
  */
 export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function PhoneInput(
   {
     className,
     wrapperClassName,
     value,
+    defaultValue,
     onValueChange,
     defaultCountry = 'AU',
     countries,
@@ -76,31 +129,40 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function
     placeholder = 'Phone number',
     searchPlaceholder = 'Search countries…',
     disabled,
+    name,
+    form,
+    onKeyDown,
     ...props
   },
   ref,
 ) {
   const field = useFieldControl()
+  const listId = useId()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [country, setCountry] = useState<Country>(
-    () => countryByCode(defaultCountry) ?? COUNTRIES[0]!,
-  )
-  const [national, setNational] = useState('')
+  const [active, setActive] = useState(0)
+  const [state, setState] = useState<PhoneState>(() => {
+    const base = countryByCode(defaultCountry) ?? COUNTRIES[0]!
+    const initial = value ?? defaultValue
+    return initial ? parse(initial, base) : { country: base, national: '' }
+  })
+  const { country, national } = state
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const listRef = useRef<HTMLDivElement | null>(null)
+  const isDisabled = disabled ?? field.disabled
 
   // An externally supplied value decides both halves — including the country,
-  // so loading a saved `+1…` number selects the right flag without extra props.
+  // so loading a saved `+44…` number selects the right flag without extra props.
+  //
+  // Compared as E.164 rather than digit-for-digit: the value that comes back is
+  // our own emission with the trunk `0` removed, and rewriting the field from it
+  // would pull the `0` out from under the user mid-number.
   useEffect(() => {
     if (value === undefined) return
-    const digits = value.replace(/[^\d]/g, '')
-    const match = countryByDial(digits)
-    if (match) {
-      setCountry(match)
-      setNational(digits.slice(match.dial.length))
-    } else {
-      setNational(digits)
-    }
+    setState((previous) => {
+      if ((value || '') === toE164(previous)) return previous
+      return value ? parse(value, previous.country) : { ...previous, national: '' }
+    })
   }, [value])
 
   const list = useMemo(() => {
@@ -127,28 +189,70 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function
     )
   }, [list, query])
 
-  function emit(next: Country, digits: string) {
-    setCountry(next)
-    setNational(digits)
-    onValueChange?.(digits ? `+${next.dial}${digits}` : '', { country: next, national: digits })
+  useEffect(() => {
+    listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView?.({ block: 'nearest' })
+  }, [active, open])
+
+  function emit(next: PhoneState) {
+    setState(next)
+    onValueChange?.(toE164(next), { country: next.country, national: significant(next) })
   }
 
-  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+  function choose(entry: Country) {
+    emit({ country: entry, national })
+    setOpen(false)
+  }
+
+  function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    onKeyDown?.(event)
+    if (event.defaultPrevented) return
     // Backspace at the start of an empty field is a request to change country.
     if (event.key === 'Backspace' && national === '') setOpen(true)
   }
+
+  // The list is driven from the search box, as a combobox: focus stays where
+  // the typing is, and `aria-activedescendant` tells a screen reader which
+  // country the arrows are on.
+  function onSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    const last = visible.length - 1
+    const moves: Record<string, number> = {
+      ArrowDown: Math.min(last, active + 1),
+      ArrowUp: Math.max(0, active - 1),
+    }
+    if (event.key in moves && visible.length > 0) {
+      event.preventDefault()
+      setActive(moves[event.key]!)
+      return
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      const entry = visible[active]
+      if (entry) choose(entry)
+    }
+  }
+
+  const optionId = (code: string) => `${listId}-${code}`
+  const activeEntry = visible[active]
 
   return (
     <div
       className={cn('sui-input-group sui-phone', wrapperClassName)}
       data-slot="phone-input"
-      data-disabled={(disabled ?? field.disabled) || undefined}
+      data-disabled={isDisabled || undefined}
     >
       <Popover
         open={open}
         onOpenChange={(next) => {
           setOpen(next)
-          if (!next) {
+          if (next) {
+            // Open on the country already chosen, so Enter keeps it.
+            setActive(
+              Math.max(
+                0,
+                visible.findIndex((entry) => entry.code === country.code),
+              ),
+            )
+          } else {
             setQuery('')
             // Picking a country is nearly always followed by typing the number.
             requestAnimationFrame(() => inputRef.current?.focus())
@@ -159,7 +263,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function
           <button
             type="button"
             className="sui-phone__country sui-focusable"
-            disabled={disabled ?? field.disabled}
+            disabled={isDisabled}
             aria-label={`Country: ${country.name} (+${country.dial})`}
             aria-expanded={open}
           >
@@ -178,25 +282,40 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function
               className="sui-combobox__search-input"
               value={query}
               autoFocus
+              role="combobox"
+              aria-expanded="true"
+              aria-controls={listId}
+              aria-autocomplete="list"
+              aria-activedescendant={activeEntry ? optionId(activeEntry.code) : undefined}
               placeholder={searchPlaceholder}
               aria-label="Search countries"
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value)
+                setActive(0)
+              }}
+              onKeyDown={onSearchKeyDown}
             />
           </div>
-          <div role="listbox" aria-label="Country" className="sui-combobox__list">
+          <div
+            ref={listRef}
+            id={listId}
+            role="listbox"
+            aria-label="Country"
+            className="sui-combobox__list"
+          >
             {visible.length === 0 ? (
               <p className="sui-combobox__status">No countries match that</p>
             ) : (
-              visible.map((entry) => (
+              visible.map((entry, index) => (
                 <div
                   key={entry.code}
+                  id={optionId(entry.code)}
                   role="option"
                   aria-selected={entry.code === country.code}
+                  data-active={index === active || undefined}
                   className="sui-combobox__option"
-                  onClick={() => {
-                    emit(entry, national)
-                    setOpen(false)
-                  }}
+                  onMouseEnter={() => setActive(index)}
+                  onClick={() => choose(entry)}
                 >
                   <span className="sui-phone__flag" aria-hidden="true">
                     {entry.flag}
@@ -226,12 +345,25 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function
         className={cn('sui-input-group__input', className)}
         {...field}
         {...props}
+        form={form}
         placeholder={placeholder}
-        disabled={disabled ?? field.disabled}
+        disabled={isDisabled}
         value={group(national, country.dial)}
-        onChange={(event) => emit(country, event.target.value.replace(/[^\d]/g, ''))}
-        onKeyDown={onKeyDown}
+        onChange={(event) => {
+          const raw = event.target.value
+          // The field never shows a `+`, so one arriving means a full
+          // international number was pasted or autofilled: let it pick the
+          // country rather than prefixing it with the current one.
+          if (raw.trimStart().startsWith('+')) emit(parse(raw, country))
+          else emit({ country, national: raw.replace(/[^\d]/g, '') })
+        }}
+        onKeyDown={onInputKeyDown}
       />
+
+      {/* The visible text is spaced for reading; the form gets E.164. */}
+      {name ? (
+        <input type="hidden" name={name} form={form} value={toE164(state)} disabled={isDisabled} />
+      ) : null}
     </div>
   )
 })

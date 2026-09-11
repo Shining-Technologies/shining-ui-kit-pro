@@ -1,5 +1,5 @@
 {
-  "name": "@shining-ui-kit/themes",
+  "name": "@shining-technologies/ui-kit-themes",
   "version": "0.1.0",
   "description": "Shipped design presets for Shining UI Kit: project palettes and table chrome themes.",
   "keywords": [
@@ -15,14 +15,14 @@
   ],
   "license": "MIT",
   "author": "Shining Technologies",
-  "homepage": "https://github.com/ikramulSoHeL/shining-ui-kit-pro#readme",
+  "homepage": "https://github.com/Shining-Technologies/shining-ui-kit-pro#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ikramulSoHeL/shining-ui-kit-pro.git",
+    "url": "git+https://github.com/Shining-Technologies/shining-ui-kit-pro.git",
     "directory": "packages/themes"
   },
   "bugs": {
-    "url": "https://github.com/ikramulSoHeL/shining-ui-kit-pro/issues"
+    "url": "https://github.com/Shining-Technologies/shining-ui-kit-pro/issues"
   },
   "engines": {
     "node": ">=18.18"
@@ -56,7 +56,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
-    "@shining-ui-kit/core": "workspace:*"
+    "@shining-technologies/ui-kit-core": "workspace:*"
   },
   "devDependencies": {
     "vite": "^6.0.5",

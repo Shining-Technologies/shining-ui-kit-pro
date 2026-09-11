@@ -1,9 +1,9 @@
-# @shining-ui-kit/core
+# @shining-technologies/ui-kit-core
 
-[![npm](https://img.shields.io/npm/v/@shining-ui-kit/core.svg)](https://www.npmjs.com/package/@shining-ui-kit/core)
-[![license](https://img.shields.io/npm/l/@shining-ui-kit/core.svg)](../../LICENSE)
+[![npm](https://img.shields.io/npm/v/@shining-technologies/ui-kit-core.svg)](https://www.npmjs.com/package/@shining-technologies/ui-kit-core)
+[![license](https://img.shields.io/npm/l/@shining-technologies/ui-kit-core.svg)](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/master/LICENSE)
 
-Everything [Shining UI Kit](https://github.com/ikramulSoHeL/shining-ui-kit-pro) knows that is
+Everything [Shining UI Kit](https://github.com/Shining-Technologies/shining-ui-kit-pro) knows that is
 not React: the design-token surface, the OKLCH colour engine, the project system, and the
 pure state, filter and pagination helpers behind the data table.
 
@@ -14,11 +14,13 @@ or computing a query on an API route.
 ## Install
 
 ```bash
-pnpm add @shining-ui-kit/core
+npm install @shining-technologies/ui-kit-core
 ```
 
-You do not need this package directly if you use `@shining-ui-kit/react` — it re-exports the
-parts an application reaches for.
+You do not need this package directly if you use `@shining-technologies/ui-kit-react` — it re-exports the
+parts an application reaches for. Install it for code that runs **outside** React or on the
+server: `@shining-technologies/ui-kit-react` is marked `'use client'`, so a Next.js Server Component or API
+route should import these functions from `@shining-technologies/ui-kit-core` instead.
 
 ## What is in it
 
@@ -27,7 +29,7 @@ parts an application reaches for.
 A project is four colours and a shape. Resolving one derives the complete token set.
 
 ```ts
-import { createProject, resolveProject } from '@shining-ui-kit/core'
+import { createProject, resolveProject } from '@shining-technologies/ui-kit-core'
 
 const acme = createProject({
   name: 'Acme',
@@ -44,7 +46,7 @@ or a config file.
 ### The colour engine
 
 ```ts
-import { contrastRatio, generateScale, mix, readableForeground } from '@shining-ui-kit/core'
+import { contrastRatio, generateScale, mix, readableForeground } from '@shining-technologies/ui-kit-core'
 
 generateScale('#7c3aed') // 50…950, perceptually even in OKLab
 readableForeground('#7c3aed') // the text colour that clears WCAG AA on it
@@ -57,22 +59,25 @@ Sorting, filtering, pagination and query normalisation as pure functions, indepe
 renderer.
 
 ```ts
-import { FILTER_OPERATORS, getPageRange, isFilterActive } from '@shining-ui-kit/core'
+import { FILTER_OPERATORS, getPageRange, isFilterActive } from '@shining-technologies/ui-kit-core'
 ```
 
 ### Themes
 
 ```ts
-import { createTheme, createTableTheme, mergeThemes, themeToCssVars } from '@shining-ui-kit/core'
+import { createTheme, createTableTheme, mergeThemes, themeToCssVars } from '@shining-technologies/ui-kit-core'
 
-document.documentElement.setAttribute('style', themeToCssVars(theme))
+// themeToCssVars returns { '--sui-…': value }: spread it into a style prop, or set each one
+for (const [name, value] of Object.entries(themeToCssVars(theme))) {
+  document.documentElement.style.setProperty(name, value)
+}
 ```
 
 ## Documentation
 
-- [Projects](https://github.com/ikramulSoHeL/shining-ui-kit-pro/blob/master/docs/guide/projects.md)
-- [Theming](https://github.com/ikramulSoHeL/shining-ui-kit-pro/blob/master/docs/guide/theming.md)
-- [API reference](https://github.com/ikramulSoHeL/shining-ui-kit-pro/blob/master/docs/reference/api-reference.md)
+- [Projects](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/master/docs/guide/projects.md)
+- [Theming](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/master/docs/guide/theming.md)
+- [API reference](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/master/docs/reference/api-reference.md)
 
 ## License
 

@@ -1,4 +1,4 @@
-import { getPageRange } from '@shining-ui-kit/core'
+import { getPageRange } from '@shining-technologies/ui-kit-core'
 import { useDataTable } from '../../context/table-context'
 import { cn } from '../../lib/cn'
 import { renderSlot } from '../../lib/slots'

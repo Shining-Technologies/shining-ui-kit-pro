@@ -7,6 +7,8 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import {
   forwardRef,
   useCallback,
+  useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -18,7 +20,11 @@ import {
   type TextareaHTMLAttributes,
 } from 'react'
 import { cn } from '../lib/cn'
-import { useFieldControl } from '../lib/field-context'
+import { useFieldControl, useFieldLabelId } from '../lib/field-context'
+
+// React 18 warns for every `useLayoutEffect` rendered on the server; the
+// sizing it does is meaningless there anyway, so the server gets a no-op.
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
 /* ------------------------------------------------------------------ textarea */
 
@@ -60,7 +66,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
   }, [autoResize, maxRows])
 
   // Content set from outside — a loaded draft — has to size the box too.
-  useLayoutEffect(resize, [resize, props.value])
+  useIsomorphicLayoutEffect(resize, [resize, props.value])
 
   const control = (
     <textarea
@@ -138,13 +144,17 @@ export const Switch = forwardRef<
   ElementRef<typeof SwitchPrimitive.Root>,
   ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>
 >(function Switch({ className, ...props }, ref) {
-  const { id, 'aria-describedby': describedBy, disabled } = useFieldControl()
+  // The whole field wiring: a required switch ("I accept the terms") is
+  // announced as required, and as invalid when the field has an error.
+  const field = useFieldControl()
   return (
     <SwitchPrimitive.Root
       ref={ref}
-      id={id}
-      aria-describedby={describedBy}
-      disabled={disabled}
+      id={field.id}
+      aria-describedby={field['aria-describedby']}
+      aria-invalid={field['aria-invalid']}
+      disabled={field.disabled}
+      required={field.required}
       data-slot="switch"
       className={cn('sui-switch sui-focusable', className)}
       {...props}
@@ -162,9 +172,18 @@ export interface RadioGroupProps extends ComponentPropsWithoutRef<typeof RadioGr
 
 export const RadioGroup = forwardRef<ElementRef<typeof RadioGroupPrimitive.Root>, RadioGroupProps>(
   function RadioGroup({ className, orientation = 'vertical', ...props }, ref) {
+    const field = useFieldControl()
+    // A `<label for>` cannot name a `radiogroup` div, so a surrounding field's
+    // label is attached by id instead; the rest of the wiring is the usual.
+    const labelId = useFieldLabelId()
     return (
       <RadioGroupPrimitive.Root
         ref={ref}
+        aria-labelledby={props['aria-label'] ? undefined : labelId}
+        aria-describedby={field['aria-describedby']}
+        aria-invalid={field['aria-invalid']}
+        disabled={field.disabled}
+        required={field.required}
         data-slot="radio-group"
         className={cn(
           'sui-radio-group',
@@ -195,29 +214,92 @@ export const RadioGroupItem = forwardRef<
 
 /* -------------------------------------------------------------------- slider */
 
+/** The word for one thumb of a range — the same words Radix gives them. */
+const thumbPart = (index: number, count: number) =>
+  count === 2 ? (index === 0 ? 'Minimum' : 'Maximum') : `Value ${index + 1} of ${count}`
+
+/**
+ * A value on a track, or a range with one thumb per value.
+ *
+ * The thumbs are what take focus, so they are what joins a surrounding
+ * `<Field>`: each is named by the field's label through `aria-labelledby` (a
+ * `<label for>` cannot reach a `span`), described by its help text and marked
+ * invalid with it. A range's thumbs add their own part — "Price Minimum",
+ * "Price Maximum" — by listing themselves after the label. `aria-label` and
+ * `aria-labelledby` on the slider are forwarded to the thumbs, which is where
+ * a name is needed for use outside a field.
+ *
+ * `required` is taken from the field but not announced: a slider always holds
+ * a value, so it is satisfied by construction, and `aria-required` is not a
+ * valid attribute on `role="slider"`. It is exposed as `data-required` for
+ * styling only.
+ */
 export const Slider = forwardRef<
   ElementRef<typeof SliderPrimitive.Root>,
   ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(function Slider({ className, value, defaultValue, ...props }, ref) {
+>(function Slider(
+  {
+    className,
+    value,
+    defaultValue,
+    disabled,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
+    ...props
+  },
+  ref,
+) {
+  const field = useFieldControl()
+  const labelId = useFieldLabelId()
+  const thumbId = useId()
   // One thumb per value. Reading it from the props is what lets the same
   // component serve a single value and a range without a `range` flag.
   const thumbCount = (value ?? defaultValue ?? [0]).length
+  // An explicit name wins over the field's label, as it does everywhere else.
+  const labelledBy = ariaLabelledBy ?? (ariaLabel ? undefined : labelId)
+  const describedBy =
+    [field['aria-describedby'], ariaDescribedBy].filter(Boolean).join(' ') || undefined
 
   return (
     <SliderPrimitive.Root
       ref={ref}
       data-slot="slider"
+      data-required={field.required || undefined}
       value={value}
       defaultValue={defaultValue}
+      disabled={disabled ?? field.disabled}
       className={cn('sui-slider', className)}
       {...props}
     >
       <SliderPrimitive.Track className="sui-slider__track">
         <SliderPrimitive.Range className="sui-slider__range" />
       </SliderPrimitive.Track>
-      {Array.from({ length: thumbCount }, (_, i) => (
-        <SliderPrimitive.Thumb key={i} className="sui-slider__thumb sui-focusable" />
-      ))}
+      {Array.from({ length: thumbCount }, (_, i) => {
+        const id = i === 0 && field.id ? field.id : `${thumbId}-${i}`
+        return (
+          <SliderPrimitive.Thumb
+            key={i}
+            // The field's id lands on the first thumb, the focusable part.
+            id={id}
+            className="sui-slider__thumb sui-focusable"
+            // A lone thumb is named by the label; a range's thumbs append their
+            // own `aria-label` ("Minimum", "Maximum") by referencing themselves.
+            aria-labelledby={
+              labelledBy ? (thumbCount > 1 ? `${labelledBy} ${id}` : labelledBy) : undefined
+            }
+            // Set here rather than left to Radix: an `undefined` passed through
+            // would overwrite the word it gives each thumb of a range.
+            aria-label={
+              thumbCount > 1
+                ? [ariaLabel, thumbPart(i, thumbCount)].filter(Boolean).join(' ')
+                : ariaLabel
+            }
+            aria-describedby={describedBy}
+            aria-invalid={field['aria-invalid']}
+          />
+        )
+      })}
     </SliderPrimitive.Root>
   )
 })

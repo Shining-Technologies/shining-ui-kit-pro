@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { categoryAxisProps, gridProps, valueAxisProps } from './axes'
+import { categoryAxisProps, gridProps, valueAxisProps, zeroBasedDomain } from './axes'
 import {
   ChartFrame,
   tableRowsFrom,
@@ -101,8 +101,7 @@ export function BarChart({
 
   const ordered = useMemo(() => {
     if (!sort) return data
-    const total = (d: ChartDatum) =>
-      series.reduce((sum, s) => sum + (typeof d[s.key] === 'number' ? (d[s.key] as number) : 0), 0)
+    const total = (d: ChartDatum) => series.reduce((sum, s) => sum + finite(d[s.key]), 0)
     return [...data].sort((a, b) => (sort === 'asc' ? total(a) - total(b) : total(b) - total(a)))
   }, [data, series, sort])
 
@@ -111,14 +110,10 @@ export function BarChart({
   const plotted = useMemo(() => {
     if (stacked !== 'percent') return ordered
     return ordered.map((datum) => {
-      const total = visible.reduce(
-        (sum, s) => sum + (typeof datum[s.key] === 'number' ? (datum[s.key] as number) : 0),
-        0,
-      )
+      const total = visible.reduce((sum, s) => sum + finite(datum[s.key]), 0)
       const scaled: ChartDatum = { ...datum }
       for (const s of visible) {
-        const value = datum[s.key]
-        scaled[s.key] = total > 0 && typeof value === 'number' ? (value / total) * 100 : 0
+        scaled[s.key] = total > 0 ? (finite(datum[s.key]) / total) * 100 : 0
       }
       return scaled
     })
@@ -138,12 +133,7 @@ export function BarChart({
     const out: number[] = [0]
     for (const datum of plotted) {
       if (stacked) {
-        out.push(
-          visible.reduce(
-            (sum, s) => sum + (typeof datum[s.key] === 'number' ? (datum[s.key] as number) : 0),
-            0,
-          ),
-        )
+        out.push(visible.reduce((sum, s) => sum + finite(datum[s.key]), 0))
       } else {
         for (const s of visible) {
           const v = datum[s.key]
@@ -190,7 +180,7 @@ export function BarChart({
       valueFormatter={formatFull}
       tableLabelHeader={xKey}
     >
-      {({ size, width }) => {
+      {({ size, width, label }) => {
         const asBars = resolveOrientation(orientation, size, longestLabel, labels.length)
         // The last visible series owns the rounded end of a stack; the ones
         // underneath it are interior segments and stay square.
@@ -200,6 +190,7 @@ export function BarChart({
         return (
           <ResponsiveContainer width="100%" height="100%">
             <RcBarChart
+              title={label}
               data={plotted}
               layout={asBars ? 'vertical' : 'horizontal'}
               margin={DEFAULT_MARGIN[size]}
@@ -218,7 +209,7 @@ export function BarChart({
                       formatter: axisFormatter,
                       horizontal: true,
                       hide: showValueAxis === 'auto' ? size === 'xs' : !showValueAxis,
-                      domain: percent ? [0, 100] : undefined,
+                      domain: percent ? [0, 100] : zeroBasedDomain(values),
                     })}
                   />
                   <YAxis
@@ -251,7 +242,7 @@ export function BarChart({
                       values,
                       formatter: axisFormatter,
                       hide: showValueAxis === 'auto' ? size === 'xs' : !showValueAxis,
-                      domain: percent ? [0, 100] : undefined,
+                      domain: percent ? [0, 100] : zeroBasedDomain(values),
                     })}
                   />
                 </>
@@ -327,6 +318,15 @@ function resolveOrientation(
   if (size === 'xs') return longestLabel > 4 || count > 6
   if (size === 'sm') return longestLabel > 8 && count > 5
   return false
+}
+
+/**
+ * A datum's value for summing, with anything that is not a finite number as 0.
+ * `typeof NaN === 'number'`, so the old type check let one `NaN` make a whole
+ * category's total `NaN` — which scrambles a sort and blanks a percent stack.
+ */
+function finite(value: ChartDatum[string]): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0
 }
 
 /** Rounded data-end, square at the baseline — mirrored for horizontal bars. */

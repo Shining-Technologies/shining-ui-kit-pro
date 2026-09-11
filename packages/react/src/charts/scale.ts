@@ -38,6 +38,25 @@ export function niceDomain(min: number, max: number, tickCount = 5): [number, nu
   return [Math.floor(min / step) * step, Math.ceil(max / step) * step]
 }
 
+/**
+ * The smallest and largest finite values, or `null` when there are none.
+ *
+ * A loop rather than `Math.min(...values)`: spreading passes every value as an
+ * argument, and past roughly a hundred thousand of them the engine throws a
+ * stack overflow — a long time series is exactly where a chart gets used.
+ * Non-finite values are skipped so one `NaN` cannot poison the whole domain.
+ */
+export function extent(values: Iterable<unknown>): [number, number] | null {
+  let min = Infinity
+  let max = -Infinity
+  for (const value of values) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue
+    if (value < min) min = value
+    if (value > max) max = value
+  }
+  return min <= max ? [min, max] : null
+}
+
 /** The nearest 1, 2, 5 or 10 × 10ⁿ at or above `rough`. */
 function niceStep(rough: number): number {
   const magnitude = 10 ** Math.floor(Math.log10(Math.abs(rough) || 1))

@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { categoryAxisProps, gridProps, valueAxisProps } from './axes'
+import { categoryAxisProps, gridProps, valueAxisProps, zeroBasedDomain } from './axes'
 import {
   ChartFrame,
   tableRowsFrom,
@@ -147,13 +147,13 @@ export function TrendChart({
       valueFormatter={formatFull}
       tableLabelHeader={xKey}
     >
-      {({ size, width }) => {
+      {({ size, width, label }) => {
         const points =
           showPoints === 'auto' ? data.length <= 12 && size !== 'xs' : Boolean(showPoints)
 
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <Chart data={data} margin={DEFAULT_MARGIN[size]} accessibilityLayer>
+            <Chart title={label} data={data} margin={DEFAULT_MARGIN[size]} accessibilityLayer>
               {variant === 'area' && !stacked ? (
                 <defs>
                   {resolved.map((s, i) => (
@@ -192,7 +192,7 @@ export function TrendChart({
                   values,
                   formatter: valueFormatter,
                   hide: showYAxis === 'auto' ? size === 'xs' : !showYAxis,
-                  domain: startAtZero ? [0, 'auto'] : undefined,
+                  domain: startAtZero ? zeroBasedDomain(values) : undefined,
                 })}
               />
 

@@ -1,6 +1,8 @@
 import {
   globalFilterFn,
+  isFilterActive,
   isSameQuery,
+  stableStringify,
   type ColumnFilterConfig,
   type ColumnFiltersState,
   type ColumnPinningState,
@@ -11,7 +13,7 @@ import {
   type RowSelectionState,
   type SortingState,
   type VisibilityState,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import {
   getCoreRowModel,
   getExpandedRowModel,
@@ -19,6 +21,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  type Column,
   type ColumnDef as EngineColumnDef,
   type FilterFn,
   type OnChangeFn,
@@ -35,16 +38,47 @@ import {
   SELECTION_COLUMN_ID,
 } from '../columns/built-in'
 import { adaptColumns } from '../lib/column-adapter'
-import { useControllableState, type Updater } from '../lib/use-controllable-state'
+import { applyUpdater, useControllableState, type Updater } from '../lib/use-controllable-state'
 import { useEventCallback } from '../lib/use-event-callback'
 import type { DataTableProps } from '../types/props'
 import { resolveFeatures, type ResolvedFeatures } from './resolve-features'
+import { useResponsiveHidden } from './use-responsive-hidden'
 
 const EMPTY_SORTING: SortingState = []
 const EMPTY_FILTERS: ColumnFiltersState = []
 const EMPTY_SELECTION: RowSelectionState = {}
 const EMPTY_SIZING: ColumnSizingState = {}
 const EMPTY_EXPANDED: ExpandedState = {}
+
+/** Hide `hidden` columns unless the state already says something about them. */
+function withResponsiveDefaults(state: VisibilityState, hidden: string[]): VisibilityState {
+  if (hidden.length === 0) return state
+  let merged: VisibilityState | undefined
+  for (const id of hidden) {
+    if (id in state) continue
+    merged ??= { ...state }
+    merged[id] = false
+  }
+  return merged ?? state
+}
+
+/**
+ * The filters that actually narrow the result.
+ *
+ * A panel row whose operator was picked but whose value is still empty is kept
+ * in state — it holds the operator choice — but it is not a filter yet, so it
+ * is neither sent to the server nor counted as "filtered".
+ */
+function activeFilters(
+  filters: ColumnFiltersState,
+  configs: Map<string, ColumnFilterConfig>,
+): ColumnFiltersState {
+  const active = filters.filter((entry) => {
+    const config = configs.get(entry.id)
+    return config ? isFilterActive(entry.value, config.type) : entry.value !== undefined
+  })
+  return active.length === filters.length ? filters : active
+}
 
 export interface TableInstanceResult<TData> {
   table: Table<TData>
@@ -103,6 +137,31 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
     defaultValue: props.defaultColumnVisibility ?? adapted.initialVisibility,
     onChange: props.onColumnVisibilityChange,
   })
+  // Columns `meta.responsive` hides at this viewport are hidden by default, but
+  // only by default: an explicit entry in the visibility state — the user
+  // ticking the column back on — wins. The defaults are merged in for the
+  // engine and kept out of the stored state, so they never outlive a resize.
+  const responsiveHidden = useResponsiveHidden(adapted.responsive)
+  const effectiveVisibility = useMemo(
+    () => withResponsiveDefaults(columnVisibility, responsiveHidden),
+    [columnVisibility, responsiveHidden],
+  )
+  const handleVisibilityChange = useCallback(
+    (updater: Updater<VisibilityState>) => {
+      setColumnVisibility((previous) => {
+        const merged = withResponsiveDefaults(previous, responsiveHidden)
+        const next = typeof updater === 'function' ? updater(merged) : updater
+        if (responsiveHidden.length === 0) return next
+        const stored = { ...next }
+        for (const id of responsiveHidden) {
+          if (!(id in previous) && stored[id] === false) delete stored[id]
+        }
+        return stored
+      })
+    },
+    [responsiveHidden, setColumnVisibility],
+  )
+
   const [columnSizing, setColumnSizing] = useControllableState<ColumnSizingState>({
     value: props.columnSizing,
     defaultValue: props.defaultColumnSizing ?? EMPTY_SIZING,
@@ -153,6 +212,23 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
     [setExpandedState, singleExpand],
   )
 
+  // The engine hands over every pagination change as a fresh object — even a
+  // "reset to page 0" issued on page 0. Passed through, that re-renders a
+  // controlled parent, whose inline `data` array is then new data, which
+  // resets the page again: a render loop. A change that changes nothing stops
+  // here.
+  const setPaginationIfChanged = useCallback(
+    (updater: Updater<PaginationState>) => {
+      setPagination((previous) => {
+        const next = applyUpdater(updater, previous)
+        return next.pageIndex === previous.pageIndex && next.pageSize === previous.pageSize
+          ? previous
+          : next
+      })
+    },
+    [setPagination],
+  )
+
   // Keep an uncontrolled page size in step with a changing `pageSize` prop,
   // without fighting the page-size picker (which never changes the prop).
   const declaredPageSize = features.pagination.pageSize
@@ -160,8 +236,95 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
   useEffect(() => {
     if (lastDeclaredPageSize.current === declaredPageSize) return
     lastDeclaredPageSize.current = declaredPageSize
-    setPagination({ pageIndex: 0, pageSize: declaredPageSize })
-  }, [declaredPageSize, setPagination])
+    setPaginationIfChanged({ pageIndex: 0, pageSize: declaredPageSize })
+  }, [declaredPageSize, setPaginationIfChanged])
+
+  // The engine only resets pages it paginates itself. In server pagination a
+  // new sort, filter or search would otherwise ask for page 5 of a different
+  // result — often past its end. Going back to the first page happens in the
+  // same update as the change, so `onQueryChange` fires once, not twice.
+  const serverPagination = features.pagination.enabled && features.pagination.mode === 'server'
+  // With `keepPageOnDataChange` the engine's own reset is switched off (it
+  // cannot tell a refetch from a re-sort), so sort, filter and search take
+  // over the job here exactly as they do for server pagination.
+  const keepPage =
+    features.pagination.enabled && !serverPagination && props.keepPageOnDataChange === true
+  const resetsOnSort = (serverPagination && features.sorting.mode === 'server') || keepPage
+  const resetsOnFilter = (serverPagination && features.filtering.mode === 'server') || keepPage
+  const toFirstPage = useCallback(
+    () => setPaginationIfChanged((previous) => ({ ...previous, pageIndex: 0 })),
+    [setPaginationIfChanged],
+  )
+
+  // …and when the server's total shrinks under the current page — the last
+  // row of the last page deleted — step back to the page that now ends the
+  // result instead of showing an empty one. Only against a settled answer:
+  // while loading, or before the first total arrives, `rowCount` is stale.
+  // A settled total of 0 is an answer too — the last row deleted, or a result
+  // emptied under page 4 — and its only page is the first. A negative total
+  // is the engine's "unknown", which says nothing about where the end is.
+  const rowCount = features.pagination.rowCount
+  const loading = props.loading ?? false
+  useEffect(() => {
+    if (!serverPagination || loading || rowCount === undefined || rowCount < 0) return
+    const lastPage = Math.max(0, Math.ceil(rowCount / pagination.pageSize) - 1)
+    if (pagination.pageIndex <= lastPage) return
+    setPaginationIfChanged((previous) => ({ ...previous, pageIndex: lastPage }))
+  }, [
+    loading,
+    pagination.pageIndex,
+    pagination.pageSize,
+    rowCount,
+    serverPagination,
+    setPaginationIfChanged,
+  ])
+
+  const sortingRef = useRef(sorting)
+  sortingRef.current = sorting
+  const columnFiltersRef = useRef(columnFilters)
+  columnFiltersRef.current = columnFilters
+  const globalFilterRef = useRef(globalFilter)
+  globalFilterRef.current = globalFilter
+  const filterConfigs = adapted.filters
+
+  const handleSortingChange = useCallback(
+    (updater: Updater<SortingState>) => {
+      const previous = sortingRef.current
+      const next = applyUpdater(updater, previous)
+      sortingRef.current = next
+      setSorting(next)
+      if (resetsOnSort && stableStringify(next) !== stableStringify(previous)) toFirstPage()
+    },
+    [resetsOnSort, setSorting, toFirstPage],
+  )
+  const handleColumnFiltersChange = useCallback(
+    (updater: Updater<ColumnFiltersState>) => {
+      const previous = columnFiltersRef.current
+      const next = applyUpdater(updater, previous)
+      columnFiltersRef.current = next
+      setColumnFilters(next)
+      // Only a change to what is actually filtered: picking an operator for an
+      // empty filter changes nothing on the server.
+      if (
+        resetsOnFilter &&
+        stableStringify(activeFilters(next, filterConfigs)) !==
+          stableStringify(activeFilters(previous, filterConfigs))
+      ) {
+        toFirstPage()
+      }
+    },
+    [filterConfigs, resetsOnFilter, setColumnFilters, toFirstPage],
+  )
+  const handleGlobalFilterChange = useCallback(
+    (updater: Updater<string>) => {
+      const previous = globalFilterRef.current
+      const next = applyUpdater(updater, previous)
+      globalFilterRef.current = next
+      setGlobalFilter(next)
+      if (resetsOnFilter && next !== previous) toFirstPage()
+    },
+    [resetsOnFilter, setGlobalFilter, toFirstPage],
+  )
 
   // ----------------------------------------------------------------- columns
   const rowActions = props.rowActions ?? props.slots?.rowActions
@@ -234,6 +397,24 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
     [enableRow, isRowDisabled],
   )
 
+  // The engine decides which columns the search box covers from the *first*
+  // row's value, so a column whose first value is empty — a missing email, a
+  // null note — was silently never searched. The first value that is there
+  // decides instead.
+  const dataRef = useRef(props.data)
+  dataRef.current = props.data
+  const getColumnCanGlobalFilter = useCallback((column: Column<TData, unknown>) => {
+    const accessor = column.accessorFn
+    if (!accessor) return false
+    const data = dataRef.current
+    for (let index = 0; index < data.length; index++) {
+      const value = accessor(data[index] as TData, index)
+      if (value === null || value === undefined || value === '') continue
+      return typeof value === 'string' || typeof value === 'number'
+    }
+    return false
+  }, [])
+
   const multiSort = features.sorting.multi
   const isMultiSortEvent = useCallback(
     (event: unknown) =>
@@ -242,7 +423,9 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
   )
 
   const table = useReactTable<TData>({
-    data: props.data,
+    // The engine types `data` as mutable but only ever reads it; the cast is
+    // what lets the prop accept a read-only array.
+    data: props.data as TData[],
     columns: engineColumns,
     state: {
       sorting,
@@ -250,19 +433,20 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
       globalFilter,
       pagination,
       rowSelection,
-      columnVisibility,
+      columnVisibility: effectiveVisibility,
       columnSizing,
       columnPinning,
       expanded,
     },
-    getRowId: props.getRowId,
+    // `features.selection.getRowId` is documented as the same thing; honour it.
+    getRowId: props.getRowId ?? props.features?.selection?.getRowId,
 
-    onSortingChange: setSorting as OnChangeFn<SortingState>,
-    onColumnFiltersChange: setColumnFilters as OnChangeFn<ColumnFiltersState>,
-    onGlobalFilterChange: setGlobalFilter as OnChangeFn<string>,
-    onPaginationChange: setPagination as OnChangeFn<PaginationState>,
+    onSortingChange: handleSortingChange as OnChangeFn<SortingState>,
+    onColumnFiltersChange: handleColumnFiltersChange as OnChangeFn<ColumnFiltersState>,
+    onGlobalFilterChange: handleGlobalFilterChange as OnChangeFn<string>,
+    onPaginationChange: setPaginationIfChanged as OnChangeFn<PaginationState>,
     onRowSelectionChange: setRowSelection as OnChangeFn<RowSelectionState>,
-    onColumnVisibilityChange: setColumnVisibility as OnChangeFn<VisibilityState>,
+    onColumnVisibilityChange: handleVisibilityChange as OnChangeFn<VisibilityState>,
     onColumnSizingChange: setColumnSizing as OnChangeFn<ColumnSizingState>,
     onColumnPinningChange: setColumnPinning as OnChangeFn<ColumnPinningState>,
     onExpandedChange: setExpanded as OnChangeFn<ExpandedState>,
@@ -280,9 +464,11 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
     enableFilters: features.filtering.enabled,
     enableGlobalFilter: features.filtering.globalSearch,
     globalFilterFn: globalFilterFn as FilterFn<TData>,
+    getColumnCanGlobalFilter,
     manualFiltering: !clientFiltering,
 
     manualPagination: features.pagination.mode === 'server',
+    ...(keepPage ? { autoResetPageIndex: false } : {}),
     ...(features.pagination.rowCount !== undefined
       ? { rowCount: features.pagination.rowCount }
       : {}),
@@ -309,15 +495,19 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
   // ------------------------------------------------------------------ server
   const emitQuery = useEventCallback(props.onQueryChange)
   const lastQuery = useRef<DataTableQuery | undefined>(undefined)
+  const appliedFilters = useMemo(
+    () => activeFilters(columnFilters, filterConfigs),
+    [columnFilters, filterConfigs],
+  )
   const query = useMemo<DataTableQuery>(
     () => ({
       pageIndex: pagination.pageIndex,
       pageSize: pagination.pageSize,
       sorting,
-      columnFilters,
+      columnFilters: appliedFilters,
       globalFilter,
     }),
-    [columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting],
+    [appliedFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting],
   )
 
   const hasQueryListener = Boolean(props.onQueryChange)
@@ -328,12 +518,22 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
     emitQuery(query)
   }, [emitQuery, hasQueryListener, query])
 
+  // A refetch that returns fewer rows can leave a kept page past the end; step
+  // back to the page that now ends the result rather than show an empty one.
+  const clientPageCount = keepPage ? table.getPageCount() : 0
+  useEffect(() => {
+    if (!keepPage) return
+    const lastPage = Math.max(0, clientPageCount - 1)
+    if (pagination.pageIndex <= lastPage) return
+    setPaginationIfChanged((previous) => ({ ...previous, pageIndex: lastPage }))
+  }, [clientPageCount, keepPage, pagination.pageIndex, setPaginationIfChanged])
+
   // ----------------------------------------------------------------- derived
-  const isFiltered = columnFilters.length > 0 || globalFilter.trim().length > 0
+  const isFiltered = appliedFilters.length > 0 || globalFilter.trim().length > 0
   const clearFilters = useCallback(() => {
-    setColumnFilters(EMPTY_FILTERS)
-    setGlobalFilter('')
-  }, [setColumnFilters, setGlobalFilter])
+    handleColumnFiltersChange(EMPTY_FILTERS)
+    handleGlobalFilterChange('')
+  }, [handleColumnFiltersChange, handleGlobalFilterChange])
 
   return {
     table,

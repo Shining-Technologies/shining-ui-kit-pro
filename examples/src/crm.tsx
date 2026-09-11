@@ -7,7 +7,7 @@ import {
   CellText,
   DataTable,
   type ColumnDef,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { accounts, type Account } from './data'
 
 /**

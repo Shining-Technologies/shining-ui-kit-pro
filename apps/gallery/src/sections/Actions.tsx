@@ -17,7 +17,7 @@ import {
   ToggleGroupItem,
   Tooltip,
   TooltipProvider,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { STATUS_REGISTRY } from '../data'
 import { Demo } from './Demo'
 

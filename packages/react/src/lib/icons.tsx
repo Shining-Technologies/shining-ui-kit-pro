@@ -283,6 +283,12 @@ export const ArrowLeftIcon = (p: IconProps) => (
   </Icon>
 )
 
+export const ArrowRightIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 12h14M12 5l7 7-7 7" />
+  </Icon>
+)
+
 export const ArrowUpIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M12 19V5M5 12l7-7 7 7" />
@@ -292,6 +298,13 @@ export const ArrowUpIcon = (p: IconProps) => (
 export const MenuIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 6h16M4 12h16M4 18h16" />
+  </Icon>
+)
+
+export const PanelLeftIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M9 3v18" />
   </Icon>
 )
 

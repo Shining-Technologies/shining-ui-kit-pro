@@ -1,15 +1,15 @@
 /**
- * `@shining-ui-kit/react`
+ * `@shining-technologies/ui-kit-react`
  *
  * A component library whose entire appearance comes from the active project:
  * buttons, cards, forms, charts and a production-grade data table, all painted
  * from one generated token set.
  *
  * ```tsx
- * import { UIKitProvider, Button, Card, LineChart } from '@shining-ui-kit/react'
- * import '@shining-ui-kit/react/styles.css'
+ * import { UIKitProvider, Button, Card, LineChart } from '@shining-technologies/ui-kit-react'
+ * import '@shining-technologies/ui-kit-react/styles.css'
  *
- * <UIKitProvider defaultProject="shining" scope="global">
+ * <UIKitProvider preset="shining">
  *   <App />
  * </UIKitProvider>
  * ```
@@ -26,6 +26,7 @@ export {
   UIKitContext,
   UIKitProvider,
   useColorMode,
+  usePortalContainer,
   useProject,
   useUIKit,
 } from './theme'
@@ -166,17 +167,26 @@ export {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   Input,
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
   Separator,
@@ -187,6 +197,18 @@ export {
   badgeVariants,
   buttonVariants,
 } from './primitives'
+export type {
+  BadgeProps,
+  ButtonGroupProps,
+  ButtonProps,
+  CheckboxProps,
+  InputProps,
+  SkeletonProps,
+  TooltipProps,
+  TooltipProviderProps,
+} from './primitives'
+/* Referenced by `DataTableContextValue.rowIndex`, so a custom part can type it. */
+export type { RowIndexModel } from './hooks/row-index'
 
 // ---------------------------------------------------------------------- hooks
 export { useTableInstance } from './hooks/use-table-instance'
@@ -262,6 +284,7 @@ export type {
 export {
   BUILT_IN_PALETTES,
   ProjectRegistry,
+  applyBrand,
   contrastRatio,
   createProject,
   createTableTheme,
@@ -284,13 +307,16 @@ export {
   getPageRange,
   isFilterActive,
   normalizeFilterValue,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 export type {
+  BrandInput,
+  BrandOptions,
   Breakpoint,
   CellAlign,
   ColorMode,
   ColorScale,
   NeutralTint,
+  PresetId,
   ProjectDefinition,
   ProjectInput,
   ProjectSeed,
@@ -326,7 +352,7 @@ export type {
   TableThemeTokens,
   TableVariant,
   VisibilityState,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 
 // The engine's row/table types appear in every callback signature.
 // `Table` is re-exported as `TableInstance`: the bare name belongs to the

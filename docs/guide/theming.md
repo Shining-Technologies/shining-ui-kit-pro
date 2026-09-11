@@ -8,11 +8,24 @@ from the rest.
 ## 0. Projects
 
 ```tsx
-<UIKitProvider defaultProject="shining" scope="global">
+<UIKitProvider preset="shining" scope="global">
 ```
 
 A project generates every token below from four seed colours, including a full dark mode and
 a contrast-checked foreground for every filled surface. See [Projects](./projects.md).
+
+`className` and `style` on `UIKitProvider` work in either scope. In `local` scope they go on
+the wrapper. In `global` scope `className` is added to `<html>` and `style` is set there
+property by property. Both are removed on unmount, and classes the app set itself are left
+alone. With nested global providers the innermost one wins. `style` is included in the
+server-rendered token sheet, while `className` applies at hydration. Custom properties in
+`style` override the project's tokens.
+
+The server render ships the tokens in a `<style>`, in global scope and in local scope with
+`mode="system"`. The local sheet is scoped to the wrapper and puts both palettes behind
+`prefers-color-scheme`, so neither scope flashes the wrong mode. Pass `nonce` if a
+Content-Security-Policy forbids inline styles. It covers these sheets and the sidebar's
+custom-breakpoint style. See [Next.js and server rendering](./nextjs.md#content-security-policy).
 
 ## 1. Design tokens
 
@@ -54,7 +67,7 @@ across one-to-one.
 | Sizing       | `--sui-control-height`, `--sui-control-height-sm`, `--sui-control-height-lg`, `--sui-header-height`, `--sui-row-height`, `--sui-min-column-width`                                                                          |
 | Elevation    | `--sui-shadow-surface`, `--sui-shadow-overlay`, `--sui-shadow-modal`, `--sui-shadow-pinned-left`, `--sui-shadow-pinned-right`                                                                                              |
 
-`CSS_VAR_NAMES` from `@shining-ui-kit/core` is the same list, at runtime.
+`CSS_VAR_NAMES` from `@shining-technologies/ui-kit-core` is the same list, at runtime.
 
 `--sui-accent` follows shadcn semantics: it is the subtle **hover surface**, not the brand
 colour. The brand colour is `--sui-primary`.
@@ -76,11 +89,11 @@ A theme is plain data — serialisable, storable per user, buildable at runtime:
 Only the tokens you set are emitted, as inline custom properties on the table root; everything
 else keeps inheriting from the stylesheet — which is what keeps dark mode working.
 
-`createTableTheme` gives you type-checking and inheritance:
+`createTheme` gives you type-checking and inheritance:
 
 ```ts
-import { createTheme } from '@shining-ui-kit/react'
-import { dashboardTheme } from '@shining-ui-kit/themes'
+import { createTheme } from '@shining-technologies/ui-kit-react'
+import { dashboardTheme } from '@shining-technologies/ui-kit-themes'
 
 export const ourTheme = createTheme(
   { colors: { primary: '#0ea5e9' }, radius: { table: '16px' } },
@@ -88,7 +101,8 @@ export const ourTheme = createTheme(
 )
 ```
 
-`createTableTheme` remains as an alias of `createTheme`, and `TableTheme` of `UIKitTheme`.
+`createTableTheme` remains as a deprecated alias of `createTheme`, and `TableTheme` of
+`UIKitTheme`.
 
 ### Dark-mode overrides
 
@@ -118,7 +132,7 @@ Both are token recipes applied through `data-variant` / `data-density` on the ro
 no second table implementation behind any of them, which is why they compose with everything
 else.
 
-Prebuilt themes live in `@shining-ui-kit/themes`: `defaultTheme`, `minimalTheme`,
+Prebuilt themes live in `@shining-technologies/ui-kit-themes`: `defaultTheme`, `minimalTheme`,
 `dashboardTheme` and `midnightTheme` (a worked example of a full custom palette).
 
 ## Dark mode
@@ -131,9 +145,17 @@ it never ships a dark theme that disagrees with yours.
 document.documentElement.classList.toggle('dark', isDark)
 ```
 
+Under the provider, `color-scheme` follows the colour mode too, so native scrollbars, date
+pickers and autofill go dark with the rest of the page instead of staying light.
+
 ## A note on portals
 
-Popovers, menus and selects render in a portal on `document.body`, so they read the token
-defaults from `:root` rather than from the table element. If you theme through the `theme`
-prop and want the floating surfaces to match, set the same overlay tokens
-(`--sui-popover`, `--sui-popover-foreground`, `--sui-popover-border`) on `:root` too.
+Under the provider, floating surfaces are themed in either scope: they render into
+`usePortalContainer()` — the provider's own wrapper in `local` scope, `document.body` beneath
+a themed `<html>` in `global` scope.
+
+The exception is the DataTable `theme` prop. Its tokens are inline on the table element, and
+the table's popovers, menus and selects portal out of it, so they read the provider's (or
+the stylesheet's) values instead. If you theme a table through `theme` and want its floating
+surfaces to match, set the same overlay tokens (`--sui-popover`, `--sui-popover-foreground`,
+`--sui-popover-border`) on the provider scope or `:root` too.

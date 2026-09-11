@@ -15,6 +15,7 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import ts from 'typescript'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const packagesDir = join(root, 'packages')
@@ -57,6 +58,43 @@ async function newestMtime(dir) {
     if (mtimeMs > newest) newest = mtimeMs
   }
   return newest
+}
+
+/**
+ * Type-check the shipped declarations themselves, the way a consumer with
+ * `skipLibCheck: false` would.
+ *
+ * `attw` proves each entry *resolves*; it does not prove the file it resolves
+ * to is valid. A rolled-up `.d.ts` can reference a name its bundler dropped —
+ * the `ColumnMeta` augmentation once did exactly that — and every consumer then
+ * gets a hard error or, with `skipLibCheck`, a silently untyped API. Only our
+ * own files are checked; errors inside third-party typings are not ours to fix.
+ */
+function declarationErrors(dir) {
+  const dist = join(dir, 'dist')
+  if (!existsSync(dist)) return []
+  // `.d.cts` files are byte-for-byte copies (scripts/emit-cjs-types.mjs).
+  const roots = ts.sys.readDirectory(dist, ['.d.ts'], undefined, undefined, 1)
+  if (roots.length === 0) return []
+  const program = ts.createProgram(roots, {
+    noEmit: true,
+    strict: true,
+    skipLibCheck: false,
+    target: ts.ScriptTarget.ES2022,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    jsx: ts.JsxEmit.ReactJSX,
+    lib: ['lib.es2022.d.ts', 'lib.dom.d.ts', 'lib.dom.iterable.d.ts'],
+    types: [],
+  })
+  const own = program.getSourceFiles().filter((file) => resolve(file.fileName).startsWith(dist))
+  return own.flatMap((file) =>
+    [...program.getSyntacticDiagnostics(file), ...program.getSemanticDiagnostics(file)].map((d) => {
+      const { line } = file.getLineAndCharacterOfPosition(d.start ?? 0)
+      const text = ts.flattenDiagnosticMessageText(d.messageText, ' ')
+      return `${relative(dir, file.fileName)}:${line + 1} TS${d.code} ${text}`
+    }),
+  )
 }
 
 const dirs = (await readdir(packagesDir, { withFileTypes: true }))
@@ -129,6 +167,8 @@ for (const { dir, manifest } of manifests) {
   ])
   if (distTime === 0) fail(name, 'no dist/ — run `pnpm build`')
   else if (srcTime > distTime) fail(name, 'dist/ is older than src/ — run `pnpm build`')
+
+  for (const error of declarationErrors(dir)) fail(name, `shipped declaration error: ${error}`)
 
   if (!problems.some((problem) => problem.startsWith(`${name}:`))) {
     notes.push(`${name}@${manifest.version}: ok`)

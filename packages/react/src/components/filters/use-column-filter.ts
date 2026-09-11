@@ -7,7 +7,7 @@ import {
   type ColumnFilterConfig,
   type FilterOperator,
   type FilterValue,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import type { Column } from '@tanstack/react-table'
 import { useCallback, useMemo } from 'react'
 

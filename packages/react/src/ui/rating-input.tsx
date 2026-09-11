@@ -1,10 +1,22 @@
 import { forwardRef, useState, type HTMLAttributes, type KeyboardEvent } from 'react'
 import { cn } from '../lib/cn'
-import { useFieldControl } from '../lib/field-context'
+import { useFieldControl, useFieldLabelId } from '../lib/field-context'
+import { useControllableState } from '../lib/use-controllable-state'
 import { StarIcon } from '../lib/icons'
 
-export interface RatingInputProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+export interface RatingInputProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
+  /**
+   * Controlled rating when defined; `0` is "not rated". Leave it `undefined`
+   * (and use `defaultValue`) for an uncontrolled field.
+   */
   value?: number
+  /** Initial rating while uncontrolled. */
+  defaultValue?: number
+  /** Submitted with a native `<form>` through a hidden input holding the number. */
+  name?: string
   onValueChange?: (value: number) => void
   /** How many stars. Five, unless the scale genuinely is not. */
   max?: number
@@ -25,14 +37,16 @@ export interface RatingInputProps extends Omit<HTMLAttributes<HTMLDivElement>, '
 /**
  * A star rating.
  *
- * A radio group under the surface, which is what gets it the keyboard for free:
- * arrows move by one (or a half), Home and End jump to the ends, and the value
- * is announced as "3 of 5 stars" rather than as an unlabelled button press.
+ * A `slider` under the surface, which is where the keyboard comes from: arrows
+ * move by one (or a half), Home and End jump to the ends, and the value is
+ * announced as "3 of 5 stars" rather than as an unlabelled button press.
  */
 export const RatingInput = forwardRef<HTMLDivElement, RatingInputProps>(function RatingInput(
   {
     className,
-    value = 0,
+    value: valueProp,
+    defaultValue,
+    name,
     onValueChange,
     max = 5,
     allowHalf = false,
@@ -42,11 +56,19 @@ export const RatingInput = forwardRef<HTMLDivElement, RatingInputProps>(function
     size = 'default',
     unit = 'star',
     caption,
+    onKeyDown: onKeyDownProp,
     ...props
   },
   ref,
 ) {
   const field = useFieldControl()
+  const labelId = useFieldLabelId()
+  // Controlled exactly when `value` is defined, as everywhere in the kit.
+  const [value, setValue] = useControllableState<number>({
+    value: valueProp,
+    defaultValue: defaultValue ?? 0,
+    onChange: onValueChange,
+  })
   const [hover, setHover] = useState<number | null>(null)
   const isDisabled = disabled ?? field.disabled
   const interactive = !readOnly && !isDisabled
@@ -55,11 +77,12 @@ export const RatingInput = forwardRef<HTMLDivElement, RatingInputProps>(function
 
   function set(next: number) {
     const clamped = Math.max(0, Math.min(max, next))
-    if (clamped !== value) onValueChange?.(clamped)
+    if (clamped !== value) setValue(clamped)
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (!interactive) return
+    onKeyDownProp?.(event)
+    if (!interactive || event.defaultPrevented) return
     const moves: Record<string, number> = {
       ArrowRight: step,
       ArrowUp: step,
@@ -88,12 +111,21 @@ export const RatingInput = forwardRef<HTMLDivElement, RatingInputProps>(function
       className={cn('sui-rating', size !== 'default' && `sui-rating--${size}`, className)}
       data-disabled={isDisabled || undefined}
       role={readOnly ? 'img' : 'slider'}
-      aria-label={readOnly ? `${value} out of ${max} ${unit}s` : (props['aria-label'] ?? 'Rating')}
+      aria-label={
+        readOnly
+          ? `${value} out of ${max} ${unit}s`
+          : (props['aria-label'] ?? (labelId ? undefined : 'Rating'))
+      }
+      // A `<label for>` cannot reach a div, so a surrounding field's label
+      // names the slider through its id instead.
+      aria-labelledby={readOnly || props['aria-label'] ? undefined : labelId}
       aria-valuenow={readOnly ? undefined : value}
       aria-valuemin={readOnly ? undefined : 0}
       aria-valuemax={readOnly ? undefined : max}
       aria-valuetext={readOnly ? undefined : `${value} of ${max} ${unit}s`}
       aria-describedby={field['aria-describedby']}
+      aria-invalid={readOnly ? undefined : field['aria-invalid']}
+      aria-disabled={isDisabled && !readOnly ? true : undefined}
       id={field.id}
       tabIndex={interactive ? 0 : -1}
       onKeyDown={onKeyDown}
@@ -125,8 +157,16 @@ export const RatingInput = forwardRef<HTMLDivElement, RatingInputProps>(function
                     setHover(event.clientX - box.left < box.width / 2 ? position - 0.5 : position)
                   }}
                   onMouseEnter={() => !allowHalf && setHover(position)}
-                  onClick={() => {
-                    const next = hover ?? position
+                  onClick={(event) => {
+                    // Read the half from the click itself: a touch has no
+                    // hover before it, so the hover state would say "whole".
+                    let next = position
+                    if (allowHalf) {
+                      const box = event.currentTarget.getBoundingClientRect()
+                      if (box.width > 0 && event.clientX - box.left < box.width / 2) {
+                        next = position - 0.5
+                      }
+                    }
                     set(clearable && next === value ? 0 : next)
                   }}
                 />
@@ -137,6 +177,9 @@ export const RatingInput = forwardRef<HTMLDivElement, RatingInputProps>(function
       </span>
 
       {caption ? <span className="sui-rating__caption">{caption}</span> : null}
+      {name ? (
+        <input type="hidden" name={name} value={String(value)} disabled={isDisabled} />
+      ) : null}
     </div>
   )
 })

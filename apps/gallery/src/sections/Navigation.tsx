@@ -20,7 +20,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { useState } from 'react'
 import { Demo } from './Demo'
 

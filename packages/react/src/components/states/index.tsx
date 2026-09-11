@@ -23,8 +23,8 @@ export function DataTableEmptyState<TData>({
   const custom = renderSlot(slots.emptyState, table)
 
   return (
-    <tr className="sui-state-row">
-      <td colSpan={colSpan} className="sui-state-cell">
+    <tr role="row" className="sui-state-row">
+      <td role="cell" colSpan={colSpan} className="sui-state-cell">
         {custom ?? (
           <div className="sui-state">
             <InboxIcon className="sui-state__icon" />
@@ -56,8 +56,8 @@ export function DataTableLoadingState<TData>({ table, rowCount }: LoadingStatePr
 
   if (custom !== undefined) {
     return (
-      <tr className="sui-state-row">
-        <td colSpan={columns.length || 1} className="sui-state-cell">
+      <tr role="row" className="sui-state-row">
+        <td role="cell" colSpan={columns.length || 1} className="sui-state-cell">
           {custom}
         </td>
       </tr>
@@ -94,8 +94,8 @@ export function DataTableErrorState<TData>({ error, retry, colSpan }: ErrorState
   const custom = renderSlot(slots.errorState, table)
 
   return (
-    <tr className="sui-state-row">
-      <td colSpan={colSpan} className="sui-state-cell">
+    <tr role="row" className="sui-state-row">
+      <td role="cell" colSpan={colSpan} className="sui-state-cell">
         {custom ?? (
           <div className="sui-state sui-state--error" role="alert">
             <AlertIcon className="sui-state__icon sui-state__icon--error" />

@@ -24,7 +24,7 @@ import {
   StatTile,
   TrendChart,
   type ChartDatum,
-} from '@shining-ui-kit/react/recharts'
+} from '@shining-technologies/ui-kit-react/recharts'
 
 const months: ChartDatum[] = [
   { month: 'Jan', booked: 120, completed: 96 },
@@ -66,14 +66,15 @@ describe('the shared frame', () => {
   })
 
   it('omits the legend for a single series and shows it from two up', () => {
-    const { rerender } = render(
+    const { container, rerender } = render(
       <TrendChart data={months} xKey="month" series={[series[0]!]} legend="auto" />,
     )
-    expect(screen.queryByRole('button', { name: /booked/i })).toBeNull()
+    expect(container.querySelector('.sui-viz__legend')).toBeNull()
 
     rerender(<TrendChart data={months} xKey="month" series={series} legend="auto" />)
-    expect(screen.getByRole('button', { name: 'Booked' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Completed' })).toBeInTheDocument()
+    const legend = container.querySelector<HTMLElement>('.sui-viz__legend')!
+    expect(within(legend).getByText('Booked')).toBeInTheDocument()
+    expect(within(legend).getByText('Completed')).toBeInTheDocument()
   })
 
   it('hides a series when its legend entry is pressed', async () => {
@@ -90,9 +91,15 @@ describe('the shared frame', () => {
     )
   })
 
-  it('leaves the legend inert unless it is interactive', () => {
-    render(<TrendChart data={months} xKey="month" series={series} legend="always" />)
-    expect(screen.getByRole('button', { name: 'Booked' })).toBeDisabled()
+  it('lists the legend without buttons unless it is interactive', () => {
+    const { container } = render(
+      <TrendChart data={months} xKey="month" series={series} legend="always" />,
+    )
+    const legend = container.querySelector<HTMLElement>('.sui-viz__legend')!
+    expect(within(legend).getByText('Booked')).toBeInTheDocument()
+    // A disabled button is announced as "unavailable"; a key to the colours
+    // is not a control at all.
+    expect(within(legend).queryByRole('button')).toBeNull()
   })
 
   it('carries every plotted value in a table, before anyone asks for it', () => {

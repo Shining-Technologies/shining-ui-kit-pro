@@ -3,31 +3,31 @@
 Four packages are published to npm. They version together in one line except for the
 optional CSV export, which changes on its own.
 
-| Package                      | Install it when                                        |
-| ---------------------------- | ------------------------------------------------------ |
-| `@shining-ui-kit/react`      | Always. This is the library.                           |
-| `@shining-ui-kit/core`       | You need the colour or project engine outside React    |
-| `@shining-ui-kit/themes`     | You want the shipped palettes and table chrome presets |
-| `@shining-ui-kit/export-csv` | You want CSV/TSV export from a table                   |
+| Package                                   | Install it when                                        |
+| ----------------------------------------- | ------------------------------------------------------ |
+| `@shining-technologies/ui-kit-react`      | Always. This is the library.                           |
+| `@shining-technologies/ui-kit-core`       | You need the colour or project engine outside React    |
+| `@shining-technologies/ui-kit-themes`     | You want the shipped palettes and table chrome presets |
+| `@shining-technologies/ui-kit-export-csv` | You want CSV/TSV export from a table                   |
 
-`@shining-ui-kit/react` already depends on `core` and re-exports the parts an application
+`@shining-technologies/ui-kit-react` already depends on `core` and re-exports the parts an application
 reaches for, so most projects install exactly one package.
 
 ---
 
-## `@shining-ui-kit/react`
+## `@shining-technologies/ui-kit-react`
 
 The component library: theming, primitives, composites, form inputs, the application shell,
 charts and the data table.
 
 ### Entry points
 
-| Import                              | Contains                                                                                      | Extra peer needed         |
-| ----------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------- |
-| `@shining-ui-kit/react`             | Everything except the two entries below                                                       | —                         |
-| `@shining-ui-kit/react/styles.css`  | The stylesheet                                                                                | —                         |
-| `@shining-ui-kit/react/recharts`    | `TrendChart`, `BarChart`, `DonutChart`, `GaugeChart`, `ScatterChart`, `Sparkline`, `StatTile` | `recharts`                |
-| `@shining-ui-kit/react/virtualized` | `VirtualizedDataTable`, `VirtualizedBody`                                                     | `@tanstack/react-virtual` |
+| Import                                           | Contains                                                                                      | Extra peer needed          |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- | -------------------------- |
+| `@shining-technologies/ui-kit-react`             | Everything except the two entries below                                                       | —                          |
+| `@shining-technologies/ui-kit-react/styles.css`  | The stylesheet                                                                                | —                          |
+| `@shining-technologies/ui-kit-react/recharts`    | `TrendChart`, `BarChart`, `DonutChart`, `GaugeChart`, `ScatterChart`, `Sparkline`, `StatTile` | `recharts` `^2.15 \|\| ^3` |
+| `@shining-technologies/ui-kit-react/virtualized` | `VirtualizedDataTable`, `VirtualizedBody`                                                     | `@tanstack/react-virtual`  |
 
 The two optional entries are split out precisely so their peers stay out of bundles that do
 not use them. Importing the root package never pulls in `recharts`.
@@ -37,29 +37,33 @@ not use them. Importing the root package never pulls in `recharts`.
 Whole-entry figures for the ESM build, before your bundler tree-shakes anything you did not
 import:
 
-| File             | Raw    | Gzipped |
-| ---------------- | ------ | ------- |
-| `index.js`       | 161 kB | 40 kB   |
-| `recharts.js`    | 37 kB  | 10 kB   |
-| `virtualized.js` | 1.9 kB | 0.8 kB  |
-| `styles.css`     | 182 kB | 33 kB   |
+| File              | Raw    | Gzipped |
+| ----------------- | ------ | ------- |
+| `index.js`        | 218 kB | 55 kB   |
+| `data-table-*.js` | 113 kB | 28 kB   |
+| `recharts.js`     | 37 kB  | 10 kB   |
+| `virtualized.js`  | 1.9 kB | 0.8 kB  |
+| `styles.css`      | 224 kB | 41 kB   |
 
-The table is code-split into its own chunk, so an application that uses only cards, forms and
-buttons does not pay for it.
+The table lives in a separate chunk, shared with `/virtualized`, which `index.js` imports
+statically — so it is not lazy-loaded, and the root entry's full weight is the first two rows
+together. What keeps it out of an application that uses only cards, forms and buttons is
+tree-shaking: the package declares `sideEffects` only for its CSS, so a bundler drops the
+table when nothing imports `DataTable`.
 
 ### Dependencies
 
 Radix UI primitives (the accessible behaviour under menus, dialogs, selects and the rest),
 `@tanstack/react-table`, `clsx`, `tailwind-merge`, `class-variance-authority`, and
-`@shining-ui-kit/core`. All ordinary dependencies — nothing to configure.
+`@shining-technologies/ui-kit-core`. All ordinary dependencies — nothing to configure.
 
 ---
 
-## `@shining-ui-kit/core`
+## `@shining-technologies/ui-kit-core`
 
 Everything the kit knows that is not React: the token surface, the OKLCH colour engine, the
 project system, and the pure state, filter and pagination helpers behind the table.
-39 kB raw / 12 kB gzipped, no React import anywhere.
+43 kB raw / 13 kB gzipped, no React import anywhere.
 
 Install it directly when you need that engine **outside** a React tree:
 
@@ -69,20 +73,20 @@ Install it directly when you need that engine **outside** a React tree:
 - a design-token pipeline that feeds something other than this kit
 
 ```ts
-import { createProject, resolveProject, contrastRatio } from '@shining-ui-kit/core'
+import { createProject, resolveProject, contrastRatio } from '@shining-technologies/ui-kit-core'
 ```
 
-If you are only writing React, you already have these through `@shining-ui-kit/react`.
+If you are only writing React, you already have these through `@shining-technologies/ui-kit-react`.
 
 ---
 
-## `@shining-ui-kit/themes`
+## `@shining-technologies/ui-kit-themes`
 
-The shipped presets, 1.8 kB raw. Two kinds, at different levels:
+The shipped presets, 1.9 kB raw / 0.8 kB gzipped. Two kinds, at different levels:
 
-- **Palettes** are whole projects — seed colours, geometry, density. Pass one to
-  `<UIKitProvider project={…}>`. Shipped: `shining`, `slate`, `midnight`, `violet`, `ember`,
-  `forest`, `rose`, `mono`.
+- **Palettes** are whole projects — seed colours, geometry, density. Name one with
+  `<UIKitProvider preset="…">` or pass the object to `project={…}`. Shipped: `shining`, `slate`,
+  `midnight`, `violet`, `ember`, `forest`, `rose`, `mono`, `darwind`, `unn`.
 - **Chrome themes** dress the table only — header fill, container radius, header type —
   without touching the project's colours. Pass one to `<DataTable theme={…}>`. Shipped:
   `defaultTheme`, `minimalTheme`, `dashboardTheme`, `midnightTheme`.
@@ -96,12 +100,12 @@ importing one palette by name without reaching through the whole kit.
 
 ---
 
-## `@shining-ui-kit/export-csv`
+## `@shining-technologies/ui-kit-export-csv`
 
-CSV and TSV export, 1.9 kB raw, **zero runtime dependencies**.
+CSV and TSV export, 1.9 kB raw / 1.0 kB gzipped, **zero runtime dependencies**.
 
 ```tsx
-import { downloadTableCsv } from '@shining-ui-kit/export-csv'
+import { downloadTableCsv } from '@shining-technologies/ui-kit-export-csv'
 
 ;<Button onClick={() => downloadTableCsv(table, { filename: 'users.csv' })}>Export</Button>
 ```
@@ -110,7 +114,8 @@ Separate because most tables never export anything and the main package should n
 they will not run. Values that a spreadsheet would execute as a formula are quoted by
 default — see the [package README](../../packages/export-csv/README.md).
 
-`@tanstack/table-core` is a peer; you already have it if you use the kit's table.
+`@tanstack/table-core` (`^8.20.5`) is its only peer, and it does not depend on `core`; you
+already have table-core if you use the kit's table.
 
 ---
 

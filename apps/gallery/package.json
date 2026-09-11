@@ -1,5 +1,5 @@
 {
-  "name": "@shining-ui-kit/gallery",
+  "name": "@shining-technologies/ui-kit-gallery",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,11 +10,11 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
-    "@shining-ui-kit/core": "workspace:*",
-    "@shining-ui-kit/examples": "workspace:*",
-    "@shining-ui-kit/export-csv": "workspace:*",
-    "@shining-ui-kit/react": "workspace:*",
-    "@shining-ui-kit/themes": "workspace:*",
+    "@shining-technologies/ui-kit-core": "workspace:*",
+    "@shining-technologies/ui-kit-examples": "workspace:*",
+    "@shining-technologies/ui-kit-export-csv": "workspace:*",
+    "@shining-technologies/ui-kit-react": "workspace:*",
+    "@shining-technologies/ui-kit-themes": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

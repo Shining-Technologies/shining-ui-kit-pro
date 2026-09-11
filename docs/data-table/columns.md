@@ -106,7 +106,7 @@ The group header spans its children and is marked `scope="colgroup"`.
 Add your own fields by augmenting the interface:
 
 ```ts
-declare module '@shining-ui-kit/core' {
+declare module '@shining-technologies/ui-kit-core' {
   interface ColumnMeta {
     currency?: string
   }

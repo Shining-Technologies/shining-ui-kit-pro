@@ -30,7 +30,7 @@ pnpm install
 ```
 
 `pnpm install` links every workspace package together. You do **not** need to build the
-packages before running tests, Storybook or the gallery: all three alias `@shining-ui-kit/*`
+packages before running tests, Storybook or the gallery: all three alias `@shining-technologies/ui-kit-*`
 straight to `packages/*/src`, so they run against the TypeScript sources and pick up an edit
 on save.
 
@@ -151,7 +151,7 @@ shared fixtures:
 ```tsx
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { DataTable } from '@shining-ui-kit/react'
+import { DataTable } from '@shining-technologies/ui-kit-react'
 import { users, userColumns } from './fixtures'
 
 it('sorts by name when the header is activated', async () => {
@@ -222,8 +222,8 @@ above, and type it with `Meta`/`StoryObj`:
 
 ```tsx
 import type { Meta, StoryObj } from '@storybook/react'
-import { DataTable } from '@shining-ui-kit/react'
-import { users, userColumns } from '@shining-ui-kit/examples'
+import { DataTable } from '@shining-technologies/ui-kit-react'
+import { users, userColumns } from '@shining-technologies/ui-kit-examples'
 
 const meta = {
   title: 'DataTable/Basic',
@@ -296,7 +296,7 @@ pnpm build
 ```
 
 Builds the four publishable packages, each with Vite plus `vite-plugin-dts` for declarations.
-`@shining-ui-kit/react` has an extra step: after the JS bundle,
+`@shining-technologies/ui-kit-react` has an extra step: after the JS bundle,
 [scripts/build-css.mjs](../../scripts/build-css.mjs) inlines the `@import` graph from
 `src/styles/index.css` into a single `dist/styles.css`, so the published stylesheet needs no
 CSS toolchain on the consumer's side.
@@ -304,8 +304,8 @@ CSS toolchain on the consumer's side.
 Build one package on its own:
 
 ```bash
-pnpm --filter @shining-ui-kit/core build
-pnpm --filter @shining-ui-kit/react build
+pnpm --filter @shining-technologies/ui-kit-core build
+pnpm --filter @shining-technologies/ui-kit-react build
 ```
 
 Start from clean when a stale artefact is suspected:
@@ -352,7 +352,7 @@ missing DOM polyfill for a newly used browser API. Add it to
 still passes. Drive the interaction with `await user.click(...)` from `userEvent` rather than
 firing the event directly.
 
-**Cannot find module `@shining-ui-kit/...`.** The alias lists live in three places, and a new
+**Cannot find module `@shining-technologies/ui-kit-...`.** The alias lists live in three places, and a new
 package or subpath entry has to be added to each: [vitest.config.ts](../../vitest.config.ts),
 [.storybook/main.ts](../../.storybook/main.ts) and `apps/gallery/vite.config.ts`. Subpaths must come
 **before** their package prefix.

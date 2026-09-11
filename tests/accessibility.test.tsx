@@ -1,4 +1,4 @@
-import { DataTable } from '@shining-ui-kit/react'
+import { DataTable } from '@shining-technologies/ui-kit-react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -69,7 +69,10 @@ describe('semantics', () => {
 
   it('exposes the row count to assistive technology', () => {
     render(<DataTable data={users} columns={userColumns} label="Users" pageSize={2} />)
-    expect(screen.getByRole('table')).toHaveAttribute('aria-rowcount', '5')
+    // Every row of the table, per ARIA: the header row and the five data rows,
+    // even though only two are rendered — and each rendered row says where it is.
+    expect(screen.getByRole('table')).toHaveAttribute('aria-rowcount', '6')
+    expect(bodyRows().map((row) => row.getAttribute('aria-rowindex'))).toEqual(['2', '3'])
   })
 })
 

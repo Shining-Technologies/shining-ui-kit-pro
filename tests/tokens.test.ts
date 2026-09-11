@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { CSS_VAR_NAMES } from '@shining-ui-kit/core'
+import { CSS_VAR_NAMES } from '@shining-technologies/ui-kit-core'
 import { describe, expect, it } from 'vitest'
 import { generateTokensCss } from '../scripts/generate-tokens'
 

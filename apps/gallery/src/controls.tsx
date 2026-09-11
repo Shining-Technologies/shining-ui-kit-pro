@@ -8,7 +8,7 @@ import {
   Switch,
   ToggleGroup,
   ToggleGroupItem,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { useId } from 'react'
 
 /*

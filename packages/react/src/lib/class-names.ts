@@ -1,4 +1,4 @@
-import type { CellAlign, ColumnResponsive } from '@shining-ui-kit/core'
+import type { CellAlign, ColumnResponsive } from '@shining-technologies/ui-kit-core'
 
 /** Alignment classes. Defined in CSS so they work without consumer Tailwind. */
 export const ALIGN_CLASS: Record<CellAlign, string> = {

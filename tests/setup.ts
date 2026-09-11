@@ -7,8 +7,11 @@ expect.extend(matchers)
 
 afterEach(() => cleanup())
 
+// Absent in `// @vitest-environment node` files, which render with react-dom/server.
+const dom = typeof window !== 'undefined'
+
 // jsdom does not implement these; several Radix primitives rely on them.
-if (!window.matchMedia) {
+if (dom && !window.matchMedia) {
   window.matchMedia = ((query: string) => ({
     matches: false,
     media: query,
@@ -21,20 +24,20 @@ if (!window.matchMedia) {
   })) as unknown as typeof window.matchMedia
 }
 
-if (!Element.prototype.scrollIntoView) {
+if (dom && !Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = vi.fn()
 }
 
 // Radix Select/DropdownMenu drive their listboxes with the Pointer Capture API,
 // which jsdom does not implement. Without these, opening a select never
 // resolves and the test hangs rather than failing.
-if (!Element.prototype.hasPointerCapture) {
+if (dom && !Element.prototype.hasPointerCapture) {
   Element.prototype.hasPointerCapture = () => false
   Element.prototype.setPointerCapture = () => undefined
   Element.prototype.releasePointerCapture = () => undefined
 }
 
-if (!window.ResizeObserver) {
+if (dom && !window.ResizeObserver) {
   window.ResizeObserver = class {
     observe() {}
     unobserve() {}
@@ -46,7 +49,7 @@ if (!window.ResizeObserver) {
 // IntersectionObserver to watch for layout shifts. jsdom has neither, and the
 // resulting throw happens inside an effect, so it surfaces as a hung render
 // rather than a readable error.
-if (!window.IntersectionObserver) {
+if (dom && !window.IntersectionObserver) {
   window.IntersectionObserver = class {
     readonly root = null
     readonly rootMargin = ''
@@ -60,7 +63,7 @@ if (!window.IntersectionObserver) {
   } as unknown as typeof IntersectionObserver
 }
 
-if (!window.DOMRect) {
+if (dom && !window.DOMRect) {
   window.DOMRect = class {
     constructor(
       public x = 0,

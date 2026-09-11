@@ -1,7 +1,9 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type DragEvent,
@@ -12,7 +14,10 @@ import { cn } from '../lib/cn'
 import { CloseIcon, FileIcon, UploadIcon } from '../lib/icons'
 import { Button } from '../primitives/button'
 import { useFieldControl } from '../lib/field-context'
+import { useControllableState } from '../lib/use-controllable-state'
 import { Progress } from './feedback'
+
+const NO_ITEMS: UploadItem[] = []
 
 /** `1536000` → `1.5 MB`. Decimal units, because that is what a file manager shows. */
 export function formatBytes(bytes: number, decimals = 1): string {
@@ -39,7 +44,7 @@ export interface FileUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
   /** Reject beyond this many files. */
   maxFiles?: number
   disabled?: boolean
-  /** The selection. Controlled: the caller keeps the list. */
+  /** The selection. Controlled when defined (the caller keeps the list); `[]` is empty. */
   value?: UploadItem[]
   onValueChange?: (items: UploadItem[]) => void
   /** Called with whatever survived validation. */
@@ -49,9 +54,38 @@ export interface FileUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
   /** Replaces the wording inside the drop zone. */
   children?: ReactNode
   hint?: ReactNode
+  /**
+   * Submitted with a native `<form>` (a server action, a plain POST): the
+   * selection is mirrored into a file input of this name. Needs a browser
+   * with a constructible `DataTransfer`, which is every current one.
+   */
+  name?: string
 }
 
-function accepts(file: File, accept?: string): boolean {
+/**
+ * Keep a named, hidden `<input type="file">` holding the selection.
+ *
+ * The visible picker is emptied after every pick (so the same file can be
+ * chosen twice), which means it never carries anything into a form. This
+ * input does: `DataTransfer` is the one way to put files into an input.
+ */
+export function useFormFiles(files: File[]) {
+  const ref = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const input = ref.current
+    if (!input || typeof DataTransfer === 'undefined') return
+    try {
+      const transfer = new DataTransfer()
+      for (const file of files) transfer.items.add(file)
+      input.files = transfer.files
+    } catch {
+      // An engine without a writable `files` simply submits nothing.
+    }
+  }, [files])
+  return ref
+}
+
+export function accepts(file: File, accept?: string): boolean {
   if (!accept) return true
   return accept.split(',').some((raw) => {
     const pattern = raw.trim().toLowerCase()
@@ -66,8 +100,9 @@ function accepts(file: File, accept?: string): boolean {
  * A drop zone with a file list.
  *
  * The hidden `<input type="file">` stays the real control — the styled area is
- * a label for it — so keyboard users, form resets and the OS file picker all
- * work without a line of extra code.
+ * a label for it — so keyboard users and the OS file picker work without a
+ * line of extra code. A native form reset does not clear the selection: it
+ * lives in React state, so reset it there.
  *
  * Validation happens here but reporting does not: the component rejects a file
  * and tells the caller why, and the caller decides whether that is a toast, an
@@ -80,32 +115,29 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
     multiple = false,
     maxSize,
     maxFiles,
-    disabled = false,
+    disabled: disabledProp = false,
     value,
     onValueChange,
     onFilesAccepted,
     onFileRejected,
     hint,
     children,
+    name,
     ...props
   },
   ref,
 ) {
   const field = useFieldControl()
+  const disabled = disabledProp || Boolean(field.disabled)
   const generatedId = useId()
   const inputId = field.id ?? generatedId
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
-  const [internal, setInternal] = useState<UploadItem[]>([])
-  const items = value ?? internal
-
-  const commit = useCallback(
-    (next: UploadItem[]) => {
-      if (value === undefined) setInternal(next)
-      onValueChange?.(next)
-    },
-    [onValueChange, value],
-  )
+  const [items, commit] = useControllableState<UploadItem[]>({
+    value,
+    defaultValue: NO_ITEMS,
+    onChange: onValueChange,
+  })
 
   const add = useCallback(
     (incoming: FileList | File[]) => {
@@ -121,7 +153,8 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
           onFileRejected?.(file, 'size')
           continue
         }
-        const total = items.length + accepted.length
+        // A single-file picker replaces its file rather than refusing the new one.
+        const total = (multiple ? items.length : 0) + accepted.length
         const limit = maxFiles ?? (multiple ? Infinity : 1)
         if (total >= limit) {
           onFileRejected?.(file, 'count')
@@ -139,6 +172,9 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
     },
     [accept, commit, disabled, items, maxFiles, maxSize, multiple, onFileRejected, onFilesAccepted],
   )
+
+  const files = useMemo(() => items.map((item) => item.file), [items])
+  const formRef = useFormFiles(files)
 
   function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault()
@@ -173,6 +209,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
           multiple={multiple}
           disabled={disabled}
           aria-describedby={field['aria-describedby']}
+          aria-invalid={field['aria-invalid']}
           onChange={(event) => {
             if (event.target.files) add(event.target.files)
             // Clear it so picking the same file twice still fires a change.
@@ -194,6 +231,19 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
             <span className="sui-dropzone__hint">Up to {formatBytes(maxSize)}</span>
           ) : null)}
       </div>
+
+      {name ? (
+        <input
+          ref={formRef}
+          type="file"
+          name={name}
+          multiple={multiple}
+          disabled={disabled}
+          hidden
+          tabIndex={-1}
+          aria-hidden="true"
+        />
+      ) : null}
 
       {items.length > 0 ? (
         <ul className="sui-dropzone__list">

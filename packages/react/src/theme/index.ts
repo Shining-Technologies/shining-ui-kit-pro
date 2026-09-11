@@ -4,7 +4,7 @@
  */
 export { UIKitProvider } from './provider'
 export type { UIKitProviderProps } from './provider'
-export { UIKitContext, useColorMode, useProject, useUIKit } from './context'
+export { UIKitContext, useColorMode, usePortalContainer, useProject, useUIKit } from './context'
 export type { ColorModePreference, UIKitContextValue } from './context'
 export {
   ColorModeToggle,

@@ -1,4 +1,4 @@
-import { DataTable, RowAction, RowActionGroup, type ColumnDef } from '@shining-ui-kit/react'
+import { DataTable, RowAction, RowActionGroup, type ColumnDef } from '@shining-technologies/ui-kit-react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'

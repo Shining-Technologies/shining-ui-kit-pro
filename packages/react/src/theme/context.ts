@@ -5,7 +5,7 @@ import type {
   ProjectInput,
   ProjectRegistry,
   ResolvedProject,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import { createContext, useContext } from 'react'
 
 /** `system` follows the OS until the user picks a side. */
@@ -27,6 +27,19 @@ export interface UIKitContextValue {
   setMode: (mode: ColorModePreference) => void
   /** Switch project by id. Unknown ids are ignored rather than blanking the UI. */
   setProject: (id: string) => void
+
+  /**
+   * Where dialogs, menus and tooltips render. The themed wrapper in `local`
+   * scope, so portalled surfaces keep the project's tokens; `undefined` in
+   * `global` scope, where `<body>` already inherits them from `<html>`.
+   */
+  portalContainer?: HTMLElement
+
+  /**
+   * The provider's Content-Security-Policy nonce, for the inline `<style>`s
+   * components render into server HTML (the sidebar's custom breakpoint).
+   */
+  nonce?: string
 
   /** Project management, present only when the provider was given a registry. */
   registry?: ProjectRegistry
@@ -56,6 +69,14 @@ export function useUIKit(): UIKitContextValue {
 /** The active project, or `undefined` outside a provider. */
 export function useProject(): ProjectDefinition | undefined {
   return useContext(UIKitContext)?.project
+}
+
+/**
+ * The element portalled surfaces should render into, for Radix's `container`
+ * prop. `undefined` means "the default" (`<body>`). Safe outside a provider.
+ */
+export function usePortalContainer(): HTMLElement | undefined {
+  return useContext(UIKitContext)?.portalContainer
 }
 
 /** The colour mode actually rendering, and a setter. Safe outside a provider. */

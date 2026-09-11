@@ -1,6 +1,7 @@
 import * as AvatarPrimitive from '@radix-ui/react-avatar'
 import { cva, type VariantProps } from 'class-variance-authority'
 import {
+  Children,
   forwardRef,
   type ComponentPropsWithoutRef,
   type ElementRef,
@@ -67,11 +68,10 @@ export const AvatarFallback = forwardRef<
 })
 
 export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
-  /**
-   * Show at most this many avatars, then a `+n` chip.
-   * Applied by the caller — this component only lays out what it is given.
-   */
+  /** Show at most this many avatars, then a `+n` chip standing for the rest. */
   max?: number
+  /** Classes for the `+n` chip — usually the avatars' size, e.g. `sui-avatar--sm`. */
+  moreClassName?: string
 }
 
 /**
@@ -81,16 +81,34 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
  * decoration around a list that should already be readable some other way.
  */
 export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function AvatarGroup(
-  { className, max: _max, ...props },
+  { className, max, moreClassName, children, ...props },
   ref,
 ) {
+  const items = Children.toArray(children)
+  const limit = max !== undefined && max >= 0 ? Math.floor(max) : items.length
+  const hidden = items.length - limit
+
   return (
     <div
       ref={ref}
       data-slot="avatar-group"
       className={cn('sui-avatar-group', className)}
       {...props}
-    />
+    >
+      {hidden > 0 ? items.slice(0, limit) : children}
+      {hidden > 0 ? (
+        <span
+          data-slot="avatar-group-more"
+          role="img"
+          aria-label={`${hidden} more`}
+          className={cn('sui-avatar', moreClassName)}
+        >
+          <span className="sui-avatar__fallback" aria-hidden="true">
+            +{hidden}
+          </span>
+        </span>
+      ) : null}
+    </div>
   )
 })
 

@@ -35,7 +35,7 @@ import {
   SheetTitle,
   SheetTrigger,
   Textarea,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { Demo } from './Demo'
 
 export function Overlays() {

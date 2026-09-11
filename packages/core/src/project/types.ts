@@ -99,6 +99,29 @@ export interface ProjectInput {
   builtIn?: boolean
 }
 
+/**
+ * The quick way to put your own brand on a preset: one flat object instead of
+ * a seed, a shape and a typography block. Every field is optional, and a bare
+ * string is shorthand for `{ primary }`.
+ */
+export interface BrandOptions extends Partial<ProjectSeed> {
+  /** Base corner radius, e.g. `'0.5rem'`. */
+  radius?: string
+  density?: Density
+  elevation?: ProjectShape['elevation']
+  borderWidth?: string
+  /** Table chrome preset. */
+  variant?: TableVariant
+  neutralTint?: NeutralTint
+  fontFamily?: string
+  fontSize?: string
+  titleFontWeight?: string
+  /** Token-level escape hatch, applied after generation. */
+  overrides?: UIKitTheme
+}
+
+export type BrandInput = string | BrandOptions
+
 export type ColorMode = 'light' | 'dark'
 
 /** A project resolved into concrete tokens for both colour modes. */

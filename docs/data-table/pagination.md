@@ -51,6 +51,18 @@ Give the table the total row count and it derives everything else:
 The control is identical in both modes — "Showing 21–40 of 1,240", numbered pages, first /
 previous / next / last. Nothing in the UI knows where the rows came from.
 
+A `pageSize` that is not among `pageSizeOptions`, like the `20` above, is added to the
+page-size select, so the select always shows the current size. An empty table reads
+"Page 1 of 1", not "Page 1 of 0".
+
+## Staying on the page when data changes
+
+In client pagination a new `data` array returns to the first page. When the array changes
+because of a poll or a refetch rather than a new result, pass `keepPageOnDataChange`: the
+page is kept (or steps back to the last one if the data got shorter), while sorting,
+filtering and searching still reset it. Server pagination never resets on new data, so it
+ignores the prop.
+
 ## Replacing the control
 
 ```tsx
@@ -70,7 +82,7 @@ Or drop content in through the slot: `slots={{ pagination: <MyPager /> }}`.
 The page-number arithmetic is exported and pure, so a custom control can reuse it:
 
 ```ts
-import { getPageNumbers, getPageRange } from '@shining-ui-kit/core'
+import { getPageNumbers, getPageRange } from '@shining-technologies/ui-kit-core'
 
 getPageNumbers(30, 62, 1) // [0, 'ellipsis-start', 29, 30, 31, 'ellipsis-end', 61]
 getPageRange(1, 20, 1240) // { from: 21, to: 40, total: 1240 }

@@ -41,7 +41,7 @@ import {
   TimeField,
   type ImageItem,
   type UploadItem,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { useState } from 'react'
 import { REGIONS } from '../data'
 import { Demo } from './Demo'

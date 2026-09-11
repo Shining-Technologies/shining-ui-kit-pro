@@ -46,11 +46,14 @@ export const SectionTabs = forwardRef<HTMLDivElement, SectionTabsProps>(function
   },
   ref,
 ) {
-  const [active, setActive] = useControllableState<string | undefined>({
+  const [selected, setActive] = useControllableState<string | undefined>({
     value,
     defaultValue: defaultValue ?? tabs[0]?.id,
     onChange: (next) => next !== undefined && onValueChange?.(next),
   })
+  // Resolved at render, not only at mount: tabs that arrive after the first
+  // render (loaded, or permission-filtered) still get a current one.
+  const active = selected ?? tabs[0]?.id
 
   return (
     <div

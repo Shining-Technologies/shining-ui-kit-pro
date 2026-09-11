@@ -572,6 +572,40 @@
   }
 }
 
+/*
+ * The same, for a `responsiveMode="auto"` table measured by its own width: a
+ * table in a narrow side panel needs the narrow toolbar on a wide screen too.
+ * Only `auto` roots are containers, so this never fires for other modes.
+ */
+@container sui-table (max-width: 39.9375rem) {
+  .sui-toolbar__row {
+    flex-wrap: wrap;
+  }
+
+  .sui-pagination__page-size-label {
+    display: none;
+  }
+
+  .sui-pagination__page:not([aria-current]),
+  .sui-pagination__ellipsis {
+    display: none;
+  }
+
+  .sui-search {
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .sui-toolbar__end {
+    margin-inline-start: 0;
+  }
+
+  .sui-inline-filter__input {
+    max-width: none;
+    flex: 1 1 8rem;
+  }
+}
+
 /* ------------------------------------------------------------ cell toolkit */
 
 .sui-cell-text--truncate {

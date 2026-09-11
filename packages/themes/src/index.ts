@@ -1,5 +1,5 @@
 /**
- * `@shining-ui-kit/themes` — the shipped design presets.
+ * `@shining-technologies/ui-kit-themes` — the shipped design presets.
  *
  * Two kinds of preset live here, and they operate at different levels:
  *
@@ -13,12 +13,13 @@
  * Both are plain data, so unused presets disappear from your bundle and any of
  * them can be serialised, diffed or stored per user (§26, §53).
  */
-import { createTheme, type UIKitTheme } from '@shining-ui-kit/core'
+import { createTheme, type UIKitTheme } from '@shining-technologies/ui-kit-core'
 
 // ------------------------------------------------------------------ palettes
 
 export {
   BUILT_IN_PALETTES,
+  darwindPalette,
   defaultPalette,
   emberPalette,
   forestPalette,
@@ -28,8 +29,9 @@ export {
   rosePalette,
   shiningPalette,
   slatePalette,
+  unnPalette,
   violetPalette,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 
 // ------------------------------------------------------------ chrome themes
 
@@ -101,5 +103,13 @@ export const themes = {
 
 export type ThemeName = keyof typeof themes
 
-export { createTheme, createTableTheme, mergeThemes, themeToCssVars } from '@shining-ui-kit/core'
-export type { ProjectDefinition, UIKitTheme, UIKitTokens } from '@shining-ui-kit/core'
+export { createTheme, createTableTheme, mergeThemes, themeToCssVars } from '@shining-technologies/ui-kit-core'
+export { applyBrand } from '@shining-technologies/ui-kit-core'
+export type {
+  BrandInput,
+  BrandOptions,
+  PresetId,
+  ProjectDefinition,
+  UIKitTheme,
+  UIKitTokens,
+} from '@shining-technologies/ui-kit-core'

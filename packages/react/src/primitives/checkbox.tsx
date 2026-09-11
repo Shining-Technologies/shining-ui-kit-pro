@@ -12,14 +12,22 @@ export type CheckboxProps = ComponentPropsWithoutRef<typeof CheckboxPrimitive.Ro
  */
 export const Checkbox = forwardRef<ElementRef<typeof CheckboxPrimitive.Root>, CheckboxProps>(
   function Checkbox({ className, ...props }, ref) {
-    // `aria-invalid` is not meaningful on a checkbox, so only the identity and
-    // description half of the field wiring is taken.
-    const { id, 'aria-describedby': describedBy, disabled, required } = useFieldControl()
+    // The whole field wiring, `aria-invalid` included: it is a supported state
+    // of `role="checkbox"`, and an unticked "I accept the terms" is exactly
+    // the checkbox a screen reader needs to hear is invalid.
+    const {
+      id,
+      'aria-describedby': describedBy,
+      'aria-invalid': invalid,
+      disabled,
+      required,
+    } = useFieldControl()
     return (
       <CheckboxPrimitive.Root
         ref={ref}
         id={id}
         aria-describedby={describedBy}
+        aria-invalid={invalid}
         disabled={disabled}
         required={required}
         className={cn('sui-checkbox', className)}

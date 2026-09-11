@@ -1,5 +1,5 @@
 /**
- * `@shining-ui-kit/core` — everything the kit knows that is not React.
+ * `@shining-technologies/ui-kit-core` — everything the kit knows that is not React.
  *
  * The design-token surface, the colour engine, the project system, plus the
  * types, filter engine and pure state helpers behind the data table. If

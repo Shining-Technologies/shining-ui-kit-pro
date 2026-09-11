@@ -6,8 +6,8 @@ same tokens everything else in the kit draws from, so these follow a [project](.
 switch with no adapter layer.
 
 ```tsx
-import { TrendChart, BarChart } from '@shining-ui-kit/react/recharts'
-import '@shining-ui-kit/react/styles.css'
+import { TrendChart, BarChart } from '@shining-technologies/ui-kit-react/recharts'
+import '@shining-technologies/ui-kit-react/styles.css'
 ;<TrendChart
   title="Bookings"
   description="Booked against completed"
@@ -21,10 +21,12 @@ import '@shining-ui-kit/react/styles.css'
 ```
 
 > **This is a separate entry point.** `recharts` is an _optional_ peer dependency and is only
-> pulled into a bundle that imports `@shining-ui-kit/react/recharts`. The root package still
+> pulled into a bundle that imports `@shining-technologies/ui-kit-react/recharts`. The root package still
 > costs nothing beyond the components used, and the [dependency-free SVG charts](./charts.md)
-> are still there and still exported from the root. Install `recharts@^2.15` alongside the
-> kit to use this set.
+> are still there and still exported from the root. Install `recharts` alongside the kit to use
+> this set — Recharts 3 or 2.15+, both tested on every change. On React 19 with Recharts 2, also
+> override `react-is` to `^19.0.0`, or some charts (horizontal bars among them) silently break;
+> Recharts 3 needs nothing. See [Installation](../guide/installation.md#react-19-with-recharts-2).
 
 ---
 
@@ -66,6 +68,10 @@ Every chart accepts these, on top of its own props.
 Cartesian charts add `data`, `xKey`, `series`, `showGrid`, `valueFormatter` and
 `labelFormatter`. `series` is `{ key, label?, color? }[]`, where `key` indexes into each
 datum — the same shape the [SVG charts](./charts.md) use.
+
+The value axis of `BarChart`, and of `TrendChart` while `startAtZero` is on (the default),
+always contains zero, on whichever side the data is not: all-negative data gets zero at the
+top, so a bar at -50 is half the length of one at -100 rather than a tenth of it.
 
 ### `'auto'` legends
 
@@ -221,12 +227,19 @@ What changes across them:
   image to a screen reader however carefully it is drawn, so the numbers exist in text —
   gating them behind a control the reader has to find first would make them optional. It also
   opens automatically for print. Turn it off per chart with `showTableToggle={false}`.
-- **Keyboard navigation** comes from Recharts' `accessibilityLayer` on the cartesian charts:
-  focus the plot and arrow through the points, with the tooltip following.
+- **A string `title` names the chart.** The frame becomes a `role="figure"` labelled by its
+  title, so a screen reader meets the name before the plot, the legend and the table.
+- **Keyboard navigation** comes from Recharts' `accessibilityLayer` on `TrendChart`,
+  `BarChart` and `ScatterChart`: focus the plot and arrow through the points, with the tooltip
+  following.
+- **Donut wedges are labelled** "Label: value, pct" — "Completed: 412, 38%" — so each wedge
+  is announced with its figure rather than as an unnamed image.
 - **Text never wears the series colour.** Marks carry identity; labels, values and legends
   stay in text tokens with a coloured swatch beside them. A light categorical hue is
   illegible as type.
-- Legends are `<button>`s with `aria-pressed` when interactive, and disabled when not.
+- **Legends are a plain list** unless series can be hidden. Then each entry is a `<button>` with
+  `aria-pressed`. A disabled button would be announced as "unavailable", and a key to the
+  colours is not a control at all.
 
 ---
 
@@ -306,7 +319,7 @@ import {
   useHiddenSeries,
   useResolvedSeries,
   seriesColor,
-} from '@shining-ui-kit/react/recharts'
+} from '@shining-technologies/ui-kit-react/recharts'
 
 ;<ChartFrame title="Mine" series={resolved} height={260}>
   {({ size, width }) => (

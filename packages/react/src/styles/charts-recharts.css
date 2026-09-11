@@ -1,5 +1,5 @@
 /*
- * The Recharts chart set (`@shining-ui-kit/react/recharts`).
+ * The Recharts chart set (`@shining-technologies/ui-kit-react/recharts`).
  *
  * Prefixed `sui-viz` rather than `sui-chart` so it sits beside the
  * dependency-free SVG charts without either one restyling the other. Series

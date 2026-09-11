@@ -1,6 +1,6 @@
-import { users, type User } from '@shining-ui-kit/examples'
-import { DataTable, type ColumnDef, type Density, type TableVariant } from '@shining-ui-kit/react'
-import { dashboardTheme, midnightTheme, minimalTheme } from '@shining-ui-kit/themes'
+import { users, type User } from '@shining-technologies/ui-kit-examples'
+import { DataTable, type ColumnDef, type Density, type TableVariant } from '@shining-technologies/ui-kit-react'
+import { dashboardTheme, midnightTheme, minimalTheme } from '@shining-technologies/ui-kit-themes'
 import type { Meta, StoryObj } from '@storybook/react'
 
 const columns: ColumnDef<User>[] = [

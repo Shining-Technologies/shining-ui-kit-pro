@@ -8,7 +8,7 @@ import {
   MailIcon,
   TrashIcon,
   type ColumnDef,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { users, type User } from './data'
 
 /**

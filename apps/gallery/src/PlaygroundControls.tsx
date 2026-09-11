@@ -5,7 +5,7 @@ import {
   type ResponsiveMode,
   type TableLayout,
   type TableVariant,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { Choice, Flag, Segmented } from './controls'
 
 /** Every knob the playground offers, in one object so the panel stays a view. */

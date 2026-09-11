@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { forwardRef, useState, type FocusEventHandler } from 'react'
 import { cn } from '../lib/cn'
-import { useFieldControl } from '../lib/field-context'
+import { useFieldControl, useTriggerName } from '../lib/field-context'
 import { ClockIcon, CloseIcon } from '../lib/icons'
 import { Clock, formatTime, toTime, type IsoTime } from './clock'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
@@ -10,14 +10,28 @@ export interface TimeFieldProps {
   onChange: (value: IsoTime | undefined) => void
   /** Shown when nothing is chosen. */
   placeholder?: string
-  /** Accessible name. Required — the field is a button, not a labelled input. */
-  label: string
+  /**
+   * Accessible name. Inside a `<Field>` leave it out: the field's label names
+   * the control. Outside one, pass it — the field is a button, not an input.
+   */
+  label?: string
   /** Minutes the dial and the arrow keys step by. */
   minuteStep?: number
   hour12?: boolean
   locale?: string
   /** Offer "Now" above the dial. */
   showNow?: boolean
+  /** Overrides the id a surrounding `<Field>` supplies. */
+  id?: string
+  /**
+   * Submitted with a native `<form>`: a hidden input carries the value
+   * (`HH:mm`), since the visible control is a button.
+   */
+  name?: string
+  /** Announced as required (`aria-required`); a hidden input cannot be validated natively. */
+  required?: boolean
+  /** Fires when the trigger loses focus — where a form library records "touched". */
+  onBlur?: FocusEventHandler<HTMLButtonElement>
   disabled?: boolean
   className?: string
 }
@@ -36,37 +50,51 @@ function nowRounded(step: number): IsoTime {
  * to the browser, and one browser-shaped control in a themed form is the thing
  * people notice.
  */
-export function TimeField({
-  value,
-  onChange,
-  placeholder = 'Pick a time',
-  label,
-  minuteStep = 5,
-  hour12 = true,
-  locale,
-  showNow = true,
-  disabled,
-  className,
-}: TimeFieldProps) {
+export const TimeField = forwardRef<HTMLButtonElement, TimeFieldProps>(function TimeField(
+  {
+    value,
+    onChange,
+    placeholder = 'Pick a time',
+    label,
+    minuteStep = 5,
+    hour12 = true,
+    locale,
+    showNow = true,
+    disabled,
+    className,
+    id,
+    name,
+    required,
+    onBlur,
+  },
+  ref,
+) {
   const field = useFieldControl()
   const [open, setOpen] = useState(false)
+  const isDisabled = disabled ?? field.disabled
   const formatted = formatTime(value, locale, hour12)
+  const trigger = useTriggerName(label, formatted, 'Time')
 
   return (
     <div className={cn('sui-date-field', className)} data-empty={formatted ? undefined : true}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
+            ref={ref}
             type="button"
-            id={field.id}
+            id={id ?? field.id}
             className="sui-date-field__trigger"
-            disabled={disabled ?? field.disabled}
-            aria-label={formatted ? `${label}: ${formatted}` : label}
+            disabled={isDisabled}
+            {...trigger.props}
             aria-describedby={field['aria-describedby']}
             aria-invalid={field['aria-invalid']}
+            aria-required={(required ?? field.required) || undefined}
+            onBlur={onBlur}
           >
             <ClockIcon className="sui-date-field__icon" aria-hidden="true" />
-            <span className="sui-date-field__value">{formatted ?? placeholder}</span>
+            <span id={trigger.valueId} className="sui-date-field__value">
+              {formatted ?? placeholder}
+            </span>
           </button>
         </PopoverTrigger>
 
@@ -87,7 +115,7 @@ export function TimeField({
           ) : null}
           <Clock
             value={value ?? '09:00'}
-            label={label}
+            label={trigger.text}
             hour12={hour12}
             minuteStep={minuteStep}
             onChange={onChange}
@@ -98,16 +126,18 @@ export function TimeField({
         </PopoverContent>
       </Popover>
 
-      {value ? (
+      {/* A disabled field must not be clearable either. */}
+      {value && !isDisabled ? (
         <button
           type="button"
           className="sui-date-field__clear"
-          aria-label={`Clear ${label}`}
+          aria-label={`Clear ${trigger.text}`}
           onClick={() => onChange(undefined)}
         >
           <CloseIcon aria-hidden="true" />
         </button>
       ) : null}
+      {name ? <input type="hidden" name={name} value={value ?? ''} disabled={isDisabled} /> : null}
     </div>
   )
-}
+})

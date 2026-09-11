@@ -8,14 +8,23 @@ import {
   type HTMLAttributes,
 } from 'react'
 import { cn } from '../lib/cn'
+import { useDialogPanel } from '../lib/dialog-focus'
 import { CloseIcon } from '../lib/icons'
+import { usePortalContainer } from '../theme/context'
 
 /* -------------------------------------------------------------------- dialog */
 
 export const Dialog = DialogPrimitive.Root
 export const DialogTrigger = DialogPrimitive.Trigger
 export const DialogClose = DialogPrimitive.Close
-export const DialogPortal = DialogPrimitive.Portal
+/**
+ * Renders into the provider's themed wrapper in `local` scope, so a dialog is
+ * painted with the same project as the page that opened it.
+ */
+export function DialogPortal(props: ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>) {
+  const container = usePortalContainer()
+  return <DialogPrimitive.Portal container={container} {...props} />
+}
 
 export const DialogOverlay = forwardRef<
   ElementRef<typeof DialogPrimitive.Overlay>,
@@ -49,21 +58,34 @@ export interface DialogContentProps
 /**
  * The dialog panel.
  *
- * Portalled, so the theme variables have to reach it another way: they are
- * inherited from `<html>` when the provider runs in `global` scope, which is
- * why an app that uses dialogs should prefer that scope.
+ * Portalled — into the provider's wrapper in `local` scope, or `<body>` in
+ * `global` scope where the tokens live on `<html>` — so it is themed either way.
+ *
+ * On close, focus goes back to whatever had it when the dialog opened — or to
+ * the menu's trigger when that was a `DropdownMenuItem` that has since
+ * unmounted — rather than to `<body>`. In development it warns when the panel
+ * has no accessible name (no `DialogTitle`, no `aria-label`).
  */
 export const DialogContent = forwardRef<
   ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(function DialogContent({ className, children, size, hideClose, ...props }, ref) {
+>(function DialogContent(
+  { className, children, size, hideClose, onCloseAutoFocus, ...props },
+  ref,
+) {
+  const panel = useDialogPanel(
+    props.role === 'alertdialog' ? 'AlertDialogContent' : 'DialogContent',
+    ref,
+    onCloseAutoFocus,
+  )
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        ref={ref}
+        ref={panel.ref}
         data-slot="dialog-content"
         className={cn(dialogVariants({ size }), className)}
+        onCloseAutoFocus={panel.onCloseAutoFocus}
         {...props}
       >
         {children}
@@ -77,21 +99,44 @@ export const DialogContent = forwardRef<
   )
 })
 
-export function DialogHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div data-slot="dialog-header" className={cn('sui-dialog__header', className)} {...props} />
-  )
-}
+export const DialogHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  function DialogHeader({ className, ...props }, ref) {
+    return (
+      <div
+        ref={ref}
+        data-slot="dialog-header"
+        className={cn('sui-dialog__header', className)}
+        {...props}
+      />
+    )
+  },
+)
 
-export function DialogBody({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div data-slot="dialog-body" className={cn('sui-dialog__body', className)} {...props} />
-}
+export const DialogBody = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  function DialogBody({ className, ...props }, ref) {
+    return (
+      <div
+        ref={ref}
+        data-slot="dialog-body"
+        className={cn('sui-dialog__body', className)}
+        {...props}
+      />
+    )
+  },
+)
 
-export function DialogFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div data-slot="dialog-footer" className={cn('sui-dialog__footer', className)} {...props} />
-  )
-}
+export const DialogFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  function DialogFooter({ className, ...props }, ref) {
+    return (
+      <div
+        ref={ref}
+        data-slot="dialog-footer"
+        className={cn('sui-dialog__footer', className)}
+        {...props}
+      />
+    )
+  },
+)
 
 export const DialogTitle = forwardRef<
   ElementRef<typeof DialogPrimitive.Title>,
@@ -144,14 +189,19 @@ export interface SheetContentProps extends ComponentPropsWithoutRef<
 export const SheetContent = forwardRef<
   ElementRef<typeof DialogPrimitive.Content>,
   SheetContentProps
->(function SheetContent({ className, children, side = 'right', hideClose, ...props }, ref) {
+>(function SheetContent(
+  { className, children, side = 'right', hideClose, onCloseAutoFocus, ...props },
+  ref,
+) {
+  const panel = useDialogPanel('SheetContent', ref, onCloseAutoFocus)
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        ref={ref}
+        ref={panel.ref}
         data-slot="sheet-content"
         className={cn('sui-sheet', `sui-sheet--${side}`, className)}
+        onCloseAutoFocus={panel.onCloseAutoFocus}
         {...props}
       >
         {children}
@@ -184,17 +234,28 @@ export type AlertDialogProps = DialogContentProps
 export const AlertDialogContent = forwardRef<
   ElementRef<typeof DialogPrimitive.Content>,
   AlertDialogProps
->(function AlertDialogContent({ className, size = 'sm', ...props }, ref) {
+>(function AlertDialogContent(
+  { className, size = 'sm', onPointerDownOutside, onInteractOutside, ...props },
+  ref,
+) {
   return (
     <DialogContent
       ref={ref}
       role="alertdialog"
       size={size}
       hideClose
-      onPointerDownOutside={(event) => event.preventDefault()}
-      onInteractOutside={(event) => event.preventDefault()}
       className={className}
       {...props}
+      // Composed and applied last: a caller's handler (for logging, say) used
+      // to replace these, and so silently brought back dismiss-by-outside-click.
+      onPointerDownOutside={(event) => {
+        onPointerDownOutside?.(event)
+        event.preventDefault()
+      }}
+      onInteractOutside={(event) => {
+        onInteractOutside?.(event)
+        event.preventDefault()
+      }}
     />
   )
 })
@@ -217,8 +278,9 @@ export const HoverCardContent = forwardRef<
   ElementRef<typeof HoverCardPrimitive.Content>,
   ComponentPropsWithoutRef<typeof HoverCardPrimitive.Content>
 >(function HoverCardContent({ className, sideOffset = 6, ...props }, ref) {
+  const container = usePortalContainer()
   return (
-    <HoverCardPrimitive.Portal>
+    <HoverCardPrimitive.Portal container={container}>
       <HoverCardPrimitive.Content
         ref={ref}
         sideOffset={sideOffset}

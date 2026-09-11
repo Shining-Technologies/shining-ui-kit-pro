@@ -20,7 +20,7 @@ import {
   UIKitProvider,
   useUIKit,
   type ProjectDefinition,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { useState } from 'react'
 import { CHART_MONTHS, SPARK_SERIES } from '../data'
 import { Demo } from './Demo'

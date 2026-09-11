@@ -4,7 +4,7 @@ import {
   DataTable,
   createColumnHelper,
   type ColumnDef,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { metrics, type Metric } from './data'
 
 /**

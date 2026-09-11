@@ -3,7 +3,7 @@ import {
   getOperatorArity,
   type ColumnFilterConfig,
   type FilterOperator,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import type { Column } from '@tanstack/react-table'
 import { useMemo } from 'react'
 import { useDataTable } from '../../context/table-context'

@@ -91,6 +91,30 @@ describe('the table stylesheet', () => {
     // `margin-inline-start: auto` is what used to reserve 1.5rem in every head.
     expect(menu).not.toContain('margin-inline-start: auto')
   })
+
+  it('writes the same card rules for the viewport and the container trigger', () => {
+    const block = (at: string) => {
+      const start = css.indexOf(at)
+      expect(start, `missing ${at}`).toBeGreaterThan(-1)
+      // Each block runs to the next top-level at-rule (or the end of the file).
+      const end = css.slice(start + at.length).search(/\n@/)
+      return css.slice(start + at.length, end < 0 ? undefined : start + at.length + end)
+    }
+    const cards = block('@media (max-width: 47.9375rem) {')
+    const auto = block('@container sui-table (max-width: 47.9375rem) {')
+    expect(auto.replaceAll("[data-responsive='auto']", "[data-responsive='cards']")).toBe(cards)
+  })
+
+  it('keeps pinned cells opaque and in step with their row', () => {
+    const pinned = /\n\.sui-pinned\s*\{([^}]*)\}/.exec(css)?.[1] ?? ''
+    // A transparent pinned cell shows the cells scrolling underneath it.
+    expect(pinned).toContain('background-color: var(--sui-surface-base)')
+    expect(pinned).toContain('var(--sui-row-bg')
+  })
+
+  it('stacks a pinned footer cell above the footer cells scrolling under it', () => {
+    expect(css).toMatch(/\.sui-tfoot--sticky \.sui-tf\.sui-pinned\s*\{\s*z-index: 4;/)
+  })
 })
 
 /**

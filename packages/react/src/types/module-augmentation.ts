@@ -1,4 +1,4 @@
-import type { ColumnMeta as ShiningColumnMeta } from '@shining-ui-kit/core'
+import type { ColumnMeta as ShiningColumnMeta } from '@shining-technologies/ui-kit-core'
 
 /**
  * Teach the engine about our `meta` shape so `column.columnDef.meta.align` is

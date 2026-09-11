@@ -27,13 +27,13 @@ change. Treat it as major.
 
 ## Version groups
 
-`@shining-ui-kit/core`, `@shining-ui-kit/react` and `@shining-ui-kit/themes` are a
+`@shining-technologies/ui-kit-core`, `@shining-technologies/ui-kit-react` and `@shining-technologies/ui-kit-themes` are a
 [`fixed`](https://github.com/changesets/changesets/blob/main/docs/fixed-packages.md) group:
 they always carry the same version, because `react` re-exports `core`'s types and `themes`
 produces `core`'s projects. Installing matching versions should never be something a user has
 to think about.
 
-`@shining-ui-kit/export-csv` versions on its own — it is optional, has no runtime
+`@shining-technologies/ui-kit-export-csv` versions on its own — it is optional, has no runtime
 dependencies, and rarely changes.
 
 The gallery and examples workspaces are `private` and ignored here; they are never published.

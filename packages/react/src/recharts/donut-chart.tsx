@@ -100,6 +100,24 @@ export function DonutChart({
 
   const total = visible.reduce((sum, slice) => sum + slice.value, 0)
 
+  // Recharts draws every wedge as a `role="img"` path and spreads the datum's
+  // SVG attributes onto it — so without a label here each wedge is an image
+  // with no name, which is announced as nothing and fails axe `svg-img-alt`.
+  const wedges = useMemo(
+    () =>
+      visible.map((slice) => ({
+        ...slice,
+        // Stated rather than inherited: Recharts 2 makes each wedge an image
+        // itself, Recharts 3 does not — and a label on a role-less path is
+        // prohibited ARIA there (axe `aria-prohibited-attr`).
+        role: 'img',
+        'aria-label': `${slice.label}: ${formatFull(slice.value)}${unit ?? ''}${
+          total > 0 ? `, ${Math.round((slice.value / total) * 100)}%` : ''
+        }`,
+      })),
+    [visible, total, unit],
+  )
+
   const tableRows = useMemo(
     () =>
       data.map((slice) => ({
@@ -123,7 +141,7 @@ export function DonutChart({
       tableColumns={['Value']}
       valueFormatter={formatFull}
     >
-      {({ size, height }) => {
+      {({ size, height, label }) => {
         // Radii follow the plot box rather than fixed pixels, so the ring keeps
         // its proportions from a phone-width card up to a full-width panel.
         const outer = Math.max(40, Math.min(height / 2 - 8, 160))
@@ -133,7 +151,7 @@ export function DonutChart({
         return (
           <div className="sui-viz__radial">
             <ResponsiveContainer width="100%" height="100%">
-              <RcPieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+              <RcPieChart title={label} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
                 <Tooltip
                   {...TOOLTIP_DEFAULTS}
                   content={
@@ -150,7 +168,7 @@ export function DonutChart({
                   }
                 />
                 <Pie
-                  data={visible}
+                  data={wedges}
                   dataKey="value"
                   nameKey="label"
                   innerRadius={inner}

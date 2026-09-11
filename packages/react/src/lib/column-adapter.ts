@@ -4,8 +4,9 @@ import {
   resolveComparator,
   type ColumnFilterConfig,
   type ColumnPinningState,
+  type ColumnResponsive,
   type VisibilityState,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import type {
   CellContext as EngineCellContext,
   ColumnDef as EngineColumnDef,
@@ -29,6 +30,9 @@ export interface AdaptedColumns<TData> {
   labels: Map<string, string>
   initialVisibility: VisibilityState
   initialPinning: ColumnPinningState
+  /** Leaf columns that hide below or above a breakpoint, by id. */
+  responsive: Map<string, ColumnResponsive>
+
   /** Capabilities inferred from the definitions, so features can self-enable. */
   hints: { anyResizable: boolean; anyPinnable: boolean; anyFooter: boolean }
 }
@@ -61,6 +65,10 @@ function plainTextLabel<TData>(header: HeaderTemplate<TData> | undefined, id: st
 
 function wrapHeader<TData>(template: HeaderTemplate<TData> | undefined) {
   if (template === undefined) return undefined
+  // A plain string stays a string: `flexRender` renders it as-is, and code that
+  // reads `columnDef.header` for a label — the CSV exporter, a custom picker —
+  // gets the text instead of an opaque function.
+  if (typeof template === 'string') return template
   if (typeof template !== 'function') return () => template as ReactNode
   const render = template as (context: unknown) => ReactNode
   return (context: EngineHeaderContext<TData, unknown>) =>
@@ -127,6 +135,9 @@ function adaptOne<TData>(
   if (behavior.defaultVisible === false) out.initialVisibility[id] = false
   if (behavior.defaultPinned === 'left') out.initialPinning.left?.push(id)
   if (behavior.defaultPinned === 'right') out.initialPinning.right?.push(id)
+  if (meta?.responsive?.hideBelow || meta?.responsive?.hideAbove) {
+    out.responsive.set(id, meta.responsive)
+  }
 
   const column: Record<string, unknown> = {
     id,
@@ -171,13 +182,14 @@ function adaptOne<TData>(
   return column as unknown as EngineColumnDef<TData, unknown>
 }
 
-export function adaptColumns<TData>(defs: ColumnDef<TData>[]): AdaptedColumns<TData> {
+export function adaptColumns<TData>(defs: readonly ColumnDef<TData>[]): AdaptedColumns<TData> {
   const out: AdaptedColumns<TData> = {
     columns: [],
     filters: new Map(),
     labels: new Map(),
     initialVisibility: {},
     initialPinning: { left: [], right: [] },
+    responsive: new Map(),
     hints: { anyResizable: false, anyPinnable: false, anyFooter: false },
   }
   out.columns = defs.map((def) => adaptOne(def, out))

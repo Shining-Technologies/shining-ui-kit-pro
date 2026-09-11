@@ -35,7 +35,7 @@ import {
   TabsTrigger,
   Textarea,
   UIKitProvider,
-} from '@shining-ui-kit/react'
+} from '@shining-technologies/ui-kit-react'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState, type ReactNode } from 'react'

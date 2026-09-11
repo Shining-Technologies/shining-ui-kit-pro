@@ -1,4 +1,4 @@
-import { DataTable, type ColumnDef, type DataTableQuery } from '@shining-ui-kit/react'
+import { DataTable, type ColumnDef, type DataTableQuery } from '@shining-technologies/ui-kit-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { makeUsers, type User } from './data'
 

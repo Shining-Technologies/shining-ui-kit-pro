@@ -67,7 +67,7 @@ Resolving a project produces both colour modes eagerly, so a mode toggle swaps o
 rather than re-running the generator.
 
 ```ts
-import { resolveProject, shiningPalette } from '@shining-ui-kit/core'
+import { resolveProject, shiningPalette } from '@shining-technologies/ui-kit-core'
 
 const { light, dark } = resolveProject(shiningPalette)
 light.colors.primary // '#01493b'
@@ -103,27 +103,73 @@ neighbouring series apart in greyscale and for a colour-blind reader.
 
 ## Using a project
 
-### One fixed project
+### A preset, with or without your brand
+
+Most apps never need to build a project object. Name a preset, and optionally put your brand
+on it:
 
 ```tsx
-import { UIKitProvider } from '@shining-ui-kit/react'
+import { UIKitProvider } from '@shining-technologies/ui-kit-react'
 
-;<UIKitProvider defaultProject="shining" scope="global">
+;<UIKitProvider preset="darwind" scope="global">
   <App />
 </UIKitProvider>
+
+<UIKitProvider preset="unn" brand="#be123c" scope="global">
+<UIKitProvider preset="unn" brand={{ primary: '#be123c', radius: '0.5rem' }} scope="global">
 ```
+
+`brand` is a flat object: the seed colours (`primary`, `accent`, `neutral`, `surface` and the
+status colours) alongside `radius`, `density`, `elevation`, `borderWidth`, `variant`,
+`neutralTint`, `fontFamily`, `fontSize`, `titleFontWeight` and `overrides`. A string is
+shorthand for `{ primary }`. The result is a project with the id `<preset>-custom`, so it
+never shadows the shipped preset.
+
+The same operation outside React — in a route loader, a test, or to save to a database — is
+`applyBrand`:
+
+```ts
+import { applyBrand, unnPalette } from '@shining-technologies/ui-kit-core'
+
+const ours = applyBrand(unnPalette, { primary: '#be123c', density: 'compact' })
+```
+
+### Precedence
+
+The provider paints the first of these that is set:
+
+1. `project` (controlled).
+2. A project picked in this session — through `<ProjectSwitcher />`, the editor or `setProject`.
+3. With a `registry`, the project the user picked on an earlier visit, as persisted.
+4. `defaultProject`.
+5. `preset` and/or `brand`, if either is passed.
+6. With a `registry`, its initial project: `initialProjectId`, else its first built-in.
+7. `shining`.
+
+`defaultProject`, `preset`, `brand` and `initialProjectId` decide where a first visit starts;
+once the user picks a project, the pick survives reloads. Only `project` overrides it.
+
+`project` and `defaultProject` accept a full definition, a registry id, or a preset id.
+An id that matches nothing falls back to `shining` and logs a console warning.
+
+### What a preset reaches
+
+Every component. Colours, radius, borders, shadows and type are CSS variables; density sets
+the rhythm of controls and table rows; and `DataTable` takes its `density` and `variant` from
+the project unless you pass its own. Dialogs, sheets, menus, selects, popovers, tooltips and
+hover cards render inside the themed scope, so they match in either scope.
 
 ### Scope
 
-|                           |                                                                                                                               |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `scope="global"`          | Writes the tokens onto `<html>`. What an application wants: portalled surfaces — dialogs, dropdowns, tooltips — inherit them. |
-| `scope="local"` (default) | Wraps the subtree in a themed element. For previewing several projects side by side.                                          |
+|                           |                                                                                                                                        |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `scope="global"`          | Writes the tokens onto `<html>`. What an application wants: the page background and your own markup outside the provider pick them up. |
+| `scope="local"` (default) | Wraps the subtree in a themed element, and renders its portalled surfaces into it. For previewing several projects side by side.       |
 
 ### Colour mode
 
 ```tsx
-<UIKitProvider defaultProject="shining" defaultMode="system" scope="global">
+<UIKitProvider preset="shining" defaultMode="system" scope="global">
 ```
 
 `system` follows the OS until the user chooses a side. In global scope the provider also
@@ -139,10 +185,15 @@ cannot express it without leaving the user unable to get back to it.
 ## Managing projects at runtime
 
 `ProjectRegistry` is a small observable store. It lives outside React so it can be read by a
-route loader or a server render, and so a project chosen in one place survives a remount.
+route loader, and so a project chosen in one place survives a remount.
+
+A server render has no storage, so a registry there only knows its initial project —
+`initialProjectId`, else the first built-in. The provider paints `registry.getInitialActiveId()`
+while hydrating, so the markup agrees with the server's, then switches to the project
+restored from storage in the next commit.
 
 ```tsx
-import { ProjectRegistry, UIKitProvider, ProjectSwitcher, ProjectEditor } from '@shining-ui-kit/react'
+import { ProjectRegistry, UIKitProvider, ProjectSwitcher, ProjectEditor } from '@shining-technologies/ui-kit-react'
 
 const registry = new ProjectRegistry()          // persists to localStorage
 const memoryOnly = new ProjectRegistry({ storage: null })
@@ -153,14 +204,26 @@ const memoryOnly = new ProjectRegistry({ storage: null })
 </UIKitProvider>
 ```
 
-| Method                      |                                                                                             |
-| --------------------------- | ------------------------------------------------------------------------------------------- |
-| `create(input)`             | Add a project. Ids are made unique, so two "Acme"s can coexist.                             |
-| `fork(id, name)`            | Copy one — the flow behind "start from a preset".                                           |
-| `update(id, patch)`         | Edit. **Editing a built-in forks it** rather than mutating the shipped preset.              |
-| `remove(id)`                | Delete a user project. Built-ins cannot be deleted.                                         |
-| `setActive(id)`             | Switch.                                                                                     |
-| `export()` / `import(json)` | Serialise for a file or a database row. Junk is rejected outright, never partially applied. |
+| Method                      |                                                                                                             |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `create(input)`             | Add a project. Ids are made unique, so two "Acme"s can coexist.                                             |
+| `fork(id, name)`            | Copy one — the flow behind "start from a preset".                                                           |
+| `update(id, patch)`         | Edit. **Editing a built-in forks it** rather than mutating the shipped preset.                              |
+| `remove(id)`                | Delete a user project. Built-ins cannot be deleted. Removing the active one returns to the initial project. |
+| `reset()`                   | Drop every user project and return to the initial project.                                                  |
+| `setActive(id)`             | Switch. This is the user's pick, and it is persisted.                                                       |
+| `getChosenActiveId()`       | The active id if the user picked it, `undefined` while it is still the initial project.                     |
+| `export()` / `import(json)` | Serialise for a file or a database row. Input that is not an export is rejected outright.                   |
+
+`initialProjectId` applies on first load only. Only a chosen active id is persisted, so the
+initial project never becomes a "pick" that outranks the app's configuration. Saved state from
+before picks were tracked counts as a pick.
+
+Stored and imported projects are checked one by one. A missing `shape` or `typography`, or a
+field missing from either, is filled in with the defaults; an unknown `neutralTint` becomes
+`subtle`; a seed colour that is not a string is discarded, so its default applies. A project
+without a string `seed.primary` is dropped. `import` makes ids unique, against what is already there and
+within the batch.
 
 Storage failures — a private window, blocked site data, a full quota — are caught. The
 in-memory registry stays correct; only the next reload loses the change.
@@ -210,7 +273,12 @@ sparingly — every value pinned here is one the contrast guarantee no longer co
 ## Building a project in code
 
 ```ts
-import { createProject, forkProject, updateProject, shiningPalette } from '@shining-ui-kit/core'
+import {
+  createProject,
+  forkProject,
+  updateProject,
+  shiningPalette,
+} from '@shining-technologies/ui-kit-core'
 
 const acme = createProject({
   name: 'Acme Admin',
@@ -225,7 +293,7 @@ const tightened = updateProject(acme, { shape: { density: 'compact' } })
 
 ## The colour engine
 
-`@shining-ui-kit/core` exports the OKLab toolkit the generator is built on, for when you
+`@shining-technologies/ui-kit-core` exports the OKLab toolkit the generator is built on, for when you
 need the same derivations in your own code:
 
 ```ts
@@ -236,7 +304,7 @@ import {
   generateScale,
   contrastRatio,
   readableForeground,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 
 generateScale('#01493b') // { 50: '#f0faf7', …, 950: '#08221c' }
 readableForeground('#facc15') // the legible ink for that fill

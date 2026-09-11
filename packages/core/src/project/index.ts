@@ -6,6 +6,8 @@
  * project restyles an entire application rather than one component.
  */
 export type {
+  BrandInput,
+  BrandOptions,
   ColorMode,
   NeutralTint,
   ProjectDefinition,
@@ -18,6 +20,7 @@ export type {
 export {
   DEFAULT_SHAPE,
   DEFAULT_TYPOGRAPHY,
+  applyBrand,
   createProject,
   forkProject,
   resolveProject,
@@ -27,6 +30,7 @@ export {
 export { generateColors } from './generate-palette'
 export {
   BUILT_IN_PALETTES,
+  darwindPalette,
   defaultPalette,
   emberPalette,
   forestPalette,
@@ -36,7 +40,9 @@ export {
   rosePalette,
   shiningPalette,
   slatePalette,
+  unnPalette,
   violetPalette,
 } from './palettes'
+export type { PresetId } from './palettes'
 export { ProjectRegistry, globalProjectRegistry } from './registry'
 export type { ProjectRegistryOptions, ProjectStorage } from './registry'

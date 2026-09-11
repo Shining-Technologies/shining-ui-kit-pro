@@ -16,6 +16,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Scrollbars, native pickers and autofill follow the mode the scope is painted in. */
+.sui-scope[data-sui-mode='light'] {
+  color-scheme: light;
+}
+
+.sui-scope[data-sui-mode='dark'] {
+  color-scheme: dark;
+}
+
 /*
  * One focus treatment for the whole kit.
  *

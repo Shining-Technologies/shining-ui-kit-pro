@@ -1,4 +1,4 @@
-import { getPageNumbers, getPageRange } from '@shining-ui-kit/core'
+import { getPageNumbers, getPageRange } from '@shining-technologies/ui-kit-core'
 import { useDataTable } from '../../context/table-context'
 import {
   ChevronLeftIcon,
@@ -36,6 +36,12 @@ export function DefaultPagination<TData>({ table }: PaginationProps<TData>) {
   const pages = features.pagination.showPageNumbers
     ? getPageNumbers(pageIndex, pageCount, features.pagination.siblingCount)
     : []
+  // A page size the picker does not offer (`pageSize={20}` with the default
+  // options) would leave the select showing nothing; it is always listed.
+  const { pageSizeOptions } = features.pagination
+  const sizeOptions = pageSizeOptions.includes(pageSize)
+    ? pageSizeOptions
+    : [...pageSizeOptions, pageSize].sort((a, b) => a - b)
 
   // From the state rather than the row model, so a selection made on another
   // page — or on a row the server has not sent — is still counted.
@@ -58,7 +64,7 @@ export function DefaultPagination<TData>({ table }: PaginationProps<TData>) {
         </span>
         {/* Announced on every page change, without moving focus. */}
         <span role="status" aria-live="polite" className="sui-sr-only">
-          Page {pageIndex + 1} of {pageCount}
+          Page {pageIndex + 1} of {Math.max(pageCount, 1)}
         </span>
       </div>
 
@@ -73,7 +79,7 @@ export function DefaultPagination<TData>({ table }: PaginationProps<TData>) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {features.pagination.pageSizeOptions.map((option) => (
+              {sizeOptions.map((option) => (
                 <SelectItem key={option} value={String(option)}>
                   {option}
                 </SelectItem>

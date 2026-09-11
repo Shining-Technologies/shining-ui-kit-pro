@@ -1,9 +1,9 @@
 /*
- * @shining-ui-kit/react styles.
+ * @shining-technologies/ui-kit-react styles.
  *
  * Import once, anywhere in your app:
  *
- *   import '@shining-ui-kit/react/styles.css'
+ *   import '@shining-technologies/ui-kit-react/styles.css'
  *
  * This file is plain, framework-free CSS built entirely from the `--sui-*`
  * design tokens, so every component looks right with no Tailwind configuration
@@ -29,3 +29,4 @@
 @import './composites.css';
 @import './inputs.css';
 @import './shell.css';
+@import './sidebar.css';

@@ -1,4 +1,4 @@
-import { getOperator, normalizeFilterValue, type ColumnFilterConfig } from '@shining-ui-kit/core'
+import { getOperator, normalizeFilterValue, type ColumnFilterConfig } from '@shining-technologies/ui-kit-core'
 import type { Table } from '@tanstack/react-table'
 import { useDataTable } from '../../context/table-context'
 import { CloseIcon } from '../../lib/icons'

@@ -8,9 +8,9 @@ changeset**; releasing is then a matter of consuming the ones that accumulated.
 
 Publishing needs three things in place. The first release is the only time you touch them.
 
-1. **The npm scope.** `@shining-ui-kit` must exist and be yours. Create it at
-   <https://www.npmjs.com/org/create> (a free org publishes public packages), or publish
-   under your own username scope by renaming the packages. Every package already sets
+1. **The npm scope.** Packages publish under the Shining Technologies org,
+   [`@shining-technologies`](https://www.npmjs.com/org/shining-technologies). Whoever
+   publishes must be a member of that org with publish rights. Every package already sets
    `"publishConfig": { "access": "public" }`, which is what stops npm treating a scoped
    package as private and rejecting it.
 
@@ -139,8 +139,8 @@ public API is one you are willing to keep.
 **`402 Payment Required`** — npm thinks the package is private. The scope exists but
 `publishConfig.access` is missing or the org is on a paid plan expecting private packages.
 
-**`404 Not Found` on publish** — the `@shining-ui-kit` scope does not exist, or the token
-cannot write to it.
+**`404 Not Found` on publish** — you are not a member of the `@shining-technologies` org
+with publish rights, or the token cannot write to it.
 
 **Provenance failures** — the release workflow sets `NPM_CONFIG_PROVENANCE`, which
 cryptographically links each tarball to the workflow run that built it. It requires a public

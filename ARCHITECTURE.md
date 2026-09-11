@@ -61,19 +61,19 @@ row spreads it and cannot break the table.
 
 | Package                      | Depends on                           | Contains                                                                                                     |
 | ---------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `@shining-ui-kit/core`       | `@tanstack/table-core`               | design tokens, the OKLab colour engine, the project system, types, filter engine, state utils. **No React.** |
-| `@shining-ui-kit/react`      | core, `@tanstack/react-table`, Radix | the provider and theming UI, primitives, the component kit, charts, the data table, styles                   |
-| `@shining-ui-kit/themes`     | core                                 | shipped presets: project palettes and table chrome themes                                                    |
-| `@shining-ui-kit/export-csv` | core                                 | CSV export, kept out of the main package                                                                     |
+| `@shining-technologies/ui-kit-core`       | `@tanstack/table-core`               | design tokens, the OKLab colour engine, the project system, types, filter engine, state utils. **No React.** |
+| `@shining-technologies/ui-kit-react`      | core, `@tanstack/react-table`, Radix | the provider and theming UI, primitives, the component kit, charts, the data table, styles                   |
+| `@shining-technologies/ui-kit-themes`     | core                                 | shipped presets: project palettes and table chrome themes                                                    |
+| `@shining-technologies/ui-kit-export-csv` | `@tanstack/table-core` (peer only)   | CSV export, kept out of the main package                                                                     |
 
-`@shining-ui-kit/react/virtualized` and `@shining-ui-kit/react/recharts` are **subpath
+`@shining-technologies/ui-kit-react/virtualized` and `@shining-technologies/ui-kit-react/recharts` are **subpath
 exports**; `@tanstack/react-virtual` and `recharts` are _optional_ peer dependencies so the
 base package stays lightweight (§41, §42, §53).
 
 ### Deviations from the brief, and why
 
 1. **Themes are one package, not three.** A theme is a plain token object. Three npm
-   packages for three objects is packaging overhead, not modularity. `@shining-ui-kit/themes`
+   packages for three objects is packaging overhead, not modularity. `@shining-technologies/ui-kit-themes`
    exports them individually so they tree-shake, and any one can be split out later without
    touching the engine (§4 explicitly allows this).
 2. **`examples/` is a workspace _library_, not five apps.** The example tables are consumed
@@ -296,7 +296,7 @@ loses to two things: hand-rolled SVG owns its own maths forever, and teams alrea
 on Recharts do not want a second chart API. So `src/recharts` is a second set — six forms on
 Recharts — behind its own entry point, with `recharts` as an _optional_ peer dependency. An
 app that imports the root package still pays nothing for it; an app that imports
-`@shining-ui-kit/react/recharts` opts in with its eyes open. Both sets draw from
+`@shining-technologies/ui-kit-react/recharts` opts in with its eyes open. Both sets draw from
 `--sui-chart-1..5`, so they are two implementations of one palette rather than two designs.
 
 The override problem the original argument warns about is real, and the answer to it is that

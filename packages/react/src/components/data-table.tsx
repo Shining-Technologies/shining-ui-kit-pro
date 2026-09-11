@@ -1,5 +1,6 @@
 import { useId, useMemo, type CSSProperties } from 'react'
 import { DataTableProvider, type DataTableContextValue } from '../context/table-context'
+import { buildRowIndexModel } from '../hooks/row-index'
 import { useRowNavigation } from '../hooks/use-row-navigation'
 import { useScrollEdges } from '../hooks/use-scroll-edges'
 import { useTableInstance } from '../hooks/use-table-instance'
@@ -7,11 +8,13 @@ import { buildColumnSizeVars } from '../lib/cell-style'
 import { cn } from '../lib/cn'
 import { renderSlot } from '../lib/slots'
 import { useTableTheme } from '../lib/use-table-theme'
+import { useProject } from '../theme/context'
 import type { DataTableProps } from '../types/props'
 import { resolveComponents } from './default-components'
 import { TableBody } from './parts/table-body'
 import { TableFoot } from './parts/table-foot'
 import { TableHead } from './parts/table-head'
+import { CardControls } from './toolbar/card-controls'
 
 const EMPTY_CLASSNAMES = {}
 
@@ -52,8 +55,11 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
   const navigation = useRowNavigation(interactive)
 
   const { style: themeStyle, themeClassName } = useTableTheme(props.theme)
-  const density = props.density ?? props.theme?.density ?? 'comfortable'
-  const variant = props.variant ?? props.theme?.variant ?? 'default'
+  // Explicit prop, then the table theme, then the active project — so a preset
+  // with compact, striped tables gets them without every table repeating it.
+  const project = useProject()
+  const density = props.density ?? props.theme?.density ?? project?.shape.density ?? 'comfortable'
+  const variant = props.variant ?? props.theme?.variant ?? project?.shape.variant ?? 'default'
   const responsiveMode = props.responsiveMode ?? 'scroll'
   const surface = props.surface ?? 'card'
   const tableLayout = props.tableLayout ?? 'fixed'
@@ -67,6 +73,17 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
   // Pinned shadows and the sticky-header lift are conditional on the container
   // actually being scrolled; this is what measures that.
   const scroll = useScrollEdges()
+
+  // `aria-rowcount` and every row's `aria-rowindex`, worked out once. Only
+  // while rows are on screen: the empty, loading and error states render
+  // every row they have.
+  const rowIndex = buildRowIndexModel(table, {
+    active: !props.error && table.getRowModel().rows.length > 0,
+    footerRows: instance.hasFooter ? table.getFooterGroups().length : 0,
+    hasDetails: Boolean(props.renderExpandedRow),
+    serverPagination: features.pagination.enabled && features.pagination.mode === 'server',
+    knownTotal: features.pagination.rowCount,
+  })
 
   const context: DataTableContextValue<TData> = {
     table,
@@ -107,6 +124,7 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
     renderExpandedRow: props.renderExpandedRow,
 
     navigation,
+    rowIndex,
     tableId,
   }
 
@@ -181,6 +199,8 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
           />
         ) : null}
 
+        {responsiveMode !== 'scroll' ? <CardControls<TData> /> : null}
+
         <Container
           table={table}
           containerProps={{
@@ -196,6 +216,11 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
           <Table
             table={table}
             tableProps={{
+              // Explicit roles on every part, native elements included: the
+              // card layout restyles them with `display`, and Chrome and Safari
+              // drop the implicit table semantics of an element that is no
+              // longer displayed as a table. Stated roles survive that.
+              role: 'table',
               className: cn('sui-table', props.tableClassName),
               // Column widths are published once here and read by every cell.
               style: buildColumnSizeVars(table),
@@ -206,7 +231,9 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
                 props['aria-labelledby'] ??
                 (props.caption ? captionId : props.title && !props.label ? titleId : undefined),
               'aria-describedby': props['aria-describedby'],
-              'aria-rowcount': table.getRowCount() || undefined,
+              // Every row of the table — header, data, details and footer —
+              // not just the data; see `buildRowIndexModel`.
+              'aria-rowcount': rowIndex.rowCount,
               'aria-busy': props.loading || undefined,
             }}
           >

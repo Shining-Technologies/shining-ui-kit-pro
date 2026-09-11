@@ -1,5 +1,7 @@
 import { mergeThemes, type UIKitTheme } from '../theme/create-theme'
 import type {
+  BrandInput,
+  BrandOptions,
   ProjectDefinition,
   ProjectInput,
   ProjectShape,
@@ -97,6 +99,58 @@ export function forkProject(project: ProjectDefinition, name: string): ProjectDe
   })
 }
 
+/**
+ * Put a brand on a project: a colour, or a flat set of seed, shape and type
+ * tweaks. Unset fields keep the base project's values.
+ *
+ * The result is a new project with its own id (`<base>-custom`), so it never
+ * shadows the shipped preset it started from.
+ *
+ * ```ts
+ * applyBrand(darwindPalette, '#be123c')
+ * applyBrand(unnPalette, { primary: '#be123c', radius: '0.5rem', density: 'compact' })
+ * ```
+ */
+export function applyBrand(base: ProjectDefinition, brand: BrandInput): ProjectDefinition {
+  const options: BrandOptions = typeof brand === 'string' ? { primary: brand } : brand
+  const {
+    radius,
+    density,
+    elevation,
+    borderWidth,
+    variant,
+    neutralTint,
+    fontFamily,
+    fontSize,
+    titleFontWeight,
+    overrides,
+    ...seed
+  } = options
+
+  const shape = { radius, density, elevation, borderWidth, variant }
+  const typography = { fontFamily, fontSize, titleFontWeight }
+
+  return {
+    ...base,
+    id: `${base.id}-custom`,
+    name: `${base.name} (custom)`,
+    basePalette: base.basePalette ?? base.id,
+    seed: { ...base.seed, ...defined(seed) },
+    neutralTint: neutralTint ?? base.neutralTint,
+    shape: { ...base.shape, ...defined(shape) },
+    typography: { ...base.typography, ...defined(typography) },
+    overrides: overrides ? (mergeThemes(base.overrides, overrides) as UIKitTheme) : base.overrides,
+    builtIn: false,
+  }
+}
+
+/** Drop `undefined` values so a spread never erases a base value. */
+function defined<T extends object>(value: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, v]) => v !== undefined && v !== ''),
+  ) as Partial<T>
+}
+
 const RADIUS_SCALE = (base: string) => ({
   base,
   small: `calc(${base} - 4px)`,
@@ -155,7 +209,8 @@ function shapeTokens(project: ProjectDefinition): Omit<UIKitTheme, 'colors' | 'd
  */
 export function resolveProject(project: ProjectDefinition): ResolvedProject {
   const shared = shapeTokens(project)
-  const elevation = ELEVATION[project.shape.elevation]
+  // An unknown level (a typo, a stored project from elsewhere) used to throw.
+  const elevation = ELEVATION[project.shape.elevation] ?? ELEVATION.soft
 
   const build = (mode: 'light' | 'dark'): UIKitTheme => ({
     ...shared,

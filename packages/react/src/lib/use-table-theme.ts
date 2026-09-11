@@ -3,7 +3,7 @@ import {
   stableHash,
   themeToCssVars,
   type TableTheme,
-} from '@shining-ui-kit/core'
+} from '@shining-technologies/ui-kit-core'
 import { useInsertionEffect, useMemo, type CSSProperties } from 'react'
 
 /** Ref-counted so several tables can share a theme without fighting over the tag. */

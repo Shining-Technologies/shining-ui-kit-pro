@@ -1,4 +1,4 @@
-import type { ColumnDef } from '@shining-ui-kit/react'
+import type { ColumnDef } from '@shining-technologies/ui-kit-react'
 
 export interface User {
   id: string

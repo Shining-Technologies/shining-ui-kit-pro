@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useId,
   useRef,
   useState,
   type HTMLAttributes,
@@ -7,16 +8,32 @@ import {
   type ClipboardEvent,
 } from 'react'
 import { cn } from '../lib/cn'
-import { useFieldControl } from '../lib/field-context'
+import { useFieldControl, useFieldLabelId } from '../lib/field-context'
 import { CloseIcon } from '../lib/icons'
+import { useControllableState } from '../lib/use-controllable-state'
 
-export interface TagsInputProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+export interface TagsInputProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
+  /** Controlled tags when defined; `[]` is the empty list. */
   value?: string[]
+  /** Initial tags while uncontrolled. */
+  defaultValue?: string[]
+  /**
+   * Submitted with a native `<form>`: one hidden input per tag under this
+   * name, so the server reads them with `formData.getAll(name)`.
+   */
+  name?: string
   onValueChange?: (value: string[]) => void
   placeholder?: string
   /** Stop accepting tags past this many. */
   max?: number
-  /** Keys that end a tag. Comma and Enter by default. */
+  /**
+   * Keys that end a tag, as `KeyboardEvent.key` values — comma and Enter by
+   * default. The same characters split a pasted list (Enter and Tab as a line
+   * break and a tab); a line break in pasted text always splits.
+   */
   delimiters?: string[]
   /** Reject a tag by returning a message, or `null` to accept it. */
   validate?: (tag: string, existing: string[]) => string | null
@@ -24,6 +41,24 @@ export interface TagsInputProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
   dedupe?: boolean
   disabled?: boolean
   'aria-label'?: string
+}
+
+const NONE: string[] = []
+
+/** Keys that stand for a character when the text arrives by paste instead. */
+const KEY_CHARACTERS: Record<string, string> = { Enter: '\n', Tab: '\t' }
+
+/**
+ * What splits a pasted list: the characters among `delimiters` (Enter and Tab
+ * as a newline and a tab), plus a line break always — a column copied from a
+ * spreadsheet is one value per line whatever the field's delimiters are.
+ */
+function pasteSplitter(delimiters: string[]): RegExp {
+  const characters = delimiters
+    .map((key) => KEY_CHARACTERS[key] ?? key)
+    .filter((key) => key.length === 1 && key !== '\n')
+    .map((key) => key.replace(/[\\\]^-]/g, '\\$&'))
+  return new RegExp(`\\r?\\n|[${characters.join('')}]`.replace('|[]', ''))
 }
 
 /**
@@ -38,6 +73,8 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>(function Tag
   {
     className,
     value,
+    defaultValue,
+    name,
     onValueChange,
     placeholder = 'Add a tag…',
     max,
@@ -45,24 +82,25 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>(function Tag
     validate,
     dedupe = true,
     disabled,
-    'aria-label': ariaLabel = 'Tags',
+    'aria-label': ariaLabelProp,
     ...props
   },
   ref,
 ) {
   const field = useFieldControl()
-  const [internal, setInternal] = useState<string[]>([])
+  const labelId = useFieldLabelId()
+  const errorId = useId()
+  const ariaLabel = ariaLabelProp ?? 'Tags'
+  const [tags, commit] = useControllableState<string[]>({
+    value,
+    defaultValue: defaultValue ?? NONE,
+    onChange: onValueChange,
+  })
   const [draft, setDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const tags = value ?? internal
   const isDisabled = disabled ?? field.disabled
   const full = max !== undefined && tags.length >= max
-
-  function commit(next: string[]) {
-    if (value === undefined) setInternal(next)
-    onValueChange?.(next)
-  }
 
   function add(raw: string): boolean {
     const tag = raw.trim()
@@ -84,6 +122,9 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>(function Tag
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    // Enter that confirms an IME composition (Japanese, Chinese) is not the
+    // end of a tag — committing there would cut the word in half.
+    if (event.nativeEvent.isComposing) return
     if (delimiters.includes(event.key)) {
       event.preventDefault()
       add(draft)
@@ -99,11 +140,18 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>(function Tag
   }
 
   function onPaste(event: ClipboardEvent<HTMLInputElement>) {
-    const text = event.clipboardData.getData('text')
-    if (!/[,\n\t]/.test(text)) return
+    const pasted = event.clipboardData.getData('text')
+    const splitter = pasteSplitter(delimiters)
+    if (!splitter.test(pasted)) return
     event.preventDefault()
+    // The paste lands where the caret is, so whatever was already typed in the
+    // box is part of the list rather than thrown away.
+    const input = event.currentTarget
+    const from = input.selectionStart ?? draft.length
+    const to = input.selectionEnd ?? draft.length
+    const text = draft.slice(0, from) + pasted + draft.slice(to)
     const incoming = text
-      .split(/[,\n\t]/)
+      .split(splitter)
       .map((entry) => entry.trim())
       .filter(Boolean)
     const next = [...tags]
@@ -134,7 +182,11 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>(function Tag
         }}
         {...props}
       >
-        <ul className="sui-tags__list" aria-label={ariaLabel}>
+        <ul
+          className="sui-tags__list"
+          aria-label={labelId && !ariaLabelProp ? undefined : ariaLabel}
+          aria-labelledby={labelId && !ariaLabelProp ? labelId : undefined}
+        >
           {tags.map((tag, index) => (
             <li key={`${tag}-${index}`} className="sui-tags__chip">
               {tag}
@@ -161,9 +213,15 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>(function Tag
           value={draft}
           placeholder={full ? `Limit of ${max} reached` : placeholder}
           disabled={isDisabled || full}
-          aria-label={ariaLabel}
+          // A surrounding `<Field>` names the input through `<label for>`; an
+          // aria-label here would override it with the generic default.
+          aria-label={labelId && !ariaLabelProp ? undefined : ariaLabel}
           id={field.id}
-          aria-describedby={field['aria-describedby']}
+          aria-describedby={
+            [field['aria-describedby'], error ? errorId : null].filter(Boolean).join(' ') ||
+            undefined
+          }
+          aria-invalid={field['aria-invalid'] ?? (error ? true : undefined)}
           onChange={(event) => {
             setDraft(event.target.value)
             if (error) setError(null)
@@ -176,8 +234,20 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>(function Tag
         />
       </div>
 
+      {name
+        ? tags.map((tag, index) => (
+            <input
+              key={`${tag}-${index}`}
+              type="hidden"
+              name={name}
+              value={tag}
+              disabled={isDisabled}
+            />
+          ))
+        : null}
+
       {error ? (
-        <p className="sui-tags__error" role="alert">
+        <p id={errorId} className="sui-tags__error" role="alert">
           {error}
         </p>
       ) : null}
