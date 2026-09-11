@@ -1,0 +1,669 @@
+/*
+ * Form controls: field layout, label, textarea, switch, radio, slider, toggle.
+ *
+ * The input, checkbox and select live in primitives.css because the table uses
+ * them too; everything else a form needs is here.
+ */
+
+/* ------------------------------------------------------------------- field */
+/*
+ * One layout for "label, control, help text, error". Written once so that every
+ * form in an application spaces and orders those four things identically —
+ * which is most of what makes a set of forms feel like one product.
+ */
+
+.sui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.sui-field--horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.sui-field--horizontal .sui-field__label {
+  order: 2;
+}
+
+.sui-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--sui-foreground);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+  user-select: none;
+}
+
+.sui-field__label[data-disabled] {
+  opacity: 0.5;
+}
+
+/* The required marker is decorative; the control carries the real `required`. */
+.sui-field__required {
+  color: var(--sui-destructive);
+}
+
+/*
+ * Help text and errors sit tighter to the control than the label does.
+ *
+ * The field's own `gap` is the label-to-control rhythm; a message belongs to
+ * the control above it, so it is pulled back up until the two read as one
+ * unit rather than as two rows of a stack.
+ */
+.sui-field__description,
+.sui-field__error {
+  margin-top: -0.1875rem;
+}
+
+.sui-field__description {
+  color: var(--sui-muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.sui-field__error {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--sui-destructive);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* Two messages under one control keep the tight spacing between them, too. */
+.sui-field__description + .sui-field__error {
+  margin-top: -0.25rem;
+}
+
+.sui-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sui-stack);
+  padding: 0;
+  border: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.sui-fieldset__legend {
+  padding: 0;
+  font-size: 0.875rem;
+  font-weight: var(--sui-title-font-weight);
+}
+
+/* ---------------------------------------------------------------- textarea */
+
+.sui-textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.5rem 0.75rem;
+  border: var(--sui-border-width) solid var(--sui-input);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-card);
+  color: var(--sui-foreground);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 120ms ease;
+}
+
+.sui-textarea::placeholder {
+  color: var(--sui-muted-foreground);
+}
+
+.sui-textarea:focus-visible {
+  border-color: var(--sui-ring);
+}
+
+.sui-textarea:disabled {
+  opacity: 0.5;
+  background: var(--sui-muted);
+  cursor: not-allowed;
+}
+
+.sui-textarea[aria-invalid='true'] {
+  border-color: var(--sui-destructive);
+}
+
+/* ----------------------------------------------------------- input adornments */
+/*
+ * An icon or button sitting inside the input's box. The wrapper owns the
+ * border so focus is drawn around the whole control, not around the bare text
+ * field inside it.
+ */
+
+.sui-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: var(--sui-control-height);
+  padding-inline: 0.75rem;
+  border: var(--sui-border-width) solid var(--sui-input);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-card);
+  color: var(--sui-foreground);
+  transition: border-color 120ms ease;
+}
+
+.sui-input-group:focus-within {
+  border-color: var(--sui-ring);
+}
+
+.sui-input-group__addon {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  color: var(--sui-muted-foreground);
+}
+
+.sui-input-group__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.sui-input-group__input::placeholder {
+  color: var(--sui-muted-foreground);
+}
+
+/* ------------------------------------------------------------------ switch */
+
+.sui-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: var(--sui-border-width) solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sui-input) 55%, transparent);
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.sui-switch[data-state='checked'] {
+  background: var(--sui-primary);
+}
+
+.sui-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sui-switch__thumb {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: var(--sui-card);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  transform: translateX(0.125rem);
+  transition: transform 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.sui-switch[data-state='checked'] .sui-switch__thumb {
+  transform: translateX(1.125rem);
+}
+
+/* ------------------------------------------------------------- radio group */
+
+.sui-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sui-radio-group--horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sui-stack);
+}
+
+.sui-radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: var(--sui-border-width) solid var(--sui-input);
+  border-radius: 999px;
+  background: var(--sui-card);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.sui-radio[data-state='checked'] {
+  border-color: var(--sui-primary);
+}
+
+.sui-radio:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sui-radio__indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.sui-radio__indicator::after {
+  content: '';
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--sui-primary);
+}
+
+/* ------------------------------------------------------------------ slider */
+
+.sui-slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 1.25rem;
+  touch-action: none;
+  user-select: none;
+}
+
+.sui-slider[data-orientation='vertical'] {
+  flex-direction: column;
+  width: 1.25rem;
+  height: 100%;
+  min-height: 8rem;
+}
+
+.sui-slider__track {
+  position: relative;
+  flex-grow: 1;
+  height: 0.25rem;
+  border-radius: 999px;
+  background: var(--sui-muted);
+}
+
+.sui-slider[data-orientation='vertical'] .sui-slider__track {
+  width: 0.25rem;
+  height: auto;
+}
+
+.sui-slider__range {
+  position: absolute;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sui-primary);
+}
+
+.sui-slider[data-orientation='vertical'] .sui-slider__range {
+  width: 100%;
+  height: auto;
+}
+
+.sui-slider__thumb {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--sui-primary);
+  border-radius: 999px;
+  background: var(--sui-card);
+  box-shadow: var(--sui-shadow-surface);
+  cursor: grab;
+}
+
+.sui-slider__thumb:active {
+  cursor: grabbing;
+}
+
+.sui-slider[data-disabled] {
+  opacity: 0.5;
+}
+
+/* ------------------------------------------------------------------ toggle */
+
+.sui-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  height: var(--sui-control-height);
+  min-width: var(--sui-control-height);
+  padding: 0 0.625rem;
+  border: var(--sui-border-width) solid transparent;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--sui-foreground);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.sui-toggle:hover:not(:disabled) {
+  background: var(--sui-accent);
+  color: var(--sui-accent-foreground);
+}
+
+.sui-toggle[data-state='on'] {
+  background: var(--sui-accent);
+  color: var(--sui-accent-foreground);
+}
+
+.sui-toggle--outline {
+  border-color: var(--sui-border);
+}
+
+.sui-toggle--sm {
+  height: var(--sui-control-height-sm);
+  min-width: var(--sui-control-height-sm);
+  padding: 0 0.5rem;
+}
+
+.sui-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sui-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.1875rem;
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-muted);
+}
+
+/*
+ * Inside a group the selected item is a raised chip on the recessed track,
+ * rather than the flat tint a standalone toggle uses — otherwise "on" and
+ * "hovered" look identical when several sit side by side.
+ */
+.sui-toggle-group .sui-toggle[data-state='on'] {
+  background: var(--sui-card);
+  color: var(--sui-foreground);
+  box-shadow: var(--sui-shadow-surface);
+}
+
+/* ---------------------------------------------------------------- calendar */
+
+/*
+ * The kit's own month grid.
+ *
+ * A native `<input type="date">` is the one control in a themed table that
+ * cannot be themed — its layout, its placeholder and its picker belong to the
+ * browser. This is the same job drawn from tokens.
+ */
+.sui-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 15.5rem;
+  user-select: none;
+}
+
+.sui-calendar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.sui-calendar__caption {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.sui-calendar__nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--sui-muted-foreground);
+  cursor: pointer;
+}
+
+.sui-calendar__nav:hover {
+  background: var(--sui-muted);
+  color: var(--sui-foreground);
+}
+
+.sui-calendar__weekdays,
+.sui-calendar__week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.125rem;
+}
+
+.sui-calendar__weekdays {
+  margin-bottom: 0.125rem;
+  color: var(--sui-muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: var(--sui-header-letter-spacing);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.sui-calendar__day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 1.875rem;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--sui-foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.sui-calendar__day:hover:not(:disabled) {
+  background: var(--sui-muted);
+}
+
+/* Days from the neighbouring months keep the grid rectangular, quietly. */
+.sui-calendar__day[data-outside] {
+  color: var(--sui-muted-foreground);
+  opacity: 0.55;
+}
+
+.sui-calendar__day[data-today]:not([data-selected]) {
+  box-shadow: inset 0 0 0 var(--sui-border-width) var(--sui-border);
+  font-weight: 600;
+}
+
+.sui-calendar__day[data-selected] {
+  background: var(--sui-primary);
+  color: var(--sui-primary-foreground);
+  font-weight: 600;
+}
+
+.sui-calendar__day:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------------------------- date field */
+
+.sui-date-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.sui-date-field__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  width: 100%;
+  height: var(--sui-control-height-sm);
+  padding: 0 1.75rem 0 0.625rem;
+  border: var(--sui-border-width) solid var(--sui-input);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-card);
+  color: var(--sui-foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sui-date-field__trigger:hover {
+  border-color: color-mix(in srgb, var(--sui-primary) 35%, var(--sui-border));
+}
+
+.sui-date-field__icon {
+  flex: none;
+  color: var(--sui-muted-foreground);
+}
+
+.sui-date-field__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-date-field[data-empty] .sui-date-field__value {
+  color: var(--sui-muted-foreground);
+}
+
+.sui-date-field__clear {
+  position: absolute;
+  inset-inline-end: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sui-muted-foreground);
+  cursor: pointer;
+}
+
+.sui-date-field__clear:hover {
+  background: var(--sui-muted);
+  color: var(--sui-foreground);
+}
+
+.sui-date-field__popover {
+  width: auto;
+  padding: 0.625rem;
+}
+
+/* ------------------------------------------------------------- range panel */
+
+/*
+ * From/To, or Minimum/Maximum. One field per end, each labelled, because
+ * "3 – 7" in two anonymous boxes is only obvious to whoever wrote it.
+ */
+.sui-range-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  width: 17.5rem;
+}
+
+.sui-range-panel__title {
+  margin: 0;
+  color: var(--sui-muted-foreground);
+  font-size: var(--sui-header-font-size);
+  font-weight: 600;
+  letter-spacing: var(--sui-header-letter-spacing);
+  text-transform: uppercase;
+}
+
+/* Most ranges people want are one of these, so they are one click. */
+.sui-range-panel__presets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.375rem;
+}
+
+.sui-range-panel__preset {
+  height: var(--sui-control-height-sm);
+  padding: 0 0.5rem;
+  border: var(--sui-border-width) solid var(--sui-border);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-card);
+  color: var(--sui-foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sui-range-panel__preset:hover {
+  background: var(--sui-muted);
+  border-color: color-mix(in srgb, var(--sui-primary) 35%, var(--sui-border));
+}
+
+.sui-range-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+  min-width: 0;
+}
+
+.sui-range-panel__label {
+  color: var(--sui-foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.sui-range-panel__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: var(--sui-border-width) solid var(--sui-border);
+}
+
+.sui-range-panel__hint {
+  color: var(--sui-muted-foreground);
+  font-size: 0.6875rem;
+  text-align: end;
+}
+
+.sui-range-panel__foot .sui-link:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: none;
+}

@@ -1,0 +1,960 @@
+/*
+ * Table structure.
+ *
+ * Everything here is driven by the tokens in tokens.css. There is not a single
+ * literal colour in this file.
+ */
+
+.sui-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sui-gap);
+  color: var(--sui-foreground);
+  font-family: var(--sui-font-family);
+  font-size: var(--sui-font-size);
+  line-height: var(--sui-line-height);
+  text-align: left;
+}
+
+.sui-root *,
+.sui-root *::before,
+.sui-root *::after {
+  box-sizing: border-box;
+}
+
+/*
+ * The card surface.
+ *
+ * The filters, the rows and the pagination are one control, so they live
+ * inside one border with hairlines between them. A filter bar floating above
+ * a separately-bordered box reads as two unrelated widgets that happen to be
+ * stacked — and the eye has to work out which filters drive which table.
+ */
+.sui-root[data-surface='card'] {
+  gap: 0;
+  background: var(--sui-card);
+  border: var(--sui-border-width) solid var(--sui-border);
+  border-radius: var(--sui-radius-surface);
+  /* Clip the header and the first rows to the card's own corners. */
+  overflow: hidden;
+}
+
+.sui-root[data-surface='card'] > .sui-heading,
+.sui-root[data-surface='card'] > .sui-toolbar,
+.sui-root[data-surface='card'] > .sui-selection-bar,
+.sui-root[data-surface='card'] > .sui-pagination {
+  padding: calc(var(--sui-cell-padding-y) * 1.2) var(--sui-cell-padding-x);
+}
+
+.sui-root[data-surface='card'] > .sui-heading,
+.sui-root[data-surface='card'] > .sui-toolbar,
+.sui-root[data-surface='card'] > .sui-selection-bar {
+  border-bottom: var(--sui-border-width) solid var(--sui-border);
+}
+
+.sui-root[data-surface='card'] > .sui-pagination {
+  border-top: var(--sui-border-width) solid var(--sui-border);
+}
+
+/* Inside the card the chrome is banded, not boxed. */
+.sui-root[data-surface='card'] > .sui-toolbar,
+.sui-root[data-surface='card'] > .sui-selection-bar {
+  border-inline: 0;
+  border-top: 0;
+  border-radius: 0;
+}
+
+.sui-root[data-surface='card'] .sui-container {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* The card already draws the outline these variants want gone. */
+.sui-root[data-surface='card'][data-variant='minimal'],
+.sui-root[data-surface='card'][data-variant='borderless'] {
+  border-color: transparent;
+}
+
+.sui-root[data-surface='card'][data-variant='dashboard'] {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 8px 24px -12px rgb(0 0 0 / 0.12);
+}
+
+/* ----------------------------------------------------------------- heading */
+
+/*
+ * The table's own title block. Sits above the toolbar, inside the component,
+ * so that "what is this list" travels with the data rather than with whatever
+ * card the page happened to put around it.
+ */
+.sui-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sui-gap);
+  min-width: 0;
+}
+
+.sui-heading__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+  min-width: 0;
+}
+
+.sui-heading__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--sui-foreground);
+  font-size: 0.9375rem;
+  font-weight: var(--sui-title-font-weight, 600);
+  line-height: 1.3;
+}
+
+.sui-heading__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--sui-primary);
+  font-size: 1rem;
+}
+
+.sui-heading__description {
+  margin: 0;
+  max-width: 80ch;
+  color: var(--sui-muted-foreground);
+  font-size: var(--sui-header-font-size);
+  line-height: 1.5;
+}
+
+.sui-heading__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+}
+
+/* --------------------------------------------------------------- container */
+
+.sui-container {
+  position: relative;
+  width: 100%;
+  overflow: auto;
+  background: var(--sui-background);
+  border: var(--sui-border-width) solid var(--sui-border);
+  border-radius: var(--sui-radius-surface);
+  /* Contain the sticky header's paint inside the rounded corners. */
+  isolation: isolate;
+  /* A sticky header inside a scroll frame must not be dragged along by the
+     browser's scroll anchoring when rows change height. */
+  overflow-anchor: none;
+}
+
+/*
+ * The fixed frame: `maxHeight` clips the container, so the header and footer
+ * stay put and the rows are the only part that moves.
+ */
+.sui-container[data-framed] {
+  overscroll-behavior: contain;
+}
+
+.sui-root[data-variant='minimal'] .sui-container,
+.sui-root[data-variant='borderless'] .sui-container {
+  border-color: transparent;
+  background: transparent;
+}
+
+.sui-root[data-surface='plain'][data-variant='dashboard'] .sui-container {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 8px 24px -12px rgb(0 0 0 / 0.12);
+}
+
+/* ------------------------------------------------------------------- table */
+
+.sui-table {
+  /* Fixed layout is what makes explicit column widths (and resizing) honest. */
+  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--sui-foreground);
+}
+
+/*
+ * `tableLayout="auto"` hands column widths back to the browser, for data whose
+ * width you cannot know in advance. Declared sizes stop being exact, so
+ * resizing and pinned offsets are approximate in this mode.
+ */
+.sui-root[data-layout='auto'] .sui-table {
+  table-layout: auto;
+  width: 100%;
+}
+
+/*
+ * Column widths reach cells as a variable, never as an inline `width`, so a
+ * layout that needs to ignore them (cards) can simply say so. The reset on the
+ * row stops a nested table inheriting its parent cell's width.
+ */
+.sui-tr {
+  --sui-cell-size: auto;
+}
+
+.sui-th,
+.sui-td {
+  width: var(--sui-cell-size);
+}
+
+.sui-caption {
+  padding: var(--sui-cell-padding-y) var(--sui-cell-padding-x);
+  color: var(--sui-muted-foreground);
+  font-size: var(--sui-header-font-size);
+  text-align: left;
+  caption-side: top;
+}
+
+/* ------------------------------------------------------------------ header */
+
+.sui-thead {
+  background: var(--sui-header-background);
+}
+
+.sui-th {
+  position: relative;
+  height: var(--sui-header-height);
+  padding: var(--sui-header-padding-y) var(--sui-header-padding-x);
+  background: var(--sui-header-background);
+  color: var(--sui-header-foreground);
+  font-size: var(--sui-header-font-size);
+  font-weight: var(--sui-header-font-weight);
+  letter-spacing: var(--sui-header-letter-spacing);
+  text-transform: var(--sui-header-text-transform);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: var(--sui-border-width) solid var(--sui-header-border);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/*
+ * A hairline between column heads.
+ *
+ * Only in the header: ruling the body as well turns a list of records into a
+ * spreadsheet, where every cell competes with its neighbours for attention.
+ * The head is where the eye needs to know which label owns which column.
+ */
+.sui-th + .sui-th {
+  border-inline-start: var(--sui-border-width) solid var(--sui-header-divider);
+}
+
+.sui-thead--sticky .sui-th {
+  position: sticky;
+  /* Set per header row, so grouped headers stack instead of overlapping. */
+  top: var(--sui-sticky-top, 0);
+  z-index: 3;
+}
+
+/*
+ * The header only lifts off the rows once they have moved under it. A frame
+ * that is not scrolled should look like a plain table, not a floating bar.
+ */
+.sui-thead--sticky .sui-th::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 0.5rem;
+  transform: translateY(100%);
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.09), rgb(0 0 0 / 0));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.sui-container[data-scrolled] .sui-thead--sticky .sui-th::after {
+  opacity: 1;
+}
+
+.sui-th__inner {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+/*
+ * Header content and cell content start at the same x. That holds because the
+ * header and cell padding tokens are equal at every density (asserted by
+ * tests/styles.test.ts) and because nothing else is allowed to take space in
+ * the head: the column menu and the resize grip are both out of flow, so a
+ * centred checkbox is centred and a right-aligned total lines up with the
+ * numbers under it.
+ */
+.sui-align-center .sui-th__inner {
+  justify-content: center;
+}
+
+.sui-align-right .sui-th__inner {
+  justify-content: flex-end;
+}
+
+.sui-th__label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-th__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  margin: -0.25rem -0.375rem;
+  padding: 0.25rem 0.375rem;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.sui-th__sort:hover {
+  background: color-mix(in srgb, var(--sui-foreground) 6%, transparent);
+  color: var(--sui-foreground);
+}
+
+/*
+ * Out of flow, deliberately: in the flow it reserved 1.5rem of every header
+ * cell forever so that a hover affordance could appear in it, which pushed
+ * every centred and right-aligned label out of line with its own column.
+ */
+.sui-th__menu {
+  position: absolute;
+  inset-inline-end: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  /* Covers the tail of a long label rather than displacing it. */
+  background: var(--sui-header-background);
+  box-shadow: -0.5rem 0 0.5rem var(--sui-header-background);
+  color: var(--sui-muted-foreground);
+  font-size: 0.875rem;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 120ms ease,
+    background-color 120ms ease;
+}
+
+.sui-th:hover .sui-th__menu,
+.sui-th__menu:focus-visible,
+.sui-th__menu[data-state='open'] {
+  opacity: 1;
+}
+
+.sui-th__menu:hover {
+  background: color-mix(in srgb, var(--sui-foreground) 8%, transparent);
+  color: var(--sui-foreground);
+}
+
+/* Sort indicator */
+
+.sui-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex: none;
+  font-size: 0.875rem;
+  color: var(--sui-muted-foreground);
+}
+
+.sui-sort--active {
+  color: var(--sui-primary);
+}
+
+/*
+ * Visible at rest, not only on hover: a sortable column that looks identical
+ * to a fixed one has to be discovered by trial, and on a touch screen there is
+ * no hover to discover it with.
+ */
+.sui-sort__idle {
+  opacity: 0.4;
+  transition: opacity 120ms ease;
+}
+
+.sui-th:hover .sui-sort__idle,
+.sui-th__sort:focus-visible .sui-sort__idle {
+  opacity: 0.75;
+}
+
+.sui-sort__index {
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Resize grip */
+
+.sui-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  display: block;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+  background: transparent;
+}
+
+.sui-resizer::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  right: 4px;
+  width: 2px;
+  height: 60%;
+  border-radius: 1px;
+  background: var(--sui-border);
+  opacity: 0;
+  transition:
+    opacity 120ms ease,
+    background-color 120ms ease;
+}
+
+.sui-th:hover .sui-resizer::after,
+.sui-resizer:focus-visible::after {
+  opacity: 1;
+}
+
+.sui-resizer--active::after,
+.sui-resizer:active::after {
+  opacity: 1;
+  background: var(--sui-primary);
+  top: 0;
+  height: 100%;
+}
+
+/* -------------------------------------------------------------------- body */
+
+.sui-td {
+  height: var(--sui-row-height);
+  padding: var(--sui-cell-padding-y) var(--sui-cell-padding-x);
+  background: inherit;
+  color: var(--sui-row-foreground);
+  vertical-align: middle;
+  border-bottom: var(--sui-border-width) solid var(--sui-row-border);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Fixed-layout columns truncate by default. One cell deciding to be three lines
+ * tall sets the height of every other column in its row, and a table whose rows
+ * are all different heights is much harder to scan than one that clips.
+ * Opt a column back in with `meta: { wrap: true }`.
+ */
+.sui-root[data-layout='fixed'] .sui-td {
+  white-space: nowrap;
+}
+
+.sui-td--wrap,
+.sui-root[data-layout='fixed'] .sui-td--wrap {
+  white-space: normal;
+  text-overflow: clip;
+}
+
+/* Rows kept on screen through a refetch, dimmed rather than replaced (§45). */
+.sui-tbody--refetching {
+  opacity: 0.55;
+  transition: opacity 140ms ease;
+}
+
+.sui-tbody .sui-tr:last-child > .sui-td {
+  border-bottom-color: transparent;
+}
+
+.sui-align-left {
+  text-align: left;
+}
+.sui-align-center {
+  text-align: center;
+}
+.sui-align-right {
+  text-align: right;
+}
+
+/* -------------------------------------------------------------------- rows */
+
+.sui-row {
+  background: var(--sui-row-background);
+  transition: background-color 100ms ease;
+}
+
+.sui-row:hover {
+  background: var(--sui-row-hover);
+}
+
+.sui-root[data-variant='striped'] .sui-tbody .sui-row:nth-child(odd) {
+  background: var(--sui-row-striped);
+}
+
+.sui-root[data-variant='striped'] .sui-tbody .sui-row:hover {
+  background: var(--sui-row-hover);
+}
+
+.sui-row--selected,
+.sui-root[data-variant='striped'] .sui-tbody .sui-row--selected {
+  background: var(--sui-row-selected);
+}
+
+.sui-row--selected:hover {
+  background: var(--sui-row-selected-hover);
+}
+
+.sui-row--interactive {
+  cursor: pointer;
+}
+
+.sui-row--disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.sui-row:focus-visible {
+  outline: 2px solid var(--sui-ring);
+  outline-offset: -2px;
+}
+
+.sui-row--skeleton:hover {
+  background: var(--sui-row-background);
+}
+
+/* ---------------------------------------------------------- expanded detail */
+
+.sui-expanded > .sui-expanded__cell {
+  padding: 0;
+  background: var(--sui-muted);
+  border-bottom: var(--sui-border-width) solid var(--sui-row-border);
+}
+
+.sui-expanded__content {
+  padding: calc(var(--sui-cell-padding-y) * 1.5) var(--sui-cell-padding-x);
+}
+
+.sui-expander {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--sui-muted-foreground);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.sui-expander:hover {
+  background: color-mix(in srgb, var(--sui-foreground) 8%, transparent);
+  color: var(--sui-foreground);
+}
+
+.sui-expander__head {
+  color: var(--sui-muted-foreground);
+  opacity: 0.7;
+}
+
+.sui-expander__icon {
+  transition: transform 150ms ease;
+}
+
+.sui-expander[data-expanded] .sui-expander__icon {
+  transform: rotate(90deg);
+}
+
+/* ------------------------------------------------------------------ pinning */
+
+.sui-pinned {
+  position: sticky;
+  z-index: 2;
+  background: var(--sui-background);
+}
+
+.sui-row:hover > .sui-pinned {
+  background: var(--sui-row-hover);
+}
+
+.sui-row--selected > .sui-pinned {
+  background: var(--sui-row-selected);
+}
+
+.sui-th.sui-pinned {
+  z-index: 4;
+  background: var(--sui-header-background);
+}
+
+/*
+ * A pinned column casts a shadow only while something is scrolled underneath
+ * it. A permanent shadow claims the table overflows when it does not.
+ */
+.sui-container[data-overflow-start] .sui-pinned--left.sui-pinned--edge {
+  box-shadow: var(--sui-shadow-pinned-left);
+}
+
+.sui-container[data-overflow-end] .sui-pinned--right.sui-pinned--edge {
+  box-shadow: var(--sui-shadow-pinned-right);
+}
+
+/* Pinned cells paint their own background, so they need every row state. */
+.sui-root[data-variant='striped'] .sui-tbody .sui-row:nth-child(odd) > .sui-pinned {
+  background: var(--sui-row-striped);
+}
+
+.sui-row--disabled > .sui-pinned {
+  background: var(--sui-row-background);
+}
+
+.sui-tf.sui-pinned {
+  background: var(--sui-muted);
+}
+
+/* ------------------------------------------------------------------ footer */
+
+.sui-tfoot {
+  background: var(--sui-muted);
+}
+
+/* Totals stay in view while the rows scroll past them. */
+.sui-tfoot--sticky .sui-tf {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: var(--sui-muted);
+}
+
+.sui-tf {
+  height: auto;
+  font-weight: 500;
+  border-top: var(--sui-border-width) solid var(--sui-border);
+  border-bottom: 0;
+}
+
+/* --------------------------------------------------------- state placeholders */
+
+.sui-state-cell {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.sui-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.sui-state__icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 0.25rem;
+  color: var(--sui-muted-foreground);
+  opacity: 0.7;
+}
+
+.sui-state__icon--error {
+  color: var(--sui-destructive);
+  opacity: 1;
+}
+
+.sui-state__title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--sui-foreground);
+}
+
+.sui-state__description {
+  margin: 0;
+  max-width: 32rem;
+  color: var(--sui-muted-foreground);
+}
+
+.sui-state__action {
+  margin-top: 0.75rem;
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 639px) {
+  .sui-hide-below-sm {
+    display: none !important;
+  }
+}
+@media (max-width: 767px) {
+  .sui-hide-below-md {
+    display: none !important;
+  }
+}
+@media (max-width: 1023px) {
+  .sui-hide-below-lg {
+    display: none !important;
+  }
+}
+@media (max-width: 1279px) {
+  .sui-hide-below-xl {
+    display: none !important;
+  }
+}
+@media (max-width: 1535px) {
+  .sui-hide-below-2xl {
+    display: none !important;
+  }
+}
+@media (min-width: 640px) {
+  .sui-hide-above-sm {
+    display: none !important;
+  }
+}
+@media (min-width: 768px) {
+  .sui-hide-above-md {
+    display: none !important;
+  }
+}
+@media (min-width: 1024px) {
+  .sui-hide-above-lg {
+    display: none !important;
+  }
+}
+@media (min-width: 1280px) {
+  .sui-hide-above-xl {
+    display: none !important;
+  }
+}
+@media (min-width: 1536px) {
+  .sui-hide-above-2xl {
+    display: none !important;
+  }
+}
+
+/*
+ * Card layout.
+ *
+ * A pure-CSS transformation: each row becomes a card and each cell prints its
+ * column name from `data-label`. No resize listener, no second render path,
+ * and therefore nothing that can disagree with the table version (§23).
+ *
+ * Two triggers, one set of rules — written twice because a media query and a
+ * container query cannot be merged into a single at-rule:
+ *
+ *   `cards`  switches on the viewport: a phone gets cards.
+ *   `auto`   switches on the table's own container, so a table in a narrow
+ *            panel gets cards even on a wide screen.
+ */
+
+/* `auto` measures its own box rather than the window. */
+.sui-root[data-responsive='auto'] {
+  container-type: inline-size;
+  container-name: sui-table;
+}
+
+@media (max-width: 47.9375rem) {
+  .sui-root[data-responsive='cards'] .sui-container {
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .sui-root[data-responsive='cards'] .sui-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .sui-root[data-responsive='cards'] .sui-thead {
+    display: none;
+  }
+
+  .sui-root[data-responsive='cards'] .sui-tbody,
+  .sui-root[data-responsive='cards'] .sui-tfoot {
+    display: block;
+  }
+
+  .sui-root[data-responsive='cards'] .sui-tr {
+    display: block;
+    margin-bottom: 0.625rem;
+    padding: 0.125rem 0.75rem;
+    background: var(--sui-background);
+    border: var(--sui-border-width) solid var(--sui-border);
+    border-radius: var(--sui-radius-surface);
+    box-shadow: var(--sui-shadow-surface);
+  }
+
+  .sui-root[data-responsive='cards'] .sui-tbody .sui-tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .sui-root[data-responsive='cards'] .sui-td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: auto;
+    height: auto;
+    /* Pinning is a horizontal-scroll idea; there is no horizontal scroll here. */
+    position: static;
+    box-shadow: none;
+    text-align: right;
+    overflow: visible;
+    white-space: normal;
+    border-bottom-color: var(--sui-row-border);
+  }
+
+  .sui-root[data-responsive='cards'] .sui-tr > .sui-td:last-child {
+    border-bottom-color: transparent;
+  }
+
+  .sui-root[data-responsive='cards'] .sui-td::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--sui-muted-foreground);
+    font-size: var(--sui-header-font-size);
+    font-weight: var(--sui-header-font-weight);
+    letter-spacing: var(--sui-header-letter-spacing);
+    text-align: left;
+  }
+
+  /* A cell with no label (checkbox, expander, actions) keeps the card's margin. */
+  .sui-root[data-responsive='cards'] .sui-td:not([data-label]) {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .sui-root[data-responsive='cards'] .sui-td:not([data-label])::before {
+    content: none;
+  }
+
+  .sui-root[data-responsive='cards'] .sui-hide-in-cards {
+    display: none;
+  }
+
+  .sui-root[data-responsive='cards'] .sui-state-cell,
+  .sui-root[data-responsive='cards'] .sui-expanded,
+  .sui-root[data-responsive='cards'] .sui-expanded > .sui-expanded__cell {
+    display: block;
+  }
+}
+
+@container sui-table (max-width: 47.9375rem) {
+  .sui-root[data-responsive='auto'] .sui-container {
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .sui-root[data-responsive='auto'] .sui-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .sui-root[data-responsive='auto'] .sui-thead {
+    display: none;
+  }
+
+  .sui-root[data-responsive='auto'] .sui-tbody,
+  .sui-root[data-responsive='auto'] .sui-tfoot {
+    display: block;
+  }
+
+  .sui-root[data-responsive='auto'] .sui-tr {
+    display: block;
+    margin-bottom: 0.625rem;
+    padding: 0.125rem 0.75rem;
+    background: var(--sui-background);
+    border: var(--sui-border-width) solid var(--sui-border);
+    border-radius: var(--sui-radius-surface);
+    box-shadow: var(--sui-shadow-surface);
+  }
+
+  .sui-root[data-responsive='auto'] .sui-tbody .sui-tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .sui-root[data-responsive='auto'] .sui-td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: auto;
+    height: auto;
+    /* Pinning is a horizontal-scroll idea; there is no horizontal scroll here. */
+    position: static;
+    box-shadow: none;
+    text-align: right;
+    overflow: visible;
+    white-space: normal;
+    border-bottom-color: var(--sui-row-border);
+  }
+
+  .sui-root[data-responsive='auto'] .sui-tr > .sui-td:last-child {
+    border-bottom-color: transparent;
+  }
+
+  .sui-root[data-responsive='auto'] .sui-td::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--sui-muted-foreground);
+    font-size: var(--sui-header-font-size);
+    font-weight: var(--sui-header-font-weight);
+    letter-spacing: var(--sui-header-letter-spacing);
+    text-align: left;
+  }
+
+  /* A cell with no label (checkbox, expander, actions) keeps the card's margin. */
+  .sui-root[data-responsive='auto'] .sui-td:not([data-label]) {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .sui-root[data-responsive='auto'] .sui-td:not([data-label])::before {
+    content: none;
+  }
+
+  .sui-root[data-responsive='auto'] .sui-hide-in-cards {
+    display: none;
+  }
+
+  .sui-root[data-responsive='auto'] .sui-state-cell,
+  .sui-root[data-responsive='auto'] .sui-expanded,
+  .sui-root[data-responsive='auto'] .sui-expanded > .sui-expanded__cell {
+    display: block;
+  }
+}

@@ -1,0 +1,108 @@
+/*
+ * Token entry point.
+ *
+ * The default values are generated from the default project so the kit looks
+ * finished with no provider mounted; everything below them is the hand-written
+ * part that a palette cannot express — how density changes rhythm, and what
+ * each table variant does to its own chrome.
+ */
+@import './tokens.generated.css';
+
+/* ------------------------------------------------------------- header chrome */
+/*
+ * A column head is a label, not data. Tracked-out small caps say so at a
+ * glance, and the hairline between heads tells you where one column's values
+ * stop — the two together are most of what makes a dense table readable.
+ */
+
+.sui-root {
+  --sui-header-text-transform: uppercase;
+  --sui-header-divider: var(--sui-header-border);
+}
+
+/* ------------------------------------------------------------------ density */
+/* Density only ever changes rhythm, never colour or behaviour (§27).          */
+
+[data-sui-density='compact'],
+.sui-root[data-density='compact'] {
+  --sui-cell-padding-x: 0.625rem;
+  --sui-cell-padding-y: 0.3125rem;
+  --sui-header-padding-x: 0.625rem;
+  --sui-header-padding-y: 0.375rem;
+  --sui-header-height: 2.25rem;
+  --sui-row-height: 2.25rem;
+  --sui-font-size: 0.8125rem;
+  --sui-header-font-size: 0.6875rem;
+  --sui-gap: 0.375rem;
+  --sui-stack: 0.75rem;
+  --sui-surface-padding: 0.75rem;
+  --sui-control-height: 2rem;
+  --sui-control-height-sm: 1.75rem;
+  --sui-control-height-lg: 2.25rem;
+}
+
+[data-sui-density='comfortable'],
+.sui-root[data-density='comfortable'] {
+  --sui-cell-padding-x: 0.875rem;
+  --sui-cell-padding-y: 0.625rem;
+  --sui-header-padding-x: 0.875rem;
+  --sui-header-padding-y: 0.5rem;
+  --sui-header-height: 2.75rem;
+  --sui-row-height: 3rem;
+  --sui-gap: 0.5rem;
+  --sui-stack: 1rem;
+  --sui-surface-padding: 1rem;
+  --sui-control-height: 2.25rem;
+  --sui-control-height-sm: 2rem;
+  --sui-control-height-lg: 2.5rem;
+}
+
+[data-sui-density='spacious'],
+.sui-root[data-density='spacious'] {
+  --sui-cell-padding-x: 1.125rem;
+  --sui-cell-padding-y: 1rem;
+  --sui-header-padding-x: 1.125rem;
+  --sui-header-padding-y: 0.75rem;
+  --sui-header-height: 3.25rem;
+  --sui-row-height: 3.75rem;
+  --sui-gap: 0.75rem;
+  --sui-stack: 1.5rem;
+  --sui-surface-padding: 1.5rem;
+  --sui-control-height: 2.5rem;
+  --sui-control-height-sm: 2.25rem;
+  --sui-control-height-lg: 2.75rem;
+}
+
+/* ----------------------------------------------------------------- variants */
+/* Variants are token and class recipes, never separate components (§26).      */
+
+.sui-root[data-variant='minimal'] {
+  --sui-header-background: transparent;
+  --sui-row-border: transparent;
+  --sui-radius-surface: 0px;
+  --sui-header-divider: transparent;
+  --sui-header-text-transform: none;
+}
+
+.sui-root[data-variant='compact'] {
+  --sui-cell-padding-x: 0.625rem;
+  --sui-cell-padding-y: 0.3125rem;
+  --sui-header-padding-x: 0.625rem;
+  --sui-header-padding-y: 0.375rem;
+  --sui-header-height: 2.25rem;
+  --sui-row-height: 2.25rem;
+  --sui-font-size: 0.8125rem;
+  --sui-header-font-size: 0.75rem;
+}
+
+.sui-root[data-variant='borderless'] {
+  --sui-row-border: transparent;
+  --sui-header-border: transparent;
+  --sui-header-background: transparent;
+  --sui-header-divider: transparent;
+}
+
+.sui-root[data-variant='dashboard'] {
+  --sui-header-background: var(--sui-muted);
+  --sui-radius-surface: calc(var(--sui-radius) + 4px);
+}

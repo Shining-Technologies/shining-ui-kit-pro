@@ -1,0 +1,216 @@
+/*
+ * The theming UI: project switcher, colour-mode toggle, swatch grid and the
+ * project editor.
+ *
+ * These are themed by the project they edit, which is deliberate — the editor
+ * is the fastest possible preview of the change being made.
+ */
+
+/* -------------------------------------------------------- palette preview */
+
+.sui-palette-preview {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+.sui-palette-preview__dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 999px;
+  /* A ring in the surface colour, so a swatch the same colour as the menu
+     still reads as a separate dot. */
+  box-shadow: 0 0 0 1.5px var(--sui-popover);
+}
+
+.sui-palette-preview__dot:not(:first-child) {
+  margin-inline-start: -0.25rem;
+}
+
+/* -------------------------------------------------------- project switcher */
+
+.sui-project-switcher {
+  display: inline-flex;
+}
+
+.sui-project-switcher__menu {
+  min-width: 15rem;
+}
+
+.sui-project-switcher__item {
+  gap: 0.625rem;
+}
+
+.sui-project-switcher__name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-project-switcher__check {
+  flex: none;
+  color: var(--sui-primary);
+}
+
+/* ------------------------------------------------------------ swatch grid */
+
+.sui-swatch-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sui-stack);
+}
+
+.sui-swatch-grid__title {
+  margin: 0 0 0.5rem;
+  color: var(--sui-muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: var(--sui-header-letter-spacing);
+  text-transform: uppercase;
+}
+
+.sui-swatch-grid__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.625rem;
+}
+
+.sui-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sui-swatch__chip {
+  height: 2.5rem;
+  border: var(--sui-border-width) solid var(--sui-border);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-swatch);
+}
+
+.sui-swatch__name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-swatch__value {
+  color: var(--sui-muted-foreground);
+  font-family: var(--sui-font-family-mono);
+  font-size: 0.6875rem;
+}
+
+/* --------------------------------------------------------- project editor */
+
+.sui-project-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sui-stack);
+  min-width: 0;
+}
+
+.sui-project-editor__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sui-gap);
+}
+
+.sui-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.sui-preset {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border: var(--sui-border-width) solid var(--sui-border);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-card);
+  color: var(--sui-foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.sui-preset:hover {
+  border-color: color-mix(in srgb, var(--sui-ring) 45%, var(--sui-border));
+}
+
+/* The selected preset is marked with a ring rather than a fill: a fill would
+   fight the swatches it contains, which are the actual information. */
+.sui-preset[data-selected='true'] {
+  border-color: var(--sui-primary);
+  box-shadow: 0 0 0 1px var(--sui-primary);
+}
+
+.sui-preset__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+
+.sui-color-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sui-color-input__row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/*
+ * `<input type="color">` paints a chrome-supplied swatch inside a chrome-
+ * supplied box. Stripping the padding and border is the only way to make it
+ * match the kit's other controls; the swatch itself stays native, which is
+ * what gives us a real, accessible colour picker for free.
+ */
+.sui-color-input__picker {
+  flex: none;
+  width: var(--sui-control-height-sm);
+  height: var(--sui-control-height-sm);
+  padding: 0;
+  border: var(--sui-border-width) solid var(--sui-input);
+  border-radius: var(--sui-radius-control);
+  background: none;
+  cursor: pointer;
+}
+
+.sui-color-input__picker::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+.sui-color-input__picker::-webkit-color-swatch {
+  border: none;
+  border-radius: calc(var(--sui-radius-control) - 3px);
+}
+.sui-color-input__picker::-moz-color-swatch {
+  border: none;
+  border-radius: calc(var(--sui-radius-control) - 3px);
+}
+
+.sui-color-input__hex {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--sui-font-family-mono);
+  text-transform: lowercase;
+}

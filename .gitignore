@@ -1,0 +1,20 @@
+node_modules/
+dist/
+build/
+coverage/
+storybook-static/
+.turbo/
+*.tsbuildinfo
+.DS_Store
+.vite/
+.eslintcache
+*.local
+
+# This is a pnpm workspace; pnpm-lock.yaml is the lockfile of record.
+# A stray npm/yarn lockfile makes `--frozen-lockfile` installs disagree
+# with what CI and `changeset publish` actually resolve.
+package-lock.json
+yarn.lock
+
+# Local publish artefacts
+*.tgz

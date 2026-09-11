@@ -1,0 +1,611 @@
+/*
+ * Shared primitives: the buttons, inputs, badges, menus and floating surfaces
+ * every other component in the kit is assembled from.
+ *
+ * Same rule as everywhere else — tokens only. A rule that hardcodes a colour
+ * here is a component that will not follow the active project.
+ */
+
+/* ------------------------------------------------------------------ shared */
+
+.sui-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sui-root :focus-visible,
+.sui-surface :focus-visible {
+  outline: 2px solid var(--sui-ring);
+  outline-offset: 2px;
+}
+
+.sui-muted {
+  color: var(--sui-muted-foreground);
+}
+
+.sui-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.sui-link {
+  color: var(--sui-primary);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: var(--sui-radius-control);
+}
+
+.sui-link:hover {
+  text-decoration: underline;
+}
+
+.sui-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--sui-primary);
+  color: var(--sui-primary-foreground);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ------------------------------------------------------------------ button */
+/*
+ * Variant names follow shadcn/ui, because that is the vocabulary the design
+ * this kit implements is written in. The older `solid`/`danger`/`md` names are
+ * kept as aliases so existing call sites keep working.
+ */
+
+.sui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  border-radius: var(--sui-radius-control);
+  border: var(--sui-border-width) solid transparent;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
+}
+
+.sui-btn > svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+}
+
+.sui-btn:disabled,
+.sui-btn[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ----- sizes ----- */
+
+.sui-btn--default,
+.sui-btn--md {
+  height: var(--sui-control-height);
+  padding: 0 1rem;
+}
+.sui-btn--sm {
+  height: var(--sui-control-height-sm);
+  gap: 0.375rem;
+  padding: 0 0.75rem;
+  font-size: 0.8125rem;
+}
+.sui-btn--lg {
+  height: var(--sui-control-height-lg);
+  padding: 0 1.5rem;
+}
+.sui-btn--icon {
+  width: var(--sui-control-height);
+  height: var(--sui-control-height);
+  padding: 0;
+}
+.sui-btn--icon-sm {
+  width: var(--sui-control-height-sm);
+  height: var(--sui-control-height-sm);
+  padding: 0;
+}
+.sui-btn--icon-lg {
+  width: var(--sui-control-height-lg);
+  height: var(--sui-control-height-lg);
+  padding: 0;
+}
+
+/* ----- variants ----- */
+
+.sui-btn--primary,
+.sui-btn--solid {
+  background: var(--sui-primary);
+  color: var(--sui-primary-foreground);
+}
+.sui-btn--primary:hover:not(:disabled),
+.sui-btn--solid:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--sui-primary) 90%, var(--sui-foreground));
+}
+
+.sui-btn--secondary {
+  background: var(--sui-secondary);
+  color: var(--sui-secondary-foreground);
+}
+.sui-btn--secondary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--sui-secondary) 85%, var(--sui-foreground));
+}
+
+.sui-btn--outline {
+  background: var(--sui-card);
+  border-color: var(--sui-border);
+  color: var(--sui-foreground);
+  box-shadow: var(--sui-shadow-surface);
+}
+.sui-btn--outline:hover:not(:disabled) {
+  background: var(--sui-accent);
+  color: var(--sui-accent-foreground);
+}
+
+.sui-btn--ghost {
+  background: transparent;
+  color: var(--sui-foreground);
+}
+.sui-btn--ghost:hover:not(:disabled) {
+  background: var(--sui-accent);
+  color: var(--sui-accent-foreground);
+}
+
+.sui-btn--destructive,
+.sui-btn--danger {
+  background: var(--sui-destructive);
+  color: var(--sui-destructive-foreground);
+}
+.sui-btn--destructive:hover:not(:disabled),
+.sui-btn--danger:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--sui-destructive) 88%, var(--sui-foreground));
+}
+
+.sui-btn--link {
+  background: transparent;
+  color: var(--sui-primary);
+  padding: 0;
+  height: auto;
+  text-underline-offset: 4px;
+}
+.sui-btn--link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------- button group */
+/*
+ * Adjacent buttons rendered as one control. The shared edge is collapsed rather
+ * than doubled, and only the outer corners keep their radius.
+ */
+
+.sui-button-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.sui-button-group > .sui-btn {
+  border-radius: 0;
+  position: relative;
+}
+
+.sui-button-group > .sui-btn:not(:first-child) {
+  margin-inline-start: calc(-1 * var(--sui-border-width));
+}
+
+.sui-button-group > .sui-btn:first-child {
+  border-start-start-radius: var(--sui-radius-control);
+  border-end-start-radius: var(--sui-radius-control);
+}
+
+.sui-button-group > .sui-btn:last-child {
+  border-start-end-radius: var(--sui-radius-control);
+  border-end-end-radius: var(--sui-radius-control);
+}
+
+/* The focused and pressed buttons must paint over their neighbours' edges. */
+.sui-button-group > .sui-btn:focus-visible,
+.sui-button-group > .sui-btn[data-state='on'] {
+  z-index: 1;
+}
+
+.sui-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--sui-muted-foreground);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.sui-icon-button:hover {
+  background: var(--sui-accent);
+  color: var(--sui-foreground);
+}
+
+/* ------------------------------------------------------------------- input */
+
+.sui-input {
+  width: 100%;
+  height: var(--sui-control-height);
+  padding: 0 0.75rem;
+  border: var(--sui-border-width) solid var(--sui-input);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-card);
+  color: var(--sui-foreground);
+  font-family: inherit;
+  font-size: 0.875rem;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.sui-input::placeholder {
+  color: var(--sui-muted-foreground);
+}
+
+.sui-input:focus-visible {
+  border-color: var(--sui-ring);
+}
+
+.sui-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--sui-muted);
+}
+
+/* A control the form layer has marked invalid, however it tracks validity. */
+.sui-input[aria-invalid='true'] {
+  border-color: var(--sui-destructive);
+}
+
+.sui-input--sm {
+  height: var(--sui-control-height-sm);
+  padding: 0 0.625rem;
+  font-size: 0.8125rem;
+}
+
+/* ---------------------------------------------------------------- checkbox */
+
+.sui-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: var(--sui-border-width) solid var(--sui-input);
+  border-radius: var(--sui-radius-sm);
+  background: var(--sui-card);
+  color: var(--sui-primary-foreground);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.sui-checkbox[data-state='checked'],
+.sui-checkbox[data-state='indeterminate'] {
+  background: var(--sui-primary);
+  border-color: var(--sui-primary);
+}
+
+.sui-checkbox:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sui-checkbox__indicator {
+  display: inline-flex;
+  font-size: 0.75rem;
+}
+
+/* ------------------------------------------------------------------- badge */
+/*
+ * Every status colour comes from a token, so a project's own success or warning
+ * hue reaches badges instead of them staying stuck on a shipped green.
+ */
+
+.sui-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  width: fit-content;
+  padding: 0.125rem 0.5rem;
+  border: var(--sui-border-width) solid transparent;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sui-badge > svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  pointer-events: none;
+}
+
+/* ----- soft: a tint of the intent, carrying its own ink ----- */
+
+.sui-badge--soft {
+  background: color-mix(in srgb, var(--sui-badge-color) 15%, transparent);
+  color: var(--sui-badge-ink, var(--sui-badge-color));
+}
+
+.sui-badge--neutral {
+  --sui-badge-color: var(--sui-muted-foreground);
+  --sui-badge-ink: var(--sui-foreground);
+}
+.sui-badge--accent,
+.sui-badge--primary {
+  --sui-badge-color: var(--sui-primary);
+}
+.sui-badge--success {
+  --sui-badge-color: var(--sui-success);
+}
+.sui-badge--warning {
+  --sui-badge-color: var(--sui-warning);
+}
+.sui-badge--danger,
+.sui-badge--destructive {
+  --sui-badge-color: var(--sui-destructive);
+}
+.sui-badge--info {
+  --sui-badge-color: var(--sui-info);
+}
+
+/*
+ * On a dark page a mid-lightness intent colour is too dark to read as text.
+ * Lifting the ink — not the tint — keeps the badge quiet and the label legible.
+ */
+.dark .sui-badge--soft,
+[data-sui-mode='dark'] .sui-badge--soft {
+  background: color-mix(in srgb, var(--sui-badge-color) 22%, transparent);
+  color: var(--sui-badge-ink, color-mix(in oklab, var(--sui-badge-color) 72%, white));
+}
+
+/* ----- solid ----- */
+
+.sui-badge--solid {
+  background: var(--sui-badge-color, var(--sui-primary));
+  color: var(--sui-badge-on, var(--sui-primary-foreground));
+}
+.sui-badge--solid.sui-badge--success {
+  --sui-badge-on: var(--sui-success-foreground);
+}
+.sui-badge--solid.sui-badge--warning {
+  --sui-badge-on: var(--sui-warning-foreground);
+}
+.sui-badge--solid.sui-badge--danger,
+.sui-badge--solid.sui-badge--destructive {
+  --sui-badge-on: var(--sui-destructive-foreground);
+}
+.sui-badge--solid.sui-badge--info {
+  --sui-badge-on: var(--sui-info-foreground);
+}
+.sui-badge--solid.sui-badge--neutral {
+  background: var(--sui-secondary);
+  color: var(--sui-secondary-foreground);
+}
+
+/* ----- outline ----- */
+
+.sui-badge--outline {
+  border-color: var(--sui-border);
+  color: var(--sui-foreground);
+}
+
+/* --------------------------------------------------------------- separator */
+
+.sui-separator {
+  flex: none;
+  background: var(--sui-border);
+}
+.sui-separator--horizontal {
+  width: 100%;
+  height: 1px;
+}
+.sui-separator--vertical {
+  width: 1px;
+  align-self: stretch;
+}
+
+/* ---------------------------------------------------------------- skeleton */
+
+.sui-skeleton {
+  height: 0.75rem;
+  border-radius: var(--sui-radius-sm);
+  background: color-mix(in srgb, var(--sui-foreground) 9%, transparent);
+  animation: sui-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes sui-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sui-skeleton {
+    animation: none;
+  }
+  .sui-root *,
+  .sui-surface * {
+    transition-duration: 1ms !important;
+  }
+}
+
+/* --------------------------------------------------------- floating surfaces */
+
+.sui-surface {
+  z-index: 60;
+  background: var(--sui-popover);
+  color: var(--sui-popover-foreground);
+  border: var(--sui-border-width) solid var(--sui-popover-border);
+  border-radius: var(--sui-radius-surface);
+  box-shadow: var(--sui-shadow-overlay);
+  font-family: var(--sui-font-family);
+  font-size: var(--sui-header-font-size);
+}
+
+.sui-popover {
+  padding: 0.75rem;
+  min-width: 16rem;
+  max-width: min(24rem, calc(100vw - 2rem));
+}
+
+.sui-menu {
+  padding: 0.25rem;
+  min-width: 11rem;
+  max-height: min(28rem, var(--radix-dropdown-menu-content-available-height, 28rem));
+  overflow-y: auto;
+}
+
+.sui-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: calc(var(--sui-radius-control) - 1px);
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+
+.sui-menu__item[data-highlighted] {
+  background: var(--sui-accent);
+  color: var(--sui-accent-foreground);
+}
+
+.sui-menu__item[data-disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.sui-menu__item--danger {
+  color: var(--sui-destructive);
+}
+
+.sui-menu__indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1rem;
+  font-size: 0.75rem;
+}
+
+.sui-menu__label {
+  padding: 0.375rem 0.5rem;
+  color: var(--sui-muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sui-menu__separator {
+  height: 1px;
+  margin: 0.25rem -0.25rem;
+  background: var(--sui-border);
+}
+
+.sui-tooltip {
+  z-index: 70;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-foreground);
+  color: var(--sui-background);
+  font-size: 0.75rem;
+}
+
+/* ------------------------------------------------------------------ select */
+
+.sui-select__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+  min-width: 5rem;
+  height: var(--sui-control-height-sm);
+  padding: 0 0.5rem;
+  border: var(--sui-border-width) solid var(--sui-input);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-card);
+  color: var(--sui-foreground);
+  font-family: inherit;
+  font-size: var(--sui-header-font-size);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sui-select__trigger[data-placeholder],
+.sui-select__trigger[data-placeholder] .sui-select__value {
+  color: var(--sui-muted-foreground);
+}
+
+.sui-select__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sui-select__chevron {
+  flex: none;
+  color: var(--sui-muted-foreground);
+}
+
+.sui-select__content {
+  min-width: var(--radix-select-trigger-width);
+  max-height: min(20rem, var(--radix-select-content-available-height, 20rem));
+  overflow: hidden;
+}
+
+.sui-select__viewport {
+  padding: 0.25rem;
+  max-height: inherit;
+  overflow-y: auto;
+}
+
+.sui-select__item {
+  padding-inline-end: 1.5rem;
+}

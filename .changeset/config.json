@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [["@shining-ui-kit/core", "@shining-ui-kit/react", "@shining-ui-kit/themes"]],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "master",
+  "updateInternalDependencies": "patch",
+  "ignore": ["@shining-ui-kit/gallery", "@shining-ui-kit/examples"]
+}

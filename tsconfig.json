@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["vitest/globals", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@shining-ui-kit/core": ["./packages/core/src/index.ts"],
+      "@shining-ui-kit/react": ["./packages/react/src/index.ts"],
+      "@shining-ui-kit/react/virtualized": ["./packages/react/src/virtualized.tsx"],
+      "@shining-ui-kit/react/recharts": ["./packages/react/src/recharts.ts"],
+      "@shining-ui-kit/themes": ["./packages/themes/src/index.ts"],
+      "@shining-ui-kit/export-csv": ["./packages/export-csv/src/index.ts"],
+      "@shining-ui-kit/examples": ["./examples/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*",
+    "examples/src/**/*",
+    "apps/gallery/src/**/*",
+    "stories/**/*",
+    "tests/**/*",
+    ".storybook/**/*",
+    "*.config.ts",
+    "eslint.config.js"
+  ],
+  "exclude": ["**/dist/**", "**/node_modules/**"]
+}

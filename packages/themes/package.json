@@ -1,0 +1,68 @@
+{
+  "name": "@shining-ui-kit/themes",
+  "version": "0.1.0",
+  "description": "Shipped design presets for Shining UI Kit: project palettes and table chrome themes.",
+  "keywords": [
+    "design-system",
+    "design-tokens",
+    "theme",
+    "themes",
+    "palette",
+    "presets",
+    "dark-mode",
+    "data-table",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "Shining Technologies",
+  "homepage": "https://github.com/ikramulSoHeL/shining-ui-kit-pro#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ikramulSoHeL/shining-ui-kit-pro.git",
+    "directory": "packages/themes"
+  },
+  "bugs": {
+    "url": "https://github.com/ikramulSoHeL/shining-ui-kit-pro/issues"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vite build && pnpm build:cjs-types",
+    "build:cjs-types": "node ../../scripts/emit-cjs-types.mjs ./dist",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@shining-ui-kit/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^6.0.5",
+    "vite-plugin-dts": "^4.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,215 @@
+/*
+ * Charts.
+ *
+ * Series colours come from `--sui-chart-1..5`, which the project generator
+ * derives from the brand colours — so a chart belongs to its project the same
+ * way a button does, with no per-chart palette to maintain.
+ */
+
+.sui-chart {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--sui-muted-foreground);
+}
+
+.sui-chart__canvas {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.sui-chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* ------------------------------------------------------------------- parts */
+
+.sui-chart__grid line {
+  stroke: var(--sui-border);
+  stroke-width: 1;
+  /* Non-scaling so a wide chart does not stretch the dashes into solid rules. */
+  vector-effect: non-scaling-stroke;
+}
+
+.sui-chart__axis {
+  fill: var(--sui-muted-foreground);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.sui-chart__axis-line {
+  stroke: var(--sui-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.sui-chart__line {
+  fill: none;
+  stroke: var(--sui-series-color);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sui-chart__area {
+  fill: var(--sui-series-color);
+  opacity: 0.16;
+  stroke: none;
+}
+
+.sui-chart__bar {
+  fill: var(--sui-series-color);
+  transition: opacity 120ms ease;
+}
+
+.sui-chart__point {
+  fill: var(--sui-card);
+  stroke: var(--sui-series-color);
+  stroke-width: 2;
+}
+
+.sui-chart__slice {
+  fill: var(--sui-series-color);
+  stroke: var(--sui-card);
+  stroke-width: 2;
+  transition: opacity 120ms ease;
+}
+
+/*
+ * Hover dims the rest of the chart instead of highlighting one mark. Raising
+ * one series changes its apparent colour; lowering the others does not.
+ */
+.sui-chart__series[data-dimmed='true'] {
+  opacity: 0.25;
+}
+
+.sui-chart__sparkline {
+  display: block;
+  width: 100%;
+  height: 2rem;
+  overflow: visible;
+}
+
+/* ------------------------------------------------------------------ legend */
+
+.sui-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.sui-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+}
+
+.sui-chart__legend-item[data-interactive='true'] {
+  cursor: pointer;
+}
+
+.sui-chart__legend-item[data-hidden='true'] {
+  opacity: 0.45;
+}
+
+.sui-chart__swatch {
+  flex: none;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 3px;
+  background: var(--sui-series-color);
+}
+
+.sui-chart__legend-label {
+  color: var(--sui-foreground);
+}
+
+/* ----------------------------------------------------------------- tooltip */
+
+.sui-chart__tooltip {
+  position: absolute;
+  z-index: 20;
+  min-width: 8rem;
+  padding: 0.5rem 0.625rem;
+  border: var(--sui-border-width) solid var(--sui-popover-border);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-popover);
+  color: var(--sui-popover-foreground);
+  box-shadow: var(--sui-shadow-overlay);
+  font-size: 0.75rem;
+  /* The pointer is already over the mark this describes; letting the tooltip
+     take the pointer would make it flicker as it chases the cursor. */
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 0.625rem));
+}
+
+.sui-chart__tooltip-label {
+  margin-bottom: 0.25rem;
+  color: var(--sui-muted-foreground);
+  font-weight: 500;
+}
+
+.sui-chart__tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.sui-chart__tooltip-value {
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.sui-chart__cursor {
+  stroke: var(--sui-muted-foreground);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+
+/* --------------------------------------------------------------- donut hole */
+
+.sui-chart__donut-label {
+  fill: var(--sui-foreground);
+  font-size: 1.125rem;
+  font-weight: var(--sui-title-font-weight);
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.sui-chart__donut-caption {
+  fill: var(--sui-muted-foreground);
+  font-size: 0.6875rem;
+  text-anchor: middle;
+}
+
+/* ------------------------------------------------------------ empty charts */
+
+.sui-chart__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 8rem;
+  color: var(--sui-muted-foreground);
+  font-size: 0.8125rem;
+}
