@@ -1,6 +1,6 @@
 {
   "name": "@shining-technologies/ui-kit-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Framework-agnostic core for Shining UI Kit: design tokens, the OKLCH colour engine, the project system, and the data-table engine.",
   "keywords": [
     "design-tokens",

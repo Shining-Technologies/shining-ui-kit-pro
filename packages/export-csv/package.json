@@ -1,6 +1,6 @@
 {
   "name": "@shining-technologies/ui-kit-export-csv",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Optional CSV/TSV export for the Shining UI Kit data table. Zero runtime dependencies.",
   "keywords": [
     "csv",
