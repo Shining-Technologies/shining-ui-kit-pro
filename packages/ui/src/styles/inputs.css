@@ -1120,6 +1120,34 @@
   pointer-events: auto;
 }
 
+/*
+ * The layer's chips only reserve room for their remove buttons. Painted, they
+ * would cover the labels of the real chips underneath.
+ */
+.sui-combobox__overlay .sui-combobox__chip {
+  background: transparent;
+}
+
+/*
+ * The glyphs are small; an invisible margin brings each button's hit area to
+ * about 24px (WCAG 2.5.8) without moving anything.
+ */
+button.sui-combobox__clear,
+button.sui-combobox__chip-remove {
+  position: relative;
+}
+
+button.sui-combobox__clear::after,
+button.sui-combobox__chip-remove::after {
+  content: '';
+  position: absolute;
+  inset: -0.1875rem;
+}
+
+button.sui-combobox__chip-remove::after {
+  inset: -0.4375rem;
+}
+
 .sui-combobox__ghost {
   visibility: hidden;
 }
