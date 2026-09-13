@@ -1,21 +1,15 @@
 import {
-  Badge,
-  Button,
   ColorModeToggle,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DropdownMenuItem,
-  ProjectEditor,
-  ProjectSwitcher,
-  useUIKit,
-} from '@shining-technologies/ui-kit-react'
-import { useState } from 'react'
-import { ProjectPanel } from './ProjectPanel'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@shining-technologies/ui'
+import { THEME_PRESETS } from '@shining-technologies/ui/theme'
 import type { GallerySection } from './sections'
 import { CATEGORIES, SECTIONS } from './sections'
+import { useGalleryTheme } from './theme'
 
 export interface GalleryShellProps {
   section: GallerySection
@@ -25,18 +19,24 @@ export interface GalleryShellProps {
 /**
  * The frame around every gallery page.
  *
- * Every piece of it — the sidebar, the switcher, the badges — is built from the
- * kit itself, which makes the shell the first and most honest demonstration
- * that switching project restyles an application rather than a demo area.
+ * The theme picker and the mode toggle are the package's own components, and
+ * every colour in the frame is a theme token, so switching theme restyles the
+ * whole page rather than a demo area inside it.
  */
 export function GalleryShell({ section, onSelectSection }: GalleryShellProps) {
-  const { project } = useUIKit()
-  const [creating, setCreating] = useState(false)
-  const [panelOpen, setPanelOpen] = useState(false)
+  const { theme, setThemeId } = useGalleryTheme()
 
   return (
     <div className="gallery">
-      <a className="gallery__skip" href="#gallery-main">
+      {/* Not a `#hash` link: the hash is the page router here. */}
+      <a
+        className="gallery__skip"
+        href="#gallery-main"
+        onClick={(event) => {
+          event.preventDefault()
+          document.getElementById('gallery-main')?.focus()
+        }}
+      >
         Skip to content
       </a>
 
@@ -44,21 +44,25 @@ export function GalleryShell({ section, onSelectSection }: GalleryShellProps) {
         <div className="gallery__brand">
           <span className="gallery__mark" aria-hidden="true" />
           <div>
-            <p className="gallery__title">Shining UI Kit</p>
-            <p className="gallery__subtitle">One project, every component</p>
+            <p className="gallery__title">Shining UI</p>
+            <p className="gallery__subtitle">@shining-technologies/ui — every component, one theme</p>
           </div>
         </div>
 
         <div className="gallery__bar-actions">
-          <ProjectSwitcher
-            footer={
-              <DropdownMenuItem onSelect={() => setCreating(true)}>+ New project…</DropdownMenuItem>
-            }
-          />
-          <ColorModeToggle />
-          <Button variant="outline" size="sm" onClick={() => setPanelOpen(true)}>
-            Customise
-          </Button>
+          <Select value={theme.id} onValueChange={setThemeId}>
+            <SelectTrigger className="gallery__theme" aria-label="Theme">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {THEME_PRESETS.map((preset) => (
+                <SelectItem key={preset.id} value={preset.id}>
+                  {preset.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <ColorModeToggle defaultMode="light" />
         </div>
       </header>
 
@@ -91,29 +95,12 @@ export function GalleryShell({ section, onSelectSection }: GalleryShellProps) {
               <h1>{section.label}</h1>
               <p>{section.blurb}</p>
             </div>
-            <Badge tone="primary" variant="soft">
-              {project.name}
-            </Badge>
+            <span className="gallery__chip">{theme.name}</span>
           </div>
 
           <section.render />
         </main>
       </div>
-
-      <Dialog open={creating} onOpenChange={setCreating}>
-        <DialogContent size="lg">
-          <DialogHeader>
-            <DialogTitle>New project</DialogTitle>
-            <DialogDescription>
-              Pick a starting palette, then change any colour. Everything else — hovers, borders,
-              dark mode, chart series and readable label colours — is generated for you.
-            </DialogDescription>
-          </DialogHeader>
-          <ProjectEditor onSubmit={() => setCreating(false)} onCancel={() => setCreating(false)} />
-        </DialogContent>
-      </Dialog>
-
-      <ProjectPanel open={panelOpen} onOpenChange={setPanelOpen} />
     </div>
   )
 }

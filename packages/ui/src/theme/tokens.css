@@ -1,0 +1,208 @@
+/*
+ * Shining UI — derived and component tokens.
+ *
+ *   semantic tokens (theme.css or your app)  →  these tokens  →  component CSS
+ *
+ * Nothing here is a colour choice: every colour is computed from the semantic
+ * tokens, so changing `--primary` or `--radius` restyles buttons, table rows,
+ * focus rings and radii consistently.
+ *
+ * Two kinds of token, declared differently on purpose:
+ *
+ * 1. Values that only need to be *inherited* — rhythm, typography, table sizing,
+ *    shadows and the mix ratios that differ between light and dark — are set on
+ *    `:root` and `.dark` only. A density wrapper or a `.dark` ancestor therefore
+ *    reaches every descendant, including one that carries its own theme.
+ *
+ * 2. Values *computed from* semantic tokens (`color-mix(var(--primary) …)`,
+ *    `calc(var(--radius) …)`) are resolved on the element that declares them and
+ *    inherited as finished values. Declared only on `:root`, a subtree with its
+ *    own `--primary` would keep the page's row colours. So they are re-declared
+ *    wherever a theme can change: `.dark`, `[data-theme]` and the `.sui-theme`
+ *    hook. Anything mode-specific in them is read from a kind-1 variable.
+ *
+ * Everything is zero-specificity and in the `base` layer, so an application can
+ * override any single token on any element.
+ */
+@layer theme, base, components, utilities;
+
+@layer base {
+  /* ------------------------------------------------------ inherited values */
+
+  :where(:root) {
+    /* geometry */
+    --sui-border-width: 1px;
+
+    /* typography — prefixed so they never collide with Tailwind's --font-* theme variables */
+    --sui-font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+      sans-serif;
+    --sui-font-family-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+      'Liberation Mono', monospace;
+    --sui-font-size: 0.875rem;
+    --sui-font-weight: 400;
+    --sui-line-height: 1.45;
+    --sui-title-font-size: 1rem;
+    --sui-title-font-weight: 600;
+
+    /* rhythm (comfortable density) */
+    --sui-gap: 0.5rem;
+    --sui-stack: 1rem;
+    --sui-surface-padding: 1rem;
+    --sui-control-height: 2.25rem;
+    --sui-control-height-sm: 2rem;
+    --sui-control-height-lg: 2.5rem;
+
+    /* data table sizing */
+    --sui-header-font-size: 0.75rem;
+    --sui-header-font-weight: 500;
+    --sui-header-letter-spacing: 0.02em;
+    --sui-header-text-transform: uppercase;
+    --sui-header-padding-x: 0.875rem;
+    --sui-header-padding-y: 0.5rem;
+    --sui-header-height: 2.75rem;
+    --sui-row-height: 3rem;
+    --sui-cell-padding-x: 0.875rem;
+    --sui-cell-padding-y: 0.625rem;
+    --sui-min-column-width: 3.5rem;
+
+    /* mode-specific mix ratios, read by the computed row colours below */
+    --sui-row-selected-mix: 10%;
+    --sui-row-selected-hover-mix: 16%;
+    --sui-row-striped-mix: 40%;
+
+    /* elevation — black at an alpha: light is not a palette colour */
+    --sui-shadow-surface: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --sui-shadow-overlay: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 10px 22px -6px rgb(0 0 0 / 0.12);
+    --sui-shadow-modal: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 24px 48px -12px rgb(0 0 0 / 0.25);
+    --sui-shadow-pinned-left: 6px 0 8px -6px rgb(0 0 0 / 0.14);
+    --sui-shadow-pinned-right: -6px 0 8px -6px rgb(0 0 0 / 0.14);
+  }
+
+  :where(.dark) {
+    --sui-row-selected-mix: 18%;
+    --sui-row-selected-hover-mix: 26%;
+    --sui-row-striped-mix: 35%;
+    --sui-shadow-surface: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+    --sui-shadow-overlay: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 10px 24px -6px rgb(0 0 0 / 0.55);
+    --sui-shadow-modal: 0 16px 32px -8px rgb(0 0 0 / 0.6), 0 40px 72px -20px rgb(0 0 0 / 0.7);
+  }
+
+  /* ------------------------------------------------------- computed values */
+
+  :where(:root, .dark, [data-theme], .sui-theme) {
+    --sui-radius-sm: calc(var(--radius) - 4px);
+    --sui-radius-control: calc(var(--radius) - 2px);
+    --sui-radius-surface: var(--radius);
+    --sui-radius-lg: calc(var(--radius) + 4px);
+    --sui-font-mono: var(--sui-font-family-mono);
+
+    --sui-popover-border: var(--border);
+
+    /* form fields — one focus treatment for every control that holds a value */
+    --sui-field-focus-border: var(--ring);
+    --sui-field-focus-ring: 0 0 0 3px color-mix(in oklab, var(--ring) 20%, transparent);
+    --sui-field-invalid-ring: 0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent);
+
+    --sui-header-background: color-mix(in oklab, var(--muted) 45%, var(--card));
+    --sui-header-foreground: var(--muted-foreground);
+    --sui-header-border: var(--border);
+    --sui-header-divider: var(--sui-header-border);
+    --sui-row-background: transparent;
+    --sui-row-foreground: color-mix(in oklab, var(--foreground) 85%, var(--muted-foreground));
+    --sui-row-hover: color-mix(in oklab, var(--accent) 60%, var(--card));
+    --sui-row-selected: color-mix(in oklab, var(--primary) var(--sui-row-selected-mix), var(--card));
+    --sui-row-selected-hover: color-mix(
+      in oklab,
+      var(--primary) var(--sui-row-selected-hover-mix),
+      var(--card)
+    );
+    --sui-row-striped: color-mix(in oklab, var(--muted) var(--sui-row-striped-mix), var(--card));
+    --sui-row-border: var(--border);
+  }
+
+  /* ---------------------------------------------------------------- density */
+  /* Density only ever changes rhythm, never colour or behaviour. */
+
+  :where([data-sui-density='compact'], .sui-root[data-density='compact']) {
+    --sui-cell-padding-x: 0.625rem;
+    --sui-cell-padding-y: 0.3125rem;
+    --sui-header-padding-x: 0.625rem;
+    --sui-header-padding-y: 0.375rem;
+    --sui-header-height: 2.25rem;
+    --sui-row-height: 2.25rem;
+    --sui-font-size: 0.8125rem;
+    --sui-header-font-size: 0.6875rem;
+    --sui-gap: 0.375rem;
+    --sui-stack: 0.75rem;
+    --sui-surface-padding: 0.75rem;
+    --sui-control-height: 2rem;
+    --sui-control-height-sm: 1.75rem;
+    --sui-control-height-lg: 2.25rem;
+  }
+
+  :where([data-sui-density='comfortable'], .sui-root[data-density='comfortable']) {
+    --sui-cell-padding-x: 0.875rem;
+    --sui-cell-padding-y: 0.625rem;
+    --sui-header-padding-x: 0.875rem;
+    --sui-header-padding-y: 0.5rem;
+    --sui-header-height: 2.75rem;
+    --sui-row-height: 3rem;
+    --sui-font-size: 0.875rem;
+    --sui-header-font-size: 0.75rem;
+    --sui-gap: 0.5rem;
+    --sui-stack: 1rem;
+    --sui-surface-padding: 1rem;
+    --sui-control-height: 2.25rem;
+    --sui-control-height-sm: 2rem;
+    --sui-control-height-lg: 2.5rem;
+  }
+
+  :where([data-sui-density='spacious'], .sui-root[data-density='spacious']) {
+    --sui-cell-padding-x: 1.125rem;
+    --sui-cell-padding-y: 1rem;
+    --sui-header-padding-x: 1.125rem;
+    --sui-header-padding-y: 0.75rem;
+    --sui-header-height: 3.25rem;
+    --sui-row-height: 3.75rem;
+    --sui-gap: 0.75rem;
+    --sui-stack: 1.5rem;
+    --sui-surface-padding: 1.5rem;
+    --sui-control-height: 2.5rem;
+    --sui-control-height-sm: 2.25rem;
+    --sui-control-height-lg: 2.75rem;
+  }
+
+  /* --------------------------------------------------------- table variants */
+  /* Variants are token recipes, never separate components. */
+
+  :where(.sui-root[data-variant='minimal']) {
+    --sui-header-background: transparent;
+    --sui-row-border: transparent;
+    --sui-radius-surface: 0px;
+    --sui-header-divider: transparent;
+    --sui-header-text-transform: none;
+  }
+
+  :where(.sui-root[data-variant='compact']) {
+    --sui-cell-padding-x: 0.625rem;
+    --sui-cell-padding-y: 0.3125rem;
+    --sui-header-padding-x: 0.625rem;
+    --sui-header-padding-y: 0.375rem;
+    --sui-header-height: 2.25rem;
+    --sui-row-height: 2.25rem;
+    --sui-font-size: 0.8125rem;
+    --sui-header-font-size: 0.75rem;
+  }
+
+  :where(.sui-root[data-variant='borderless']) {
+    --sui-row-border: transparent;
+    --sui-header-border: transparent;
+    --sui-header-background: transparent;
+    --sui-header-divider: transparent;
+  }
+
+  :where(.sui-root[data-variant='dashboard']) {
+    --sui-header-background: var(--muted);
+    --sui-radius-surface: calc(var(--radius) + 4px);
+  }
+}

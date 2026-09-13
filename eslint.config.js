@@ -11,6 +11,8 @@ export default tseslint.config(
       '**/storybook-static/**',
       '**/node_modules/**',
       '**/*.d.ts',
+      // Consumer test applications with their own toolchains (see integration/README.md).
+      'integration/**',
     ],
   },
   js.configs.recommended,
@@ -38,9 +40,9 @@ export default tseslint.config(
   },
   {
     // Build scripts run in Node, not the browser.
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'packages/*/scripts/**/*.mjs'],
     languageOptions: {
-      globals: { process: 'readonly', console: 'readonly', URL: 'readonly' },
+      globals: { process: 'readonly', console: 'readonly', URL: 'readonly', Buffer: 'readonly' },
     },
     rules: { 'no-console': 'off' },
   },

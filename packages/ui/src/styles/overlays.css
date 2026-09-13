@@ -1,0 +1,328 @@
+/*
+ * Modal surfaces: dialog, alert dialog, sheet, hover card.
+ *
+ * Popover, dropdown menu and tooltip are in primitives.css — the table needs
+ * them, so they ship with the shared layer.
+ */
+
+/* ----------------------------------------------------------------- overlay */
+
+.sui-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: color-mix(in srgb, #000 55%, transparent);
+  /* Backdrop blur is a progressive nicety: unsupported browsers still get the
+     dim, which is the part that actually communicates "modal". */
+  backdrop-filter: blur(2px);
+}
+
+.sui-overlay[data-state='open'] {
+  animation: sui-fade-in 180ms ease-out;
+}
+.sui-overlay[data-state='closed'] {
+  animation: sui-fade-out 140ms ease-in;
+}
+
+/* ------------------------------------------------------------------ dialog */
+
+.sui-dialog {
+  position: fixed;
+  z-index: 90;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sui-stack);
+  width: calc(100vw - 2rem);
+  max-width: 32rem;
+  max-height: calc(100dvh - 4rem);
+  padding: var(--sui-surface-padding);
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: var(--sui-radius-lg);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--sui-shadow-modal);
+  overflow-y: auto;
+}
+
+.sui-dialog--sm {
+  max-width: 24rem;
+}
+.sui-dialog--lg {
+  max-width: 48rem;
+}
+.sui-dialog--xl {
+  max-width: 64rem;
+}
+
+.sui-dialog[data-state='open'] {
+  animation: sui-dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sui-dialog[data-state='closed'] {
+  animation: sui-dialog-out 150ms ease-in;
+}
+
+.sui-dialog__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-inline-end: 1.75rem;
+}
+
+.sui-dialog__title {
+  font-size: 1rem;
+  font-weight: var(--sui-title-font-weight);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.sui-dialog__description {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.sui-dialog__body {
+  min-width: 0;
+}
+
+.sui-dialog__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sui-gap);
+}
+
+/*
+ * On a narrow screen the footer stacks and reverses, so the primary action is
+ * the one nearest the thumb rather than the one furthest from it.
+ */
+@media (max-width: 32rem) {
+  .sui-dialog__footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+.sui-dialog__close {
+  position: absolute;
+  top: 0.75rem;
+  inset-inline-end: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--sui-radius-sm);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.sui-dialog__close:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+/* ------------------------------------------------------------------- sheet */
+/*
+ * A panel anchored to one edge. The four sides differ only in geometry and the
+ * axis they slide along, so they share everything else.
+ */
+
+.sui-sheet {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sui-stack);
+  padding: var(--sui-surface-padding);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--sui-shadow-modal);
+  overflow-y: auto;
+}
+
+.sui-sheet--right,
+.sui-sheet--left {
+  top: 0;
+  bottom: 0;
+  width: min(24rem, calc(100vw - 3rem));
+}
+
+.sui-sheet--right {
+  inset-inline-end: 0;
+  border-inline-start: var(--sui-border-width) solid var(--border);
+}
+
+.sui-sheet--left {
+  inset-inline-start: 0;
+  border-inline-end: var(--sui-border-width) solid var(--border);
+}
+
+.sui-sheet--top,
+.sui-sheet--bottom {
+  inset-inline: 0;
+  max-height: 85dvh;
+}
+
+.sui-sheet--top {
+  top: 0;
+  border-bottom: var(--sui-border-width) solid var(--border);
+}
+
+.sui-sheet--bottom {
+  bottom: 0;
+  border-top: var(--sui-border-width) solid var(--border);
+}
+
+.sui-sheet--right[data-state='open'] {
+  animation: sui-slide-in-right 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sui-sheet--right[data-state='closed'] {
+  animation: sui-slide-out-right 200ms ease-in;
+}
+.sui-sheet--left[data-state='open'] {
+  animation: sui-slide-in-left 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sui-sheet--left[data-state='closed'] {
+  animation: sui-slide-out-left 200ms ease-in;
+}
+.sui-sheet--top[data-state='open'] {
+  animation: sui-slide-in-top 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sui-sheet--top[data-state='closed'] {
+  animation: sui-slide-out-top 200ms ease-in;
+}
+.sui-sheet--bottom[data-state='open'] {
+  animation: sui-slide-in-bottom 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sui-sheet--bottom[data-state='closed'] {
+  animation: sui-slide-out-bottom 200ms ease-in;
+}
+
+/* -------------------------------------------------------------- hover card */
+
+.sui-hover-card {
+  padding: 0.875rem;
+  width: 18rem;
+}
+
+.sui-hover-card[data-state='open'] {
+  animation: sui-fade-in 140ms ease-out;
+}
+
+/* -------------------------------------------------------------- animations */
+
+@keyframes sui-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sui-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sui-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes sui-dialog-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+}
+
+@keyframes sui-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes sui-slide-out-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes sui-slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes sui-slide-out-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+@keyframes sui-slide-in-top {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes sui-slide-out-top {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+@keyframes sui-slide-in-bottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes sui-slide-out-bottom {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}

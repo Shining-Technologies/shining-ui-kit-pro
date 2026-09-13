@@ -16,25 +16,32 @@ import {
   CardHeader,
   CardIcon,
   CardTitle,
+  CheckCircleIcon,
+  ClockIcon,
   Empty,
+  InboxIcon,
+  Kbd,
+  ListIcon,
   MetricGrid,
   MetricTile,
   Progress,
   SegmentedBar,
   Separator,
   Skeleton,
-  Sparkline,
   Spinner,
-  Stat,
   StatsCard,
   StatusDot,
   StatusFlow,
   StepCard,
   SummaryCard,
+  Toaster,
+  ToastProvider,
+  TrendUpIcon,
   UserAvatar,
   initialsFrom,
-} from '@shining-technologies/ui-kit-react'
-import type { ReactNode } from 'react'
+  useToast,
+} from '@shining-technologies/ui'
+import { Sparkline } from '@shining-technologies/ui/charts'
 import {
   FLEET_BREAKDOWN,
   PEOPLE,
@@ -44,53 +51,65 @@ import {
 } from '../data'
 import { Demo } from './Demo'
 
-/* Gallery-only glyphs. The kit's cards take any node, so these are just SVG. */
-function Glyph({ children }: { children: ReactNode }) {
+const WORK_ORDER_PATH = ['requested', 'scheduled', 'in_progress', 'completed', 'invoiced']
+
+/** Buttons that raise toasts. A child of the provider, because `useToast` throws outside one. */
+function ToastButtons() {
+  const { toast, dismissAll } = useToast()
+
   return (
-    <svg
-      viewBox="0 0 24 24"
-      width="1em"
-      height="1em"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {children}
-    </svg>
+    <>
+      <Button
+        variant="outline"
+        onClick={() =>
+          toast({ title: 'Job saved', description: 'JOB-4812 was updated.', tone: 'success' })
+        }
+      >
+        Success
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() =>
+          toast({
+            title: 'Crew running late',
+            description: 'North crew is 20 minutes behind schedule.',
+            tone: 'warning',
+          })
+        }
+      >
+        Warning
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() =>
+          toast({
+            title: 'Invoice deleted',
+            tone: 'destructive',
+            duration: 8000,
+            action: { label: 'Undo', onClick: () => toast({ title: 'Invoice restored' }) },
+          })
+        }
+      >
+        With undo
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => {
+          toast({ id: 'sync', title: 'Syncing timesheets…', tone: 'info', duration: 0 })
+          window.setTimeout(
+            () => toast({ id: 'sync', title: 'Timesheets synced', tone: 'success' }),
+            1500,
+          )
+        }}
+      >
+        Replace in place
+      </Button>
+      <Button variant="ghost" onClick={dismissAll}>
+        Dismiss all
+      </Button>
+    </>
   )
 }
-
-const TicketGlyph = () => (
-  <Glyph>
-    <path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4Z" />
-    <path d="M13 6v2M13 11v2M13 16v2" />
-  </Glyph>
-)
-
-const TruckGlyph = () => (
-  <Glyph>
-    <path d="M3 6h11v9H3zM14 9h4l3 3v3h-7" />
-    <circle cx="7" cy="17" r="2" />
-    <circle cx="17" cy="17" r="2" />
-  </Glyph>
-)
-
-const ClipboardGlyph = () => (
-  <Glyph>
-    <rect x="5" y="4" width="14" height="17" rx="2" />
-    <path d="M9 4V3h6v1M9 11h6M9 15h4" />
-  </Glyph>
-)
-
-const ShieldGlyph = () => (
-  <Glyph>
-    <path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6Z" />
-    <path d="m9 12 2 2 4-4" />
-  </Glyph>
-)
 
 export function Surfaces() {
   return (
@@ -127,11 +146,9 @@ export function Surfaces() {
           <Card variant="flat">
             <CardHeader>
               <CardTitle>Flat</CardTitle>
-              <CardDescription>Same box, no shadow.</CardDescription>
+              <CardDescription>Same box, no shadow. The sparkline is not in CardContent.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Sparkline data={SPARK_SERIES} area height={48} />
-            </CardContent>
+            <Sparkline data={SPARK_SERIES} height={56} />
           </Card>
 
           <Card interactive>
@@ -142,7 +159,7 @@ export function Surfaces() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Stat label="Open tickets" value="18" delta="-4 today" trend="up" />
+              <MetricTile label="Open tickets" value="18" delta="−4 today" trend="up" />
             </CardContent>
           </Card>
         </div>
@@ -184,14 +201,26 @@ export function Surfaces() {
         </div>
       </Demo>
 
-      <Demo title="Stats card sizes, icons and a full-bleed chart" inline={false}>
+      <Demo
+        title="Stats card sizes, icons and a full-bleed chart"
+        note="Passing onClick turns the tile into a real button, so it is reachable by keyboard without anyone adding a tabIndex."
+        inline={false}
+      >
         <div className="grid-3">
-          <StatsCard size="sm" label="Open tickets" value="37" change="−4" trend="up" />
+          <StatsCard
+            size="sm"
+            label="Open tickets"
+            value="37"
+            change="−4"
+            trend="up"
+            icon={<InboxIcon />}
+          />
           <StatsCard
             label="Bookings"
             value="868"
             change="+8.2%"
             trend="up"
+            icon={<TrendUpIcon />}
             chart={<Sparkline data={SPARK_SERIES} height={44} />}
           />
           <StatsCard
@@ -199,6 +228,7 @@ export function Surfaces() {
             label="Crews on shift"
             value="24"
             description="Click through for the roster"
+            icon={<ClockIcon />}
             onClick={() => undefined}
           />
         </div>
@@ -211,7 +241,7 @@ export function Surfaces() {
       >
         <div className="grid-2">
           <SummaryCard
-            icon={<TicketGlyph />}
+            icon={<InboxIcon />}
             iconTone="info"
             title="Support queue"
             description="Tickets raised by customers and crews"
@@ -229,7 +259,7 @@ export function Surfaces() {
           />
 
           <SummaryCard
-            icon={<ShieldGlyph />}
+            icon={<CheckCircleIcon />}
             iconTone="warning"
             title="Compliance checks"
             description="Licences and insurance awaiting review"
@@ -243,7 +273,7 @@ export function Surfaces() {
           />
 
           <SummaryCard
-            icon={<ClipboardGlyph />}
+            icon={<ListIcon />}
             title="Work orders"
             description="Loading — every figure and row holds its place"
             metrics={[
@@ -252,17 +282,20 @@ export function Surfaces() {
             ]}
             breakdown={TICKET_BREAKDOWN}
             loading
+            footer={
+              <Button size="sm" variant="ghost">
+                View all work orders
+              </Button>
+            }
           />
 
           <Card>
             <CardHeader>
               <CardIcon tone="primary">
-                <TruckGlyph />
+                <ClockIcon />
               </CardIcon>
               <CardTitle>Field crews</CardTitle>
-              <CardDescription>
-                Composed from the parts, with shares and percentages
-              </CardDescription>
+              <CardDescription>Composed from the parts, with shares and percentages</CardDescription>
               <CardAction>
                 <StatusDot tone="success" label="Live" pulse />
               </CardAction>
@@ -313,15 +346,24 @@ export function Surfaces() {
           <StatusFlow
             label="Work order lifecycle"
             statuses={WORK_ORDER_STATUSES}
-            steps={['requested', 'scheduled', 'in_progress', 'completed', 'invoiced']}
+            steps={WORK_ORDER_PATH}
             alternates={['on_hold', 'cancelled']}
           />
           <Separator />
           <StatusFlow
             label="Work order WO-3318"
             statuses={WORK_ORDER_STATUSES}
-            steps={['requested', 'scheduled', 'in_progress', 'completed', 'invoiced']}
+            steps={WORK_ORDER_PATH}
             current={2}
+          />
+          <Separator />
+          <StatusFlow
+            label="Work order WO-3290, cancelled after scheduling"
+            statuses={WORK_ORDER_STATUSES}
+            steps={WORK_ORDER_PATH}
+            alternates={['on_hold', 'cancelled']}
+            current="cancelled"
+            reached="scheduled"
           />
           <Separator />
           <StatusFlow
@@ -408,13 +450,14 @@ export function Surfaces() {
         inline={false}
       >
         <div className="stack-sm" style={{ maxWidth: '32rem' }}>
-          <div className="demo__body demo__body--inline">
+          <div className="demo__body--inline">
             <StatusDot tone="success" label="Operational" />
             <StatusDot tone="warning" label="Degraded" />
             <StatusDot tone="destructive" label="Outage" />
             <StatusDot tone="neutral" label="Paused" />
             <StatusDot tone="info" label="Syncing" pulse />
             <StatusDot tone="chart-1" size="lg" label="Recording" pulse />
+            <StatusDot tone="success" size="sm" aria-label="Online" />
           </div>
           <SegmentedBar label="Tickets by status" segments={TICKET_BREAKDOWN} />
           <SegmentedBar size="lg" label="Crews by state" segments={FLEET_BREAKDOWN} />
@@ -422,8 +465,18 @@ export function Surfaces() {
         </div>
       </Demo>
 
-      <Demo title="Alert" inline={false}>
+      <Demo
+        title="Alert"
+        note="Each tone brings its own glyph; pass icon={null} to go without."
+        inline={false}
+      >
         <div className="stack-sm">
+          <Alert>
+            <AlertTitle>Heads up</AlertTitle>
+            <AlertDescription>
+              Neutral has no default glyph — it is a remark, not a state.
+            </AlertDescription>
+          </Alert>
           <Alert tone="info">
             <AlertTitle>Scheduled maintenance</AlertTitle>
             <AlertDescription>
@@ -443,14 +496,18 @@ export function Surfaces() {
           <Alert tone="destructive">
             <AlertTitle>Payment failed</AlertTitle>
             <AlertDescription>
-              The card on file was declined. This one uses <code>role="alert"</code>; the others do
-              not, because interrupting a screen reader is right for an error and rude for a tip.
+              The card on file was declined. This one uses <code>role="alert"</code>; the others use{' '}
+              <code>role="note"</code>, because interrupting a screen reader is right for an error
+              and rude for a tip.
             </AlertDescription>
+          </Alert>
+          <Alert tone="info" icon={null}>
+            <AlertDescription>A single line with the glyph suppressed.</AlertDescription>
           </Alert>
         </div>
       </Demo>
 
-      <Demo title="Avatar">
+      <Demo title="Avatar" note="The bare box. AvatarGroup overlaps them and folds the rest into +n.">
         <Avatar size="sm">
           <AvatarFallback>PR</AvatarFallback>
         </Avatar>
@@ -471,6 +528,13 @@ export function Surfaces() {
             </Avatar>
           ))}
         </AvatarGroup>
+        <AvatarGroup max={3}>
+          {PEOPLE.map((person) => (
+            <Avatar key={person.name}>
+              <AvatarFallback>{initialsFrom(person.name)}</AvatarFallback>
+            </Avatar>
+          ))}
+        </AvatarGroup>
       </Demo>
 
       <Demo
@@ -485,12 +549,16 @@ export function Surfaces() {
         <UserAvatar name="Ana Ortiz" size="lg" status="busy" />
         <UserAvatar name="Kofi Mensah" size="lg" status="offline" />
         <UserAvatar name="No Tint" size="lg" muted />
+        <UserAvatar name="Lena Brandt" size="xs" />
+        <UserAvatar name="Lena Brandt" size="xl" />
       </Demo>
 
       <Demo title="Progress" inline={false}>
         <div className="stack-sm" style={{ maxWidth: '28rem' }}>
+          <Progress value={72} size="sm" />
           <Progress value={72} />
           <Progress value={45} tone="warning" />
+          <Progress value={100} tone="success" />
           <Progress value={91} tone="destructive" size="lg" />
           <Progress value={null} />
           <p className="muted">
@@ -499,15 +567,21 @@ export function Surfaces() {
         </div>
       </Demo>
 
-      <Demo title="Loading and empty" inline={false}>
+      <Demo
+        title="Loading and empty"
+        note="The inline Empty is the same statement at the volume of a sentence, for a list inside a card whose other content is still worth reading."
+        inline={false}
+      >
         <div className="grid-2">
           <Card>
             <CardContent className="stack-sm">
               <Skeleton style={{ width: '60%' }} />
               <Skeleton />
               <Skeleton style={{ width: '80%' }} />
-              <div className="demo__body demo__body--inline">
+              <div className="demo__body--inline">
+                <Spinner size="sm" />
                 <Spinner />
+                <Spinner size="lg" />
                 <span className="muted">Loading jobs…</span>
               </div>
               <Separator />
@@ -525,7 +599,7 @@ export function Surfaces() {
 
           <Card>
             <Empty
-              icon="◷"
+              icon={<InboxIcon />}
               title="No jobs scheduled"
               description="Nothing is booked for this crew today. Assign a job or change the date filter."
               actions={
@@ -539,6 +613,22 @@ export function Surfaces() {
             />
           </Card>
         </div>
+      </Demo>
+
+      <Demo
+        title="Toast"
+        note={
+          <>
+            A notification, never a focus thief. Hovering or focusing a toast holds every clock, so
+            nothing vanishes mid-read; reusing an id replaces a toast in place. Keyboard users reach
+            the region with <Kbd>Tab</Kbd> like anything else.
+          </>
+        }
+      >
+        <ToastProvider>
+          <ToastButtons />
+          <Toaster position="bottom-right" />
+        </ToastProvider>
       </Demo>
     </div>
   )

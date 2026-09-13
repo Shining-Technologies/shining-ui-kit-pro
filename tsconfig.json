@@ -19,7 +19,6 @@
   "include": [
     "packages/*/src/**/*",
     "examples/src/**/*",
-    "apps/gallery/src/**/*",
     "stories/**/*",
     "tests/**/*",
     ".storybook/**/*",

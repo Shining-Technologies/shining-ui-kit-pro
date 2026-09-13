@@ -1,0 +1,1 @@
+{"name":"types-check-nodenext","private":true,"type":"module","dependencies":{"@shining-technologies/ui":"file:../../shining-technologies-ui-2.0.0-rc.0.tgz","@tanstack/react-virtual":"^3.14.12","react":"^19.3.0","react-dom":"^19.3.0","recharts":"^3.10.1"},"devDependencies":{"@types/react":"^19.3.0","@types/react-dom":"^19.3.0","typescript":"^7.0.2"}}

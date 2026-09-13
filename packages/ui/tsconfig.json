@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["vitest/globals", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@shining-technologies/ui": ["./src/index.ts"],
+      "@shining-technologies/ui/core": ["./src/core/index.ts"],
+      "@shining-technologies/ui/theme": ["./src/theme/index.ts"],
+      "@shining-technologies/ui/charts": ["./src/charts/index.ts"],
+      "@shining-technologies/ui/csv": ["./src/csv/index.ts"],
+      "@shining-technologies/ui/virtualized": ["./src/components/data-table/virtualized.tsx"],
+      "@shining-technologies/ui/*": ["./src/components/*/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "tests/**/*", "scripts/**/*.ts", "vite.config.ts", "vitest.config.ts"]
+}

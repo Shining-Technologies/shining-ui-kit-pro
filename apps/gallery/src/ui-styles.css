@@ -1,0 +1,26 @@
+/*
+ * @shining-technologies/ui, from source.
+ *
+ * The same files, order and layers as the package build
+ * (packages/ui/scripts/build-css.mjs), so the gallery cascades exactly like
+ * `dist/styles.css` while still reloading on a stylesheet edit.
+ */
+@layer theme, base, components, utilities;
+
+@import '../../../packages/ui/src/theme/theme.css';
+@import '../../../packages/ui/src/theme/tokens.css';
+
+@import '../../../packages/ui/src/styles/base.css' layer(components);
+@import '../../../packages/ui/src/styles/primitives.css' layer(components);
+@import '../../../packages/ui/src/styles/surfaces.css' layer(components);
+@import '../../../packages/ui/src/styles/forms.css' layer(components);
+@import '../../../packages/ui/src/styles/navigation.css' layer(components);
+@import '../../../packages/ui/src/styles/overlays.css' layer(components);
+@import '../../../packages/ui/src/styles/charts-recharts.css' layer(components);
+@import '../../../packages/ui/src/styles/theming.css' layer(components);
+@import '../../../packages/ui/src/styles/table.css' layer(components);
+@import '../../../packages/ui/src/styles/controls.css' layer(components);
+@import '../../../packages/ui/src/styles/composites.css' layer(components);
+@import '../../../packages/ui/src/styles/inputs.css' layer(components);
+@import '../../../packages/ui/src/styles/shell.css' layer(components);
+@import '../../../packages/ui/src/styles/sidebar.css' layer(components);

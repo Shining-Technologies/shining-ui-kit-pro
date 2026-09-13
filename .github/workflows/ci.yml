@@ -31,6 +31,16 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # V2: the unified @shining-technologies/ui package (packages/ui).
+      - name: Typecheck V2
+        run: pnpm typecheck:ui
+
+      - name: Test V2
+        run: pnpm test:ui
+
+      - name: Test V2 charts against Recharts 3
+        run: pnpm test:ui:recharts3
+
       # The chart suites again with Recharts 3 aliased in, so both majors the
       # peer range promises stay working.
       - name: Test against Recharts 3

@@ -1,0 +1,191 @@
+/*
+ * Previews of the application frame.
+ *
+ * The shell and the sidebar are full-viewport layouts: `100dvh`, sticky
+ * columns, a fixed bottom bar, a fixed drawer. Inside `.shell-preview` they get
+ * a viewport of their own instead — layout containment makes the box the
+ * containing block for fixed descendants, so the drawer, its backdrop, the
+ * bottom bar and the back-to-top button all land inside the frame.
+ *
+ * Selectors carry two classes on the frame on purpose: this sheet can load
+ * before the package's, so it has to win on specificity, not on order.
+ */
+
+.shell-preview.shell-frame {
+  position: relative;
+  contain: layout paint;
+  background: var(--background);
+}
+
+.shell-preview.shell-frame--tall {
+  height: 36rem;
+}
+
+/* ------------------------------------------------------------------- shell */
+
+.shell-preview.shell-frame .sui-shell {
+  height: 100%;
+  min-height: 0;
+}
+
+/* The content is the scroller here, so nothing above it needs to stick. */
+.shell-preview.shell-frame .sui-shell__header {
+  position: static;
+}
+
+.shell-preview.shell-frame .sui-shell__content {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.shell-preview.shell-frame .sui-sidebar {
+  height: 100%;
+}
+
+.shell-preview.shell-frame .sui-sidebar:not([data-mobile]) {
+  position: relative;
+}
+
+/* ------------------------------------------------------------------- phone */
+
+.shell-preview.shell-frame--phone {
+  width: 100%;
+  max-width: 24rem;
+  height: 36rem;
+  margin-inline: auto;
+  border-width: 0.375rem;
+  border-color: var(--muted);
+  border-radius: calc(var(--sui-radius-surface) * 2);
+}
+
+/* The package switches on the viewport; a phone frame on a desktop has to say so itself. */
+.shell-preview.shell-frame--phone .sui-shell {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'header'
+    'content';
+}
+
+.shell-preview.shell-frame--phone .sui-shell__header-start {
+  gap: 0.25rem;
+}
+
+.shell-preview.shell-frame--phone .sui-bottom-nav {
+  display: flex;
+}
+
+.shell-preview.shell-frame--phone .sui-shell--with-bottom-nav .sui-shell__content {
+  padding: 1rem 1rem calc(1rem + var(--sui-bottom-nav-height, 3.5rem));
+}
+
+/* ------------------------------------------------------ standalone sidebar */
+
+.shell-preview.shell-frame--column {
+  display: flex;
+}
+
+.shell-demo__canvas {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 1rem;
+  background: color-mix(in oklab, var(--muted) 45%, transparent);
+  font-size: 0.8125rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.shell-demo__callout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-inline: 0.25rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--sidebar-border);
+  border-radius: var(--sui-radius-control);
+  color: var(--sidebar-foreground);
+  font-size: 0.8125rem;
+}
+
+.sui-sidebar[data-collapsed] .shell-demo__callout {
+  display: none;
+}
+
+/* ------------------------------------------------------------------- parts */
+
+.shell-demo__logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary), var(--chart-3));
+}
+
+.shell-demo__crumbs {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shell-demo__keys {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.shell-demo__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.shell-demo__gap {
+  margin-top: 1.25rem;
+}
+
+.shell-demo__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.shell-demo__people {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shell-demo__person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.shell-demo__person-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+.shell-demo__person-text span {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.shell-demo__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+}

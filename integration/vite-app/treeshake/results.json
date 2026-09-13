@@ -1,0 +1,35 @@
+[
+  {
+    "name": "button-root",
+    "raw": 224733,
+    "gzip": 69798,
+    "found": []
+  },
+  {
+    "name": "button-family",
+    "raw": 224725,
+    "gzip": 69784,
+    "found": []
+  },
+  {
+    "name": "core-applyQuery",
+    "raw": 9541,
+    "gzip": 3496,
+    "found": []
+  },
+  {
+    "name": "datatable-root",
+    "raw": 472678,
+    "gzip": 141935,
+    "found": [
+      "getCoreRowModel",
+      "data-radix"
+    ]
+  },
+  {
+    "name": "react-baseline",
+    "raw": 219556,
+    "gzip": 67836,
+    "found": []
+  }
+]

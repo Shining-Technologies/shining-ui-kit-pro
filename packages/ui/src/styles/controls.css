@@ -1,0 +1,839 @@
+/*
+ * Table controls: toolbar, search, filter panel, active-filter chips,
+ * pagination and the cell toolkit. Built from the shared primitives in
+ * primitives.css, so a project retheme reaches them for free.
+ */
+
+/* ----------------------------------------------------------------- toolbar */
+
+.sui-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sui-gap);
+}
+
+/*
+ * Two regions: a flow that wraps, and a cluster that does not.
+ *
+ * The search box and the filters share the flow and run onto a second line as
+ * the table runs out of width. The count, your actions and the column picker
+ * stay put at the top right — they are what people navigate by, and a control
+ * that moves every time a filter is added is a control you have to hunt for.
+ */
+.sui-toolbar__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sui-gap);
+  min-width: 0;
+}
+
+.sui-toolbar__start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sui-gap);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.sui-toolbar__end,
+.sui-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sui-gap);
+}
+
+.sui-toolbar__end {
+  margin-inline-start: auto;
+  flex: none;
+}
+
+.sui-toolbar__filter-trigger[data-active] {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+}
+
+/*
+ * Outside a card the inline layout draws its own band, so that the filters and
+ * the result count still read as one statement about the table below them.
+ * Inside a card the card's own hairline already says it.
+ */
+.sui-root[data-surface='plain'] .sui-toolbar[data-filter-layout='inline'] {
+  padding: calc(var(--sui-gap) * 0.75) var(--sui-gap);
+  background: var(--muted);
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: var(--sui-radius-surface);
+}
+
+.sui-toolbar__count {
+  color: var(--muted-foreground);
+  font-size: var(--sui-header-font-size);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sui-toolbar__count strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.sui-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 12rem;
+  max-width: 20rem;
+  flex: 1 1 12rem;
+}
+
+.sui-search__icon {
+  position: absolute;
+  inset-inline-start: 0.5rem;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.sui-search__input {
+  padding-inline-start: 1.875rem;
+  padding-inline-end: 1.75rem;
+}
+
+.sui-search__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.sui-search__clear {
+  position: absolute;
+  inset-inline-end: 0.375rem;
+  display: inline-flex;
+  padding: 0.125rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.sui-search__clear:hover {
+  color: var(--foreground);
+}
+
+/* --------------------------------------------------------------- filter UI */
+
+.sui-filter-panel {
+  padding: 0;
+  width: 22rem;
+}
+
+.sui-filter-panel__head {
+  padding: 0.75rem 0.875rem 0.25rem;
+}
+
+.sui-filter-panel__title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.sui-filter-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0.875rem 0.875rem;
+  max-height: min(24rem, 60vh);
+  overflow-y: auto;
+}
+
+.sui-filter-panel__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+}
+
+.sui-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+}
+
+.sui-filter-row__label {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sui-filter-row__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.sui-filter-row__operator {
+  flex: none;
+  min-width: 7.5rem;
+}
+
+.sui-filter-row__controls > *:not(.sui-filter-row__operator) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sui-filter-row__range {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sui-filter-row__range-sep {
+  color: var(--muted-foreground);
+}
+
+.sui-multiselect {
+  padding: 0;
+  width: 15rem;
+}
+
+.sui-multiselect__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: var(--sui-border-width) solid var(--border);
+}
+
+.sui-multiselect__search-icon {
+  position: absolute;
+  inset-inline-start: 1rem;
+  color: var(--muted-foreground);
+}
+
+.sui-multiselect__input {
+  width: 100%;
+  height: 1.75rem;
+  padding-inline-start: 1.5rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.sui-multiselect__list {
+  margin: 0;
+  padding: 0.25rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.sui-multiselect__option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border: 0;
+  border-radius: calc(var(--sui-radius-control) - 1px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sui-multiselect__option:hover {
+  background: var(--muted);
+}
+
+.sui-multiselect__check {
+  display: inline-flex;
+  flex: none;
+  width: 1rem;
+  color: var(--primary);
+}
+
+.sui-multiselect__empty {
+  padding: 0.75rem 0.5rem;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.sui-multiselect__footer {
+  padding: 0.5rem;
+  border-top: var(--sui-border-width) solid var(--border);
+}
+
+/* ------------------------------------------------------------ clear filters */
+
+.sui-clear-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: var(--sui-control-height-sm);
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: var(--sui-header-font-size);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.sui-clear-filters:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+/* ---------------------------------------------------------- inline filters */
+
+/* Part of the toolbar's flow, and wrapping within it. */
+.sui-inline-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sui-gap);
+  min-width: 0;
+  flex: 1 1 16rem;
+}
+
+/*
+ * Each control names its own field, so several can sit side by side without a
+ * legend: `Role  Admin` reads as a sentence, and an unset filter still says
+ * which field it belongs to.
+ */
+.sui-inline-filter__name {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.sui-inline-filter__value {
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * The control and its way out, as one object: the reset tucks against the
+ * control's trailing edge so it reads as part of it rather than as a chip
+ * repeating what the control already says.
+ */
+.sui-inline-filter {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.sui-inline-filter[data-active] > .sui-inline-filter__trigger,
+.sui-inline-filter[data-active] > .sui-inline-filter__input {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.sui-inline-filter__reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.5rem;
+  height: var(--sui-control-height-sm);
+  margin-inline-start: calc(-1 * var(--sui-border-width));
+  border: var(--sui-border-width) solid
+    color-mix(in srgb, var(--primary) 45%, var(--border));
+  border-start-end-radius: var(--sui-radius-control);
+  border-end-end-radius: var(--sui-radius-control);
+  background: color-mix(in srgb, var(--primary) 7%, var(--card));
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.sui-inline-filter__reset:hover {
+  background: color-mix(in srgb, var(--destructive) 12%, var(--card));
+  color: var(--destructive);
+}
+
+.sui-inline-filter__trigger[data-active],
+.sui-inline-filter__input[data-active] {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  background: color-mix(in srgb, var(--primary) 7%, var(--card));
+}
+
+.sui-inline-filter__input {
+  width: auto;
+  max-width: 14rem;
+  height: var(--sui-control-height-sm);
+  padding: 0 0.5rem;
+  font-size: var(--sui-header-font-size);
+}
+
+/* -------------------------------------------------------------- selection bar */
+
+.sui-selection-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sui-gap);
+  padding: 0.375rem 0.75rem;
+  border: var(--sui-border-width) solid
+    color-mix(in srgb, var(--primary) 25%, var(--border));
+  border-radius: var(--sui-radius-surface);
+  background: color-mix(in srgb, var(--primary) 7%, var(--background));
+  font-size: var(--sui-header-font-size);
+}
+
+.sui-selection-bar__count {
+  color: var(--primary);
+}
+
+.sui-selection-bar__count strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.sui-selection-bar__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  padding: 0.125rem 0.25rem;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.sui-selection-bar__clear:hover {
+  color: var(--foreground);
+}
+
+/* --------------------------------------------------------- active filters */
+
+.sui-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.sui-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  padding: 0.1875rem 0.25rem 0.1875rem 0.5rem;
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  font-size: 0.75rem;
+}
+
+.sui-chip__label {
+  font-weight: 600;
+}
+
+.sui-chip__operator {
+  color: var(--muted-foreground);
+}
+
+.sui-chip__value {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-chip__remove {
+  display: inline-flex;
+  padding: 0.125rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.sui-chip__remove:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+/* -------------------------------------------------------------- pagination */
+
+.sui-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sui-gap);
+  color: var(--muted-foreground);
+  font-size: var(--sui-header-font-size);
+}
+
+.sui-pagination__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sui-pagination__selection {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.sui-pagination__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-inline-start: auto;
+}
+
+.sui-pagination__page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.sui-pagination__pages {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.sui-pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  color: var(--muted-foreground);
+}
+
+/*
+ * Narrow screens keep every control, but only the ones that cannot be inferred.
+ * The page numbers are the first to go: prev/next and the current page still
+ * say everything needed to move through the data.
+ */
+@media (max-width: 639px) {
+  /* Small enough that the search box and the picker cannot share a line. */
+  .sui-toolbar__row {
+    flex-wrap: wrap;
+  }
+
+  .sui-pagination__page-size-label {
+    display: none;
+  }
+
+  .sui-pagination__page:not([aria-current]),
+  .sui-pagination__ellipsis {
+    display: none;
+  }
+
+  .sui-search {
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .sui-toolbar__end {
+    margin-inline-start: 0;
+  }
+
+  .sui-inline-filter__input {
+    max-width: none;
+    flex: 1 1 8rem;
+  }
+}
+
+/*
+ * The same, for a `responsiveMode="auto"` table measured by its own width: a
+ * table in a narrow side panel needs the narrow toolbar on a wide screen too.
+ * Only `auto` roots are containers, so this never fires for other modes.
+ */
+@container sui-table (max-width: 39.9375rem) {
+  .sui-toolbar__row {
+    flex-wrap: wrap;
+  }
+
+  .sui-pagination__page-size-label {
+    display: none;
+  }
+
+  .sui-pagination__page:not([aria-current]),
+  .sui-pagination__ellipsis {
+    display: none;
+  }
+
+  .sui-search {
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .sui-toolbar__end {
+    margin-inline-start: 0;
+  }
+
+  .sui-inline-filter__input {
+    max-width: none;
+    flex: 1 1 8rem;
+  }
+}
+
+/* ------------------------------------------------------------ cell toolkit */
+
+.sui-cell-text--truncate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-person {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+/* Two lines in one cell: the value, and the one thing always read with it. */
+.sui-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.sui-cell-stack__primary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sui-cell-stack__secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.sui-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.sui-avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+ * A stable colour per person, hashed into the chart ramp so avatars stay on
+ * brand through a retheme. A tint rather than the colour itself: nothing
+ * guarantees white initials would clear 4.5:1 on an arbitrary project's hue.
+ */
+.sui-avatar[data-tone='1'] {
+  background: color-mix(in srgb, var(--chart-1) 16%, var(--card));
+  color: var(--chart-1);
+}
+.sui-avatar[data-tone='2'] {
+  background: color-mix(in srgb, var(--chart-2) 16%, var(--card));
+  color: var(--chart-2);
+}
+.sui-avatar[data-tone='3'] {
+  background: color-mix(in srgb, var(--chart-3) 16%, var(--card));
+  color: var(--chart-3);
+}
+.sui-avatar[data-tone='4'] {
+  background: color-mix(in srgb, var(--chart-4) 16%, var(--card));
+  color: var(--chart-4);
+}
+.sui-avatar[data-tone='5'] {
+  background: color-mix(in srgb, var(--chart-5) 16%, var(--card));
+  color: var(--chart-5);
+}
+
+.sui-person__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.sui-person__name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-person__description {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Third line: who owns the record, or that nobody does. */
+.sui-person__caption {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-link__icon {
+  flex: none;
+  margin-inline-start: 0.25rem;
+  width: 0.75em;
+  height: 0.75em;
+  opacity: 0.7;
+  vertical-align: -0.05em;
+}
+
+.sui-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sui-progress__track {
+  flex: 1 1 auto;
+  height: 0.375rem;
+  min-width: 3rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  overflow: hidden;
+}
+
+.sui-progress__bar {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 240ms ease;
+}
+
+.sui-progress__bar--accent {
+  background: var(--primary);
+}
+.sui-progress__bar--success {
+  background: var(--success);
+}
+.sui-progress__bar--warning {
+  background: var(--warning);
+}
+.sui-progress__bar--danger {
+  background: var(--destructive);
+}
+
+.sui-progress__value {
+  flex: none;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * However many icons a row needs, on one line.
+ *
+ * `start` is the default alignment: it keeps the first icon at the same x in
+ * every row even when later ones appear only for some records, and a ragged
+ * column of actions is the thing that makes a table feel unfinished.
+ */
+.sui-actions-cell {
+  display: contents;
+}
+
+.sui-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+/*
+ * Pulled left by the icon's own inset, so the first glyph sits on the same x
+ * as the column's header text rather than a padding's width to the right of
+ * it. An icon button is a 28px box around a 14px glyph; this is that 7px.
+ */
+.sui-row-actions--start {
+  justify-content: flex-start;
+  margin-inline-start: -0.4375rem;
+}
+
+/* Holds an absent action's place, so the icons do not shuffle between rows. */
+.sui-row-action--placeholder {
+  pointer-events: none;
+}
+
+.sui-row-actions--end {
+  justify-content: flex-end;
+}
+
+.sui-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.sui-row-action > svg {
+  width: 1em;
+  height: 1em;
+}
+
+.sui-row-action:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.sui-row-action--destructive:hover {
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+  color: var(--destructive);
+}
+
+.sui-row-action--disabled,
+.sui-row-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sui-row-action--disabled:hover,
+.sui-row-action:disabled:hover {
+  background: transparent;
+  color: var(--muted-foreground);
+}

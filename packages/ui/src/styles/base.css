@@ -1,0 +1,102 @@
+/*
+ * The ground every component stands on.
+ *
+ * Deliberately small. This is not a CSS reset — the kit is meant to drop into
+ * an app that already has one.
+ *
+ * Nothing a component needs may depend on an ancestor class: V2 has no
+ * provider to render one. The focus ring and reduced motion therefore apply to
+ * kit elements directly. `.sui-scope` is an optional page-level class that
+ * paints the background and sets the type, usually on `<body>`.
+ */
+
+.sui-scope {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--sui-font-family);
+  font-size: var(--sui-font-size);
+  line-height: var(--sui-line-height);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * One focus treatment for the whole kit.
+ *
+ * `:focus-visible` only, so a mouse click never leaves a ring behind, and drawn
+ * with `box-shadow` rather than `outline` because several components sit inside
+ * `overflow: hidden` containers where an outline would be clipped away.
+ *
+ * The `:where([class*='sui-'])` selector reaches every focusable kit element
+ * with no ancestor class and zero added specificity, so a component's own
+ * focus style still wins over this default.
+ */
+.sui-focusable:focus-visible,
+.sui-scope :focus-visible,
+:where([class*='sui-']):focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px color-mix(in srgb, var(--ring) 55%, transparent);
+}
+
+/* Elements that paint their own ring keep it inside their own border box. */
+.sui-ring-inset:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 35%, transparent);
+}
+
+/* ------------------------------------------------------------------ helpers */
+
+.sui-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* A stack with the project's rhythm, used by cards, fields and page bodies. */
+.sui-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sui-stack);
+  min-width: 0;
+}
+
+/*
+ * The horizontal counterpart of `.sui-stack`.
+ *
+ * Named `cluster`, not `row`: `.sui-row` is the table's body row, and a
+ * `display: flex` landing on a `<tr>` silently detaches the body from the
+ * header's column widths — the two rules never meet in one file, so the
+ * collision is invisible until you look at a rendered table.
+ */
+.sui-cluster {
+  display: flex;
+  align-items: center;
+  gap: var(--sui-gap);
+  min-width: 0;
+}
+
+/*
+ * Continuous motion is a problem for some readers and a distraction for the
+ * rest. Every animation in the kit has a still equivalent, so honour the
+ * setting for every kit element, with or without a scope.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .sui-scope *,
+  .sui-scope *::before,
+  .sui-scope *::after,
+  [class*='sui-'],
+  [class*='sui-']::before,
+  [class*='sui-']::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

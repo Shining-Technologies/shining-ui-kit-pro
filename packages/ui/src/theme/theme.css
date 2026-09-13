@@ -1,0 +1,124 @@
+/*
+ * Shining UI — default theme.
+ *
+ * The global semantic tokens, using shadcn/ui's names, so an application that
+ * already has a shadcn `globals.css` themes these components with no changes.
+ *
+ * Every rule here has zero specificity (`:where`) and sits in the `base`
+ * cascade layer, so any definition in the application wins — whatever the
+ * import order, and whether or not the app uses Tailwind:
+ *
+ *   :root  { --primary: oklch(0.55 0.2 260); --radius: 0.5rem; }
+ *   .dark  { --primary: oklch(0.7 0.15 260); }
+ *
+ * Dark mode is the `.dark` class on any ancestor, usually <html>. The library
+ * never follows the OS by itself; see the theming guide for an opt-in.
+ */
+@layer theme, base, components, utilities;
+
+@layer base {
+  :where(:root) {
+    color-scheme: light;
+
+    /* surfaces */
+    --background: #fafaf7;
+    --foreground: #1c1c20;
+    --card: #ffffff;
+    --card-foreground: #1c1c20;
+    --popover: #ffffff;
+    --popover-foreground: #1c1c20;
+
+    /* intent */
+    --primary: #01493b;
+    --primary-foreground: #f0f3f2;
+    --secondary: #eeeef1;
+    --secondary-foreground: #35353a;
+    --muted: #eeeef1;
+    --muted-foreground: #62626b;
+    --accent: #e1e2e8;
+    --accent-foreground: #35353a;
+
+    /* status */
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --success: #15803d;
+    --success-foreground: #ffffff;
+    --warning: #ab6400;
+    --warning-foreground: #ffffff;
+    --info: #0369a1;
+    --info-foreground: #ffffff;
+
+    /* lines — `--input` is a control boundary and held to 3:1, so it is darker than `--border` */
+    --border: #dddde2;
+    --input: #8b8b94;
+    --ring: #01493b;
+
+    /* charts */
+    --chart-1: #007b65;
+    --chart-2: #559d55;
+    --chart-3: #abb25f;
+    --chart-4: #9c7200;
+    --chart-5: #853f00;
+
+    /* sidebar */
+    --sidebar: #ffffff;
+    --sidebar-foreground: #1c1c20;
+    --sidebar-primary: #01493b;
+    --sidebar-primary-foreground: #f0f3f2;
+    --sidebar-accent: #e1e2e8;
+    --sidebar-accent-foreground: #35353a;
+    --sidebar-border: #dddde2;
+    --sidebar-ring: #01493b;
+
+    /* shape */
+    --radius: 0.65rem;
+  }
+
+  :where(.dark) {
+    color-scheme: dark;
+
+    --background: #0d0c13;
+    --foreground: #f4f4fe;
+    --card: #18171e;
+    --card-foreground: #f4f4fe;
+    --popover: #1f1e25;
+    --popover-foreground: #f4f4fe;
+
+    --primary: #498676;
+    --primary-foreground: #07070c;
+    --secondary: #28282f;
+    --secondary-foreground: #f4f4fe;
+    --muted: #23232a;
+    --muted-foreground: #a3a4ad;
+    --accent: #2d303a;
+    --accent-foreground: #f4f4fe;
+
+    --destructive: #f7453e;
+    --destructive-foreground: #07070c;
+    --success: #50af69;
+    --success-foreground: #07070c;
+    --warning: #ea9942;
+    --warning-foreground: #07070c;
+    --info: #4ea0dc;
+    --info-foreground: #07070c;
+
+    --border: #2d2d34;
+    --input: #54545d;
+    --ring: #498676;
+
+    --chart-1: #1bb89a;
+    --chart-2: #85d085;
+    --chart-3: #d3dd88;
+    --chart-4: #be9027;
+    --chart-5: #b46226;
+
+    --sidebar: #18171e;
+    --sidebar-foreground: #f4f4fe;
+    --sidebar-primary: #498676;
+    --sidebar-primary-foreground: #07070c;
+    --sidebar-accent: #2d303a;
+    --sidebar-accent-foreground: #f4f4fe;
+    --sidebar-border: #2d2d34;
+    --sidebar-ring: #498676;
+  }
+}

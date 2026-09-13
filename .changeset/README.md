@@ -36,6 +36,10 @@ to think about.
 `@shining-technologies/ui-kit-export-csv` versions on its own — it is optional, has no runtime
 dependencies, and rarely changes.
 
+`@shining-technologies/ui` (V2) is in no group. Prerelease versions of it (`2.0.0-rc.N`) are set
+by hand in its `package.json`; `scripts/publish.mjs` publishes them under the `next` tag so they
+never reach `latest`.
+
 The gallery and examples workspaces are `private` and ignored here; they are never published.
 
 Full process: [docs/contributing/releasing.md](../docs/contributing/releasing.md).

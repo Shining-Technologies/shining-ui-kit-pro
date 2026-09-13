@@ -1,0 +1,1160 @@
+/*
+ * The typed form fields: password, phone, number, one-time code, tags, colour,
+ * rating, clock, date-and-time and image upload.
+ *
+ * Everything here sits on the same box as `.sui-input-group` in forms.css — the
+ * wrapper owns the border and the focus ring — so a row of mixed fields lines
+ * up on one grid no matter which of them a form happens to use.
+ */
+
+/* ---------------------------------------------------------------- password */
+
+.sui-password {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.sui-password__control {
+  padding-inline-end: 0.25rem;
+}
+
+.sui-password__reveal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.sui-password__reveal:hover:not(:disabled) {
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+.sui-password__reveal:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sui-password__caps,
+.sui-password__hint {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.sui-password__caps {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  color: var(--foreground);
+}
+
+/* A small dot rather than an icon: the warning is transient and must not shift
+   the layout under the field every time Caps Lock is pressed. */
+.sui-password__caps::before {
+  content: '';
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--destructive);
+}
+
+.sui-password__hint {
+  color: var(--muted-foreground);
+}
+
+/* ------------------------------------------------------------------- phone */
+
+.sui-phone {
+  padding-inline-start: 0.25rem;
+  gap: 0.375rem;
+}
+
+.sui-phone[data-disabled] {
+  opacity: 0.5;
+}
+
+/*
+ * The country sits inside the field's own border, divided from the number by a
+ * rule — one control with two parts, rather than two controls that happen to
+ * touch.
+ */
+.sui-phone__country {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: none;
+  height: calc(100% - 0.5rem);
+  padding: 0 0.375rem;
+  border: 0;
+  border-inline-end: var(--sui-border-width) solid var(--border);
+  border-radius: calc(var(--sui-radius-control) - 2px);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sui-phone__country:hover:not(:disabled) {
+  background: var(--muted);
+}
+
+.sui-phone__country:disabled {
+  cursor: not-allowed;
+}
+
+.sui-phone__flag {
+  font-size: 1.05em;
+  line-height: 1;
+  /* Emoji flags come from the system font; the UI font has no glyph for them. */
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+.sui-phone__dial {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+
+.sui-phone__chevron {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.sui-phone__panel {
+  width: 17rem;
+}
+
+.sui-phone__option-dial {
+  margin-inline-start: auto;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ number */
+
+.sui-number {
+  padding-inline-end: 0.25rem;
+}
+
+.sui-number[data-disabled] {
+  opacity: 0.5;
+}
+
+.sui-number__input {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Stacked steppers, sized so the pair matches the control's own height. */
+.sui-number__steppers {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  gap: 1px;
+}
+
+.sui-number__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 0.875rem;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.625rem;
+  cursor: pointer;
+}
+
+.sui-number__stepper:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.sui-number__stepper:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------- one-time code */
+
+.sui-otp {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.sui-otp__box {
+  width: 2.25rem;
+  height: 2.75rem;
+  padding: 0;
+  border: var(--sui-border-width) solid var(--input);
+  border-radius: var(--sui-radius-control);
+  background: var(--card);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: center;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.sui-otp__box[data-filled] {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--input));
+}
+
+.sui-otp__box:focus {
+  border-color: var(--ring);
+  outline: none;
+}
+
+.sui-otp__box:disabled {
+  opacity: 0.5;
+  background: var(--muted);
+  cursor: not-allowed;
+}
+
+/* The gap that turns 123456 into 123 456. */
+.sui-otp__box[data-gap] {
+  margin-inline-start: 0.625rem;
+}
+
+.sui-otp__box--masked {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
+/* -------------------------------------------------------------------- tags */
+
+.sui-tags-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sui-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3125rem;
+  width: 100%;
+  min-height: var(--sui-control-height);
+  padding: 0.25rem 0.4375rem;
+  border: var(--sui-border-width) solid var(--input);
+  border-radius: var(--sui-radius-control);
+  background: var(--card);
+  cursor: text;
+  transition: border-color 120ms ease;
+}
+
+.sui-tags:focus-within {
+  border-color: var(--ring);
+}
+
+.sui-tags[aria-invalid='true'] {
+  border-color: var(--destructive);
+}
+
+.sui-tags[data-disabled] {
+  opacity: 0.5;
+  background: var(--muted);
+  cursor: not-allowed;
+}
+
+.sui-tags__list {
+  display: contents;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.sui-tags__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  padding: 0.125rem 0.25rem 0.125rem 0.4375rem;
+  border-radius: calc(var(--sui-radius-control) - 2px);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.sui-tags__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.625rem;
+  cursor: pointer;
+}
+
+.sui-tags__remove:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
+  color: var(--foreground);
+}
+
+.sui-tags__input {
+  flex: 1 1 6rem;
+  min-width: 4rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.sui-tags__input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.sui-tags__error {
+  color: var(--destructive);
+  font-size: 0.75rem;
+}
+
+/* ------------------------------------------------------------------ colour */
+
+.sui-color {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.sui-color__control {
+  width: auto;
+  flex: 1 1 9rem;
+  min-width: 8rem;
+  padding-inline-start: 0.25rem;
+}
+
+/* The native picker is stretched over the swatch and made invisible, so the
+   swatch itself is the control rather than a decoration beside one. */
+.sui-color__swatch {
+  position: relative;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: calc(var(--sui-radius-control) - 3px);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 15%, transparent);
+  overflow: hidden;
+}
+
+/* No colour chosen: a struck-through swatch, the usual sign for "none". */
+.sui-color__swatch[data-empty] {
+  background: linear-gradient(
+    135deg,
+    transparent calc(50% - 1px),
+    var(--muted-foreground) calc(50% - 1px) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+}
+
+.sui-color__native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.sui-color__hex {
+  font-family: var(--sui-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.8125rem;
+  text-transform: lowercase;
+}
+
+.sui-color__swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.sui-color__preset {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 15%, transparent);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.sui-color__preset:hover:not(:disabled) {
+  transform: scale(1.12);
+}
+
+.sui-color__preset[data-selected] {
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px var(--foreground);
+}
+
+/* ------------------------------------------------------------------ rating */
+
+.sui-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+}
+
+.sui-rating--sm {
+  font-size: 0.875rem;
+}
+
+.sui-rating--lg {
+  font-size: 1.5rem;
+}
+
+.sui-rating[data-disabled] {
+  opacity: 0.5;
+}
+
+.sui-rating__stars {
+  display: inline-flex;
+  gap: 0.125rem;
+}
+
+.sui-rating__star {
+  position: relative;
+  display: inline-flex;
+  color: var(--input);
+  line-height: 0;
+}
+
+/* The filled star is a clipped overlay of the same glyph, which is what lets a
+   half — or any fraction — be drawn without a second icon. */
+.sui-rating__fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  display: flex;
+  overflow: hidden;
+  color: var(--warning);
+  pointer-events: none;
+}
+
+.sui-rating__hit {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sui-rating__caption {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+/* ------------------------------------------------------------------- clock */
+
+/*
+ * The sibling of `.sui-calendar`: same width, same header rhythm, so a date and
+ * a time popover sitting side by side read as one panel.
+ */
+.sui-clock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  width: 15.5rem;
+  user-select: none;
+}
+
+.sui-clock__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sui-clock__time {
+  display: flex;
+  align-items: baseline;
+  gap: 0.125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.sui-clock__digit {
+  padding: 0.125rem 0.3125rem;
+  border: 0;
+  border-radius: var(--sui-radius-control);
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.sui-clock__digit:hover {
+  background: var(--muted);
+}
+
+/* Which half of the time the dial is currently editing. */
+.sui-clock__digit[data-active] {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.sui-clock__colon {
+  color: var(--muted-foreground);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.sui-clock__meridiem {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0.125rem;
+  border-radius: var(--sui-radius-control);
+  background: var(--muted);
+}
+
+.sui-clock__period {
+  padding: 0.0625rem 0.375rem;
+  border: 0;
+  border-radius: calc(var(--sui-radius-control) - 3px);
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.sui-clock__period[data-active] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--sui-shadow-surface);
+}
+
+.sui-clock__dial {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.sui-clock__mark {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  /* Positioned by its centre, so the numbers sit on the ring rather than
+     hanging off it. */
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 1;
+}
+
+.sui-clock__mark[data-inner] {
+  width: 1.625rem;
+  height: 1.625rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.sui-clock__mark:hover {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.sui-clock__mark[data-selected] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
+
+/* The hand: a bar pinned at the centre and rotated to the selection. */
+.sui-clock__hand {
+  position: absolute;
+  inset-inline-start: 50%;
+  bottom: 50%;
+  width: 2px;
+  height: 38%;
+  border-radius: 999px;
+  background: var(--primary);
+  transform-origin: bottom center;
+  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The afternoon ring is tighter, so the hand pointing at it is shorter. */
+.sui-clock__hand[data-short] {
+  height: 24%;
+}
+
+.sui-clock__centre {
+  position: absolute;
+  inset-inline-start: 50%;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--primary);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.sui-clock__quick {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sui-clock__hand {
+    transition: none;
+  }
+}
+
+/* --------------------------------------------------------- date and time */
+
+/*
+ * One column: the month, the time typed underneath it, then Now and Done. The
+ * panel is exactly as wide as the calendar, so a phone gets the same layout.
+ */
+.sui-datetime__popover {
+  width: auto;
+  padding: 0.75rem;
+}
+
+.sui-datetime__time {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: var(--sui-border-width) solid var(--border);
+}
+
+.sui-datetime__time-label {
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.sui-datetime__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* -------------------------------------------------------------- time input */
+
+/*
+ * A time typed rather than dialled: hour and minute segments and an AM/PM
+ * switch inside one field box — the same box, and the same focus, as a text
+ * input.
+ */
+.sui-time-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+  height: var(--sui-control-height);
+  padding-inline: 0.75rem 0.25rem;
+  border: var(--sui-border-width) solid var(--input);
+  border-radius: var(--sui-radius-control);
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.sui-time-input[data-disabled] {
+  opacity: 0.5;
+  background: var(--muted);
+  cursor: not-allowed;
+}
+
+.sui-time-input__icon {
+  flex: none;
+  color: var(--muted-foreground);
+}
+
+.sui-time-input__segments {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* A segment is selected whole while focused, so the tint is the caret. */
+.sui-time-input__segment {
+  width: calc(2ch + 0.5rem);
+  height: 1.625rem;
+  padding: 0 0.25rem;
+  border: 0;
+  border-radius: var(--sui-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  caret-color: transparent;
+  outline: none;
+}
+
+.sui-time-input__segment::placeholder {
+  color: var(--muted-foreground);
+}
+
+.sui-time-input__segment::selection {
+  background: transparent;
+}
+
+.sui-time-input__segment:focus {
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+.sui-time-input__segment:disabled {
+  cursor: not-allowed;
+}
+
+.sui-time-input__separator {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.sui-time-input__period {
+  display: inline-flex;
+  flex: none;
+  gap: 1px;
+  padding: 0.125rem;
+  border-radius: calc(var(--sui-radius-control) - 2px);
+  background: var(--muted);
+}
+
+.sui-time-input__period-option {
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: calc(var(--sui-radius-control) - 4px);
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.sui-time-input__period-option[data-active] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--sui-shadow-surface);
+}
+
+.sui-time-input__period-option:disabled {
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------- field focus */
+
+/*
+ * One box and one focus treatment for every control that holds a value.
+ *
+ * Focus turns the border the ring colour and adds a soft halo that follows the
+ * same corners — shadcn's `border-ring ring-ring/20 ring-[3px]`. It is drawn
+ * once, on the box. The kit-wide `:focus-visible` ring is switched off for the
+ * parts inside a box (the bare text input, a country or reveal button, a time
+ * segment): that ring is what painted a second rectangle inside a focused
+ * field's own border.
+ *
+ * Both halves are tokens, `--sui-field-focus-border` and `--sui-field-focus-ring`;
+ * set the ring to `none` for a border-only focus.
+ */
+.sui-input,
+.sui-textarea,
+.sui-input-group,
+.sui-tags,
+.sui-otp__box,
+.sui-select__trigger,
+.sui-combobox__trigger,
+.sui-date-field__trigger,
+.sui-time-input {
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+/* An open list or picker keeps its field lit: focus has moved into the panel. */
+.sui-input:focus-visible,
+.sui-textarea:focus-visible,
+.sui-input-group:focus-within,
+.sui-input-group:has(> [data-state='open']),
+.sui-tags:focus-within,
+.sui-otp__box:focus-visible,
+.sui-select__trigger:focus-visible,
+.sui-select__trigger[data-state='open'],
+.sui-combobox__trigger:focus-visible,
+.sui-combobox__trigger[data-state='open'],
+.sui-date-field__trigger:focus-visible,
+.sui-date-field__trigger[data-state='open'],
+.sui-time-input:focus-within {
+  outline: none;
+  border-color: var(--sui-field-focus-border);
+  box-shadow: var(--sui-field-focus-ring);
+}
+
+.sui-input-group:has(> .sui-input-group__input[aria-invalid='true']),
+.sui-select__trigger[aria-invalid='true'],
+.sui-date-field__trigger[aria-invalid='true'],
+.sui-time-input[data-invalid] {
+  border-color: var(--destructive);
+}
+
+.sui-input[aria-invalid='true']:focus-visible,
+.sui-textarea[aria-invalid='true']:focus-visible,
+.sui-input-group:has(> .sui-input-group__input[aria-invalid='true']):focus-within,
+.sui-tags[aria-invalid='true']:focus-within,
+.sui-select__trigger[aria-invalid='true']:focus-visible,
+.sui-combobox__trigger[aria-invalid='true']:focus-visible,
+.sui-date-field__trigger[aria-invalid='true']:focus-visible,
+.sui-time-input[data-invalid]:focus-within {
+  border-color: var(--destructive);
+  box-shadow: var(--sui-field-invalid-ring);
+}
+
+.sui-input-group :focus-visible,
+.sui-tags :focus-visible,
+.sui-time-input :focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* A button inside a box still shows the keyboard where it is — as a tint, not a ring. */
+.sui-input-group button:focus-visible,
+.sui-tags button:focus-visible,
+.sui-time-input button:focus-visible {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/*
+ * Inside a form field every trigger is a full-size control — the height, type
+ * size and padding of a text input — so a select or a date lines up with the
+ * input beside it. Outside a field the compact sizes stay, which is what
+ * toolbars and filter bars are laid out for.
+ */
+.sui-field .sui-select__trigger {
+  width: 100%;
+  height: var(--sui-control-height);
+  padding: 0 0.625rem 0 0.75rem;
+  font-size: 0.875rem;
+}
+
+.sui-field .sui-date-field__trigger {
+  gap: 0.5rem;
+  height: var(--sui-control-height);
+  padding: 0 2.25rem 0 0.75rem;
+  font-size: 0.875rem;
+}
+
+.sui-field .sui-date-field__clear {
+  inset-inline-end: 0.5rem;
+}
+
+/* ----------------------------------------------------------- image upload */
+
+.sui-images {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.sui-images[data-disabled] {
+  opacity: 0.6;
+}
+
+.sui-images__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.5rem;
+  padding: 0.25rem;
+  border: var(--sui-border-width) dashed transparent;
+  border-radius: var(--sui-radius-surface);
+  transition: border-color 120ms ease;
+}
+
+/* The whole grid is the drop target, not just the add tile. */
+.sui-images__grid--over {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+
+.sui-images__tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 1;
+  margin: 0;
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: var(--sui-radius-control);
+  background: var(--muted);
+  overflow: hidden;
+}
+
+.sui-images[data-shape='circle'] .sui-images__tile {
+  border-radius: 999px;
+}
+
+.sui-images__tile[data-error] {
+  border-color: var(--destructive);
+}
+
+.sui-images__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* The caption floats over the foot of the image on a scrim, so the tile stays
+   square and the filename never pushes the grid out of alignment. */
+.sui-images__caption {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 0.75rem 0.375rem 0.25rem;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.65), transparent);
+  color: #fff;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-images__tile[data-error] .sui-images__caption {
+  background: var(--destructive);
+  color: var(--destructive-foreground, #fff);
+}
+
+.sui-images__progress {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 0.1875rem;
+  background: rgb(0 0 0 / 0.3);
+}
+
+.sui-images__progress > span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  transition: width 160ms ease;
+}
+
+.sui-images__remove {
+  position: absolute;
+  inset-inline-end: 0.25rem;
+  top: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+/* A round tile clips its corners, so the square's corner is off the picture.
+   Slide the button in along the 45° diagonal: 14.645% (1 - 1/√2, halved) puts
+   it on the circle's edge, and the rem offset pulls it fully inside. */
+.sui-images[data-shape='circle'] .sui-images__remove {
+  top: calc(14.645% - 0.125rem);
+  inset-inline-end: calc(14.645% - 0.125rem);
+}
+
+.sui-images__remove:hover:not(:disabled) {
+  background: var(--destructive);
+}
+
+.sui-images__add {
+  border-style: dashed;
+  background: transparent;
+}
+
+.sui-images__add-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3125rem;
+  width: 100%;
+  height: 100%;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.sui-images__add:hover .sui-images__add-label {
+  color: var(--primary);
+}
+
+.sui-images__add-label svg {
+  font-size: 1.25rem;
+}
+
+/* The real input is hidden but focusable; the label rings when it is focused. */
+.sui-images__add:focus-within {
+  border-color: var(--ring);
+}
+
+/* ---------------------------------------------------------- textarea extras */
+
+.sui-textarea-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sui-textarea--auto {
+  resize: none;
+  overflow-y: hidden;
+}
+
+.sui-textarea__count {
+  align-self: flex-end;
+  margin-top: 0.1875rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.sui-textarea__count[data-over] {
+  color: var(--destructive);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------ combobox overlay */
+/*
+ * The clear button and the chips' remove buttons cannot sit inside the
+ * trigger: a button inside a button is invalid, and a screen reader cannot
+ * reach it. They sit in a layer stacked over the trigger instead, in the same
+ * grid cell. The layer repeats the trigger's box and content with the content
+ * hidden, so each real button lands exactly on the room its hidden twin keeps
+ * in the trigger underneath. Only the buttons take the pointer; everything
+ * else in the layer lets clicks through to the trigger.
+ */
+.sui-combobox {
+  display: grid;
+  min-width: 0;
+}
+
+.sui-combobox > * {
+  grid-area: 1 / 1;
+}
+
+.sui-combobox > .sui-combobox__overlay {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.sui-combobox__overlay button {
+  pointer-events: auto;
+}
+
+.sui-combobox__ghost {
+  visibility: hidden;
+}
+
+button.sui-combobox__clear,
+button.sui-combobox__chip-remove {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  line-height: inherit;
+}
+
+button.sui-combobox__chip-remove {
+  padding: 0;
+}
+
+/* ---------------------------------------------------------- checkbox glyph */
+/*
+ * Both glyphs are rendered; the indicator's state picks one, which is what
+ * makes an uncontrolled `defaultChecked="indeterminate"` show the dash.
+ */
+.sui-checkbox__indicator[data-state='indeterminate'] .sui-checkbox__check,
+.sui-checkbox__indicator:not([data-state='indeterminate']) .sui-checkbox__minus {
+  display: none;
+}
+
+/* ----------------------------------------------------------- upload hints */
+
+/* A custom hint is wrapped only to carry the id `aria-describedby` points at. */
+.sui-dropzone__hint-slot {
+  display: contents;
+}
+
+/* A full grid keeps its add tile (its input carries the field wiring), unseen. */
+.sui-images__add[hidden] {
+  display: none;
+}

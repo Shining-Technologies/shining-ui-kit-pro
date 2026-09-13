@@ -39,9 +39,10 @@ import {
   TagsInput,
   Textarea,
   TimeField,
+  TimeInput,
   type ImageItem,
   type UploadItem,
-} from '@shining-technologies/ui-kit-react'
+} from '@shining-technologies/ui'
 import { useState } from 'react'
 import { REGIONS } from '../data'
 import { Demo } from './Demo'
@@ -58,10 +59,10 @@ const SKILLS = [
 /**
  * Every field a form is built from.
  *
- * One page rather than several on purpose: the point of the kit is that a text
- * field, a date picker and an image upload sit on the same baseline, take the
- * same label treatment and repaint from the same tokens — which is only visible
- * when they are next to each other.
+ * One page rather than several on purpose: the point of the package is that a
+ * text field, a date picker and an image upload sit on the same baseline, take
+ * the same label treatment and focus the same way — which is only visible when
+ * they are next to each other.
  */
 export function FormInputs() {
   const [budget, setBudget] = useState([40])
@@ -75,7 +76,9 @@ export function FormInputs() {
   const [date, setDate] = useState<string | undefined>('2026-09-18')
   const [time, setTime] = useState<string | undefined>('09:30')
   const [slot, setSlot] = useState<string | undefined>('2026-09-18T14:00')
-  const [inlineDate, setInlineDate] = useState('2026-09-18')
+  const [pickup, setPickup] = useState<string | undefined>('14:30')
+  const [shift, setShift] = useState<string | undefined>('06:45')
+  const [inlineDate, setInlineDate] = useState<string | undefined>('2026-09-18')
   const [inlineTime, setInlineTime] = useState('10:15')
   const [files, setFiles] = useState<UploadItem[]>([])
   const [photos, setPhotos] = useState<ImageItem[]>([])
@@ -89,6 +92,41 @@ export function FormInputs() {
 
   return (
     <div className="stack">
+      <Demo
+        title="One box, one focus"
+        note="Every field is the same box: the border turns the ring colour on focus, with a soft halo on the same corners. Nothing inside the box — a prefix, a country, a stepper — draws a second outline. Tab through these to compare."
+        inline={false}
+      >
+        <div className="grid-3">
+          <Field label="Text">
+            <Input placeholder="Priya Raman" />
+          </Field>
+          <Field label="With addons">
+            <NumberInput defaultValue={1250} precision={2} thousands prefix="$" suffix="AUD" />
+          </Field>
+          <Field label="Phone">
+            <PhoneInput defaultValue="+61412345678" />
+          </Field>
+          <Field label="Select">
+            <Select defaultValue="deep">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="regular">Regular clean</SelectItem>
+                <SelectItem value="deep">Deep clean</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Date and time">
+            <DateTimeField value={slot} onChange={setSlot} />
+          </Field>
+          <Field label="Invalid" error="That address is already in use.">
+            <InputGroup type="email" defaultValue="priya@example.com" prefix="@" />
+          </Field>
+        </div>
+      </Demo>
+
       <Demo
         title="Field"
         note="Label, control, help text and error, wired together — the control never has to be told the ids."
@@ -223,7 +261,7 @@ export function FormInputs() {
 
       <Demo
         title="Select"
-        note="The native select is right up to about a dozen options. Past that, scanning beats scrolling and the combobox below is the answer."
+        note="The select is right up to about a dozen options. Past that, scanning beats scrolling and the combobox below is the answer."
         inline={false}
       >
         <div className="grid-2">
@@ -300,18 +338,36 @@ export function FormInputs() {
 
       <Demo
         title="Date and time"
-        note="The kit's own calendar and clock. The native pickers are the two controls that cannot be themed — their layout, placeholder and popover belong to the browser — so a form built from tokens ends up with two controls ignoring every one of them."
+        note="The package's own calendar and clock: the native pickers are the two controls that cannot be themed. The date-and-time field puts a typed time under the calendar, so both halves are set in one panel with one Done."
         inline={false}
       >
         <div className="grid-3">
           <Field label="Service date">
-            <DateField value={date} onChange={setDate} label="Service date" />
+            <DateField value={date} onChange={setDate} />
           </Field>
           <Field label="Start time" description="Pick the hour, the dial turns to minutes.">
-            <TimeField value={time} onChange={setTime} label="Start time" minuteStep={15} />
+            <TimeField value={time} onChange={setTime} minuteStep={15} />
           </Field>
           <Field label="Appointment" description="Both at once, so the field is never half-set.">
-            <DateTimeField value={slot} onChange={setSlot} label="Appointment" />
+            <DateTimeField value={slot} onChange={setSlot} />
+          </Field>
+        </div>
+      </Demo>
+
+      <Demo
+        title="Typed time"
+        note="The time input from the date-and-time panel, on its own: hour and minute segments and an AM/PM switch in one box. Type 2, 3, 0 — or use the arrow keys, and a or p for the half of the day. Phones get the number pad."
+        inline={false}
+      >
+        <div className="grid-3">
+          <Field label="Pickup" description={`Value: ${pickup ?? '—'}`}>
+            <TimeInput value={pickup} onChange={setPickup} />
+          </Field>
+          <Field label="Shift start" description="24-hour, arrows step by 15 minutes.">
+            <TimeInput value={shift} onChange={setShift} hour12={false} minuteStep={15} />
+          </Field>
+          <Field label="Disabled" disabled>
+            <TimeInput value="17:00" onChange={() => {}} />
           </Field>
         </div>
       </Demo>
@@ -341,7 +397,7 @@ export function FormInputs() {
 
       <Demo
         title="Images"
-        note="A filename tells nobody which screenshot it is, so images get the picture instead of a list. Previews are object URLs, revoked when the tile goes — a FileReader preview holds every image in memory as base64 for the life of the page."
+        note="A filename tells nobody which screenshot it is, so images get the picture instead of a list. Previews are object URLs, revoked when the tile goes."
         inline={false}
       >
         <div className="grid-2">
@@ -465,14 +521,9 @@ export function FormInputs() {
                 <NumberInput defaultValue={2} min={1} max={10} />
               </Field>
             </div>
-            <div className="grid-2">
-              <Field label="Date">
-                <DateField value={date} onChange={setDate} label="Service date" />
-              </Field>
-              <Field label="Arrival">
-                <TimeField value={time} onChange={setTime} label="Arrival time" minuteStep={15} />
-              </Field>
-            </div>
+            <Field label="Arrival" description="The day and the time the crew arrives.">
+              <DateTimeField value={slot} onChange={setSlot} minuteStep={15} />
+            </Field>
             <Field label="Contact number">
               <PhoneInput defaultCountry="AU" />
             </Field>
@@ -480,7 +531,7 @@ export function FormInputs() {
               <Textarea rows={3} />
             </Field>
           </CardContent>
-          <CardFooter bordered>
+          <CardFooter>
             <Button variant="ghost" onClick={() => setDirty(false)}>
               Cancel
             </Button>

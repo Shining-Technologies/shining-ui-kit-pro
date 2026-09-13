@@ -1,5 +1,22 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "noEmit": true, "declaration": false, "declarationMap": false },
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["vite/client", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@shining-technologies/ui": ["../../packages/ui/src/index.ts"],
+      "@shining-technologies/ui/core": ["../../packages/ui/src/core/index.ts"],
+      "@shining-technologies/ui/theme": ["../../packages/ui/src/theme/index.ts"],
+      "@shining-technologies/ui/charts": ["../../packages/ui/src/charts/index.ts"],
+      "@shining-technologies/ui/csv": ["../../packages/ui/src/csv/index.ts"],
+      "@shining-technologies/ui/virtualized": [
+        "../../packages/ui/src/components/data-table/virtualized.tsx"
+      ],
+      "@shining-technologies/ui/*": ["../../packages/ui/src/components/*/index.ts"]
+    }
+  },
   "include": ["src/**/*", "vite.config.ts"]
 }

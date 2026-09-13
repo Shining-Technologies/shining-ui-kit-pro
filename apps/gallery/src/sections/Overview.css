@@ -1,0 +1,30 @@
+/* Overview page: layout only. Every colour is a theme token. */
+
+.overview-capacity {
+  display: grid;
+  grid-template-columns: minmax(6rem, 9rem) minmax(0, 1fr) 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.overview-capacity__name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--foreground);
+}
+
+.overview-capacity__value {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+
+.overview-footer-actions {
+  margin-inline-start: auto;
+}

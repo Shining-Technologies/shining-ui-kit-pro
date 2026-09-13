@@ -18,3 +18,9 @@ yarn.lock
 
 # Local publish artefacts
 *.tgz
+
+# Integration test applications (integration/*)
+.next*/
+next-env.d.ts
+test-results*/
+playwright-report/

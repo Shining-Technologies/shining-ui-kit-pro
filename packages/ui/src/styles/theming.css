@@ -1,0 +1,65 @@
+
+
+.sui-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sui-swatch__chip {
+  height: 2.5rem;
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: var(--sui-radius-control);
+  background: var(--sui-swatch);
+}
+
+.sui-swatch__name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-swatch__value {
+  color: var(--muted-foreground);
+  font-family: var(--sui-font-family-mono);
+  font-size: 0.6875rem;
+}
+
+.sui-preset {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: var(--sui-radius-control);
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.sui-preset:hover {
+  border-color: color-mix(in srgb, var(--ring) 45%, var(--border));
+}
+
+/* The selected preset is marked with a ring rather than a fill: a fill would
+   fight the swatches it contains, which are the actual information. */
+.sui-preset[data-selected='true'] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.sui-preset__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

@@ -28,7 +28,8 @@ export default defineConfig({
     testTimeout: 15_000,
     hookTimeout: 15_000,
     include: ['packages/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
-    exclude: ['**/node_modules/**', '**/dist/**'],
+    // V2 (`packages/ui`) has its own config: `pnpm test:ui`.
+    exclude: ['**/node_modules/**', '**/dist/**', 'packages/ui/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

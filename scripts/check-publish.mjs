@@ -132,6 +132,16 @@ for (const { dir, manifest } of manifests) {
   // Every entry point must actually be on disk. This is the check that catches
   // an unbuilt package, a renamed entry, or an `exports` typo.
   for (const entry of entryPaths(manifest)) {
+    // A subpath pattern (`./*`) must match at least one built file, not exist literally.
+    if (entry.includes('*')) {
+      const [prefix, suffix] = entry.split('*')
+      const base = resolve(dir, prefix)
+      const matches = existsSync(base)
+        ? (await readdir(base, { withFileTypes: true })).filter((e) => existsSync(join(base, e.name + suffix)))
+        : []
+      if (matches.length === 0) fail(name, `entry pattern "${entry}" matches no built file — run \`pnpm build\``)
+      continue
+    }
     const target = resolve(dir, entry)
     if (!existsSync(target)) {
       fail(name, `entry point "${entry}" does not exist — run \`pnpm build\``)

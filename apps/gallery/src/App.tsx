@@ -1,28 +1,44 @@
-import { globalProjectRegistry, UIKitProvider } from '@shining-technologies/ui-kit-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { GalleryShell } from './GalleryShell'
 import { SECTIONS } from './sections'
+import { GalleryThemeProvider } from './theme'
+
+const sectionFromHash = () => {
+  const id = window.location.hash.slice(1)
+  return SECTIONS.some((section) => section.id === id) ? id : SECTIONS[0]!.id
+}
 
 /**
- * The gallery.
+ * The gallery for `@shining-technologies/ui`.
  *
- * One `<UIKitProvider>` wraps everything, in `global` scope so the tokens land
- * on `<html>` and reach portalled surfaces — dialogs, dropdowns, tooltips —
- * which would otherwise render outside a scoped wrapper and keep the defaults.
- *
- * The registry is the module-level singleton, so projects created here persist
- * across reloads in this browser.
+ * There is no provider to render: the package's theme is CSS variables, dark
+ * mode is the `.dark` class and a preset is `data-theme` on `<html>`. The page
+ * in view lives in the URL hash, so a link or a reload lands on the same page.
  */
 export function App() {
-  const [sectionId, setSectionId] = useState(SECTIONS[0]!.id)
+  const [sectionId, setSectionId] = useState(sectionFromHash)
+
+  useEffect(() => {
+    const onHashChange = () => setSectionId(sectionFromHash())
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
   const section = useMemo(
     () => SECTIONS.find((s) => s.id === sectionId) ?? SECTIONS[0]!,
     [sectionId],
   )
 
   return (
-    <UIKitProvider registry={globalProjectRegistry} scope="global" defaultMode="light">
-      <GalleryShell section={section} onSelectSection={setSectionId} />
-    </UIKitProvider>
+    <GalleryThemeProvider>
+      <GalleryShell
+        section={section}
+        onSelectSection={(id) => {
+          window.location.hash = id
+          setSectionId(id)
+          window.scrollTo({ top: 0 })
+        }}
+      />
+    </GalleryThemeProvider>
   )
 }

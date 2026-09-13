@@ -45,17 +45,24 @@ jobs:
       # The same gates as CI. A release must never be the first time these run.
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm typecheck:ui
       - run: pnpm test
+      - run: pnpm test:ui
+      - run: pnpm test:ui:recharts3
+      - run: pnpm test:recharts3
       - run: pnpm check:docs
       - run: pnpm build
       - run: pnpm prepublish:check
 
+      # scripts/publish.mjs publishes prerelease versions (2.0.0-rc.N) under the
+      # `next` tag, then runs `changeset publish` for everything else. A bare
+      # `changeset publish` would put a release candidate on `latest`.
       - name: Version or publish
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm version:packages
-          publish: pnpm changeset publish
+          publish: node scripts/publish.mjs
           commit: 'chore: version packages'
           title: 'chore: version packages'
         env:
