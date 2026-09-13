@@ -63,7 +63,7 @@ cd packages/ui && pnpm pack --pack-destination ../../integration && cd ../..
 cd integration/next-app && rm -rf node_modules/@shining-technologies/ui && npm install
 npm run typecheck && npm run build && npx playwright test
 cd ../vite-app && rm -rf node_modules/@shining-technologies/ui && npm install
-npm run build && npx playwright test
+npx tsc --noEmit && npx vite build && npx playwright test   # tests serve dist/ with vite preview
 cd ../types-check/bundler && npx tsc --noEmit && cd ../nodenext && npx tsc --noEmit
 ```
 

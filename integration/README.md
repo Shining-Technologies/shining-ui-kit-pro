@@ -49,7 +49,8 @@ warning.
 
 ```bash
 cd integration/vite-app
-npm run build && npx playwright test   # see e2e/ for preview and dev suites
+npx tsc --noEmit && npx vite build     # there is no build script; the tests serve dist/
+npx playwright test                    # preview suite; SUI_DEV=1 for the dev suite
 node treeshake/build.mjs               # writes treeshake/results.json
 ```
 
