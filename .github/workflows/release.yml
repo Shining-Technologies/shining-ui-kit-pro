@@ -65,10 +65,11 @@ jobs:
           publish: node scripts/publish.mjs
           commit: 'chore: version packages'
           title: 'chore: version packages'
+        # No NPM_CONFIG_PROVENANCE: npm only accepts provenance from public
+        # repositories, and this one is private. Add it back if that changes.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
 
       - name: Summary
         if: steps.changesets.outputs.published == 'true'

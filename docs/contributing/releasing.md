@@ -167,9 +167,14 @@ work to them.
 **`404 Not Found` on publish**: the publisher or token has no publish rights in the
 `@shining-technologies` organisation.
 
-**Provenance errors**: `NPM_CONFIG_PROVENANCE` needs a public repository and the
-`id-token: write` permission. If it fails, remove that variable from the workflow; nothing else
-depends on it.
+**Provenance**: npm provenance links a tarball to the workflow run that built it, but npm only
+accepts it from a **public** repository. This repository is private, so the release workflow does
+not set `NPM_CONFIG_PROVENANCE`. If the repository becomes public, add
+`NPM_CONFIG_PROVENANCE: 'true'` to the publish step's `env` (the `id-token: write` permission is
+already granted).
+
+**`ENEEDAUTH` or an empty `NODE_AUTH_TOKEN` in the log**: the `NPM_TOKEN` secret is missing. See
+[One-time setup](#one-time-setup).
 
 **A candidate went to `latest` by mistake**:
 
