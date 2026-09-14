@@ -110,12 +110,30 @@ describe('phone input', () => {
 })
 
 describe('number input', () => {
+  it('shows no stepper buttons unless asked, and still steps from the keyboard', async () => {
+    const user = userEvent.setup()
+    render(<NumberInput defaultValue={2} aria-label="Baths" />)
+    expect(screen.queryByRole('button', { name: 'Increase' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Decrease' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByLabelText('Baths'))
+    await user.keyboard('{ArrowUp}')
+    expect(screen.getByLabelText('Baths')).toHaveValue('3')
+  })
+
   it('steps, and clamps to the range', async () => {
     const user = userEvent.setup()
     function Controlled() {
       const [value, setValue] = useState<number | null>(9)
       return (
-        <NumberInput value={value} onValueChange={setValue} min={1} max={10} aria-label="Beds" />
+        <NumberInput
+          value={value}
+          onValueChange={setValue}
+          min={1}
+          max={10}
+          steppers
+          aria-label="Beds"
+        />
       )
     }
     render(

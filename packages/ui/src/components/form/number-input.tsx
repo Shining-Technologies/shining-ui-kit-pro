@@ -39,7 +39,10 @@ export interface NumberInputProps extends Omit<
   suffix?: ReactNode
   /** Group thousands while the field is not being edited. */
   thousands?: boolean
-  /** Hide the up/down buttons and keep only the keyboard steppers. */
+  /**
+   * Show the up/down buttons. Off by default: the field reads as every other
+   * text field, and ArrowUp / ArrowDown still step.
+   */
   steppers?: boolean
   wrapperClassName?: string
 }
@@ -97,13 +100,13 @@ function decimalsOf(value: number): number {
 }
 
 /**
- * A number field with real steppers.
+ * A number field that steps from the keyboard.
  *
  * `<input type="number">` is avoided on purpose: it silently discards what it
  * cannot parse (so a stray character empties the field), its spinners cannot be
  * styled, and a scroll over a focused one changes the value. This is a text
- * field that accepts only numeric input, formats on blur and steps from both
- * the buttons and the arrow keys.
+ * field that accepts only numeric input, formats on blur and steps from the
+ * arrow keys — and from buttons too, when `steppers` asks for them.
  *
  * The decimal separator is the locale's (`locale`, or the runtime default), and
  * a `.` is accepted too. `name` goes on a hidden input holding the plain number
@@ -125,7 +128,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(functi
     prefix,
     suffix,
     thousands = false,
-    steppers = true,
+    steppers = false,
     disabled,
     name,
     form,

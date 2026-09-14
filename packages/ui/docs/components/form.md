@@ -647,7 +647,7 @@ locale-aware decimal separator and thousands grouping. It is a text input with `
 | `prefix` | `ReactNode` | — | Content before the number (`aria-hidden`). |
 | `suffix` | `ReactNode` | — | Content after the number. |
 | `thousands` | `boolean` | `false` | Groups thousands while the field is not focused. |
-| `steppers` | `boolean` | `true` | Shows the increase and decrease buttons. `false` hides them, and the arrow keys still step. |
+| `steppers` | `boolean` | `false` | Shows the increase and decrease buttons. Without them the field looks like any other text field, and the arrow keys still step. |
 | `wrapperClassName` | `string` | — | Class for the bordered wrapper. |
 | `name` | `string` | — | Adds a hidden input holding the plain number. |
 | `form` | `string` | — | Passed to both the visible input and the hidden input. |
@@ -664,8 +664,8 @@ Also accepts all `<input>` props except `value`, `defaultValue`, `onChange`, `ty
   value's own (`1.5` stepped by `1` is `2.5`), with floating-point artefacts rounded off (`0.2 + 0.1` is
   `0.3`). A caller's `onKeyDown` runs first, and calling `preventDefault()` in it stops
   the step.
-- The stepper buttons are `tabIndex={-1}` with the labels "Increase" and "Decrease". Each is disabled
-  once the value reaches the bound it moves toward.
+- With `steppers`, the buttons are `tabIndex={-1}` with the labels "Increase" and "Decrease". Each is
+  disabled once the value reaches the bound it moves toward.
 - `inputMode` is `'text'` when the value can be negative (no `min`, or `min < 0`), because phone number
   pads have no minus key. Otherwise it is `'numeric'` when `precision={0}` and `'decimal'` for anything
   else. Pass `inputMode` to override it.

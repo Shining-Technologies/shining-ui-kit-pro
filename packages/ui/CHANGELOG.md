@@ -29,6 +29,9 @@ plus these changes.
 - DataTable filter panels end with the same footer: the multi-select filter's is always shown, with
   the selection count on the left and Clear on the right, and the range panel moves Clear to the
   right of its hint.
+- `NumberInput`: `steppers` now defaults to `false`, so the increase and decrease buttons are hidden
+  and the field looks like any other text field. The arrow keys still step. Pass `steppers` to keep
+  the buttons.
 
 ### Fixed
 

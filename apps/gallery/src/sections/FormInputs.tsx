@@ -203,7 +203,7 @@ export function FormInputs() {
 
       <Demo
         title="Number"
-        note="Not input[type=number]: that one silently empties itself on a stray character and changes value when you scroll past it. This steps from the buttons and the arrow keys, formats on blur and clamps to its range."
+        note="Not input[type=number]: that one silently empties itself on a stray character and changes value when you scroll past it. This steps with the arrow keys, formats on blur and clamps to its range."
         inline={false}
       >
         <div className="grid-2">
