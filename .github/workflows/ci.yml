@@ -25,31 +25,22 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # packages/ui, then the gallery against its source.
       - name: Typecheck
         run: pnpm typecheck
 
       - name: Test
         run: pnpm test
 
-      # V2: the unified @shining-technologies/ui package (packages/ui).
-      - name: Typecheck V2
-        run: pnpm typecheck:ui
-
-      - name: Test V2
-        run: pnpm test:ui
-
-      - name: Test V2 charts against Recharts 3
-        run: pnpm test:ui:recharts3
-
       # The chart suites again with Recharts 3 aliased in, so both majors the
       # peer range promises stay working.
-      - name: Test against Recharts 3
+      - name: Test charts against Recharts 3
         run: pnpm test:recharts3
 
       - name: Check documentation links
         run: pnpm check:docs
 
-      - name: Build packages
+      - name: Build
         run: pnpm build
 
       # Catches the packaging mistakes that only surface after publishing:
@@ -58,6 +49,3 @@ jobs:
       # another. Cheap here, expensive as a patch release.
       - name: Check publishability
         run: pnpm prepublish:check
-
-      - name: Build Storybook
-        run: pnpm build-storybook --quiet

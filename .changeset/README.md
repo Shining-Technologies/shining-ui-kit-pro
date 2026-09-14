@@ -21,25 +21,17 @@ Answer the prompts, commit the generated file alongside your code. At release ti
 | **minor** | A new component, prop, export or token; anything additive                  |
 | **major** | A removed or renamed export, a changed default, a changed DOM or CSS class |
 
-Because the kit's appearance is generated, a change to the **colour engine or token names**
-is a breaking change even when no TypeScript signature moves — an application's screenshots
-change. Treat it as major.
+A change to **token names, default theme values or the cascade layer order** is a breaking
+change even when no TypeScript signature moves — an application's CSS and screenshots change.
+Treat it as major.
 
-## Version groups
+## Packages
 
-`@shining-technologies/ui-kit-core`, `@shining-technologies/ui-kit-react` and `@shining-technologies/ui-kit-themes` are a
-[`fixed`](https://github.com/changesets/changesets/blob/main/docs/fixed-packages.md) group:
-they always carry the same version, because `react` re-exports `core`'s types and `themes`
-produces `core`'s projects. Installing matching versions should never be something a user has
-to think about.
+`@shining-technologies/ui` is the only published package. Prerelease versions of it
+(`2.0.0-rc.N`) are set by hand in its `package.json`; `scripts/publish.mjs` publishes them under
+the `next` tag so they never reach `latest`.
 
-`@shining-technologies/ui-kit-export-csv` versions on its own — it is optional, has no runtime
-dependencies, and rarely changes.
-
-`@shining-technologies/ui` (V2) is in no group. Prerelease versions of it (`2.0.0-rc.N`) are set
-by hand in its `package.json`; `scripts/publish.mjs` publishes them under the `next` tag so they
-never reach `latest`.
-
-The gallery and examples workspaces are `private` and ignored here; they are never published.
+The gallery (`@shining-technologies/ui-gallery`) is `private` and ignored here; it is never
+published.
 
 Full process: [docs/contributing/releasing.md](../docs/contributing/releasing.md).

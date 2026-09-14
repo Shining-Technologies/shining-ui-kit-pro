@@ -16,7 +16,7 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const SKIP = new Set(['node_modules', '.git', 'dist', 'storybook-static', 'coverage', '.changeset'])
+const SKIP = new Set(['node_modules', '.git', 'dist', 'coverage', '.changeset'])
 
 async function* walk(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {

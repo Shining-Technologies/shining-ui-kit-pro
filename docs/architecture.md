@@ -2,7 +2,9 @@
 
 > Audience: the engineers who maintain the Shining UI packages and the teams consuming them.
 > Status: audit complete; V2 implementation lives in `packages/ui` (`@shining-technologies/ui`).
-> The V1 packages are not modified by this work.
+> The V1 packages have since been removed from the repository; their `0.1.0` releases remain on
+> npm. File paths below that point into `packages/core`, `packages/react`, `packages/themes`,
+> `packages/export-csv` or `examples/` refer to commit `7880f44`, the last one that contains them.
 
 ## 1. Scope and method
 

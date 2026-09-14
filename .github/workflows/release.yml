@@ -45,10 +45,7 @@ jobs:
       # The same gates as CI. A release must never be the first time these run.
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm typecheck:ui
       - run: pnpm test
-      - run: pnpm test:ui
-      - run: pnpm test:ui:recharts3
       - run: pnpm test:recharts3
       - run: pnpm check:docs
       - run: pnpm build

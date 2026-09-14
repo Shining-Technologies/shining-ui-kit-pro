@@ -18,7 +18,7 @@ These folders are not part of the pnpm workspace and are excluded from the root 
 Build and pack the package first (from the repository root):
 
 ```bash
-pnpm build:ui
+pnpm build
 cd packages/ui && pnpm pack --pack-destination ../../integration
 ```
 

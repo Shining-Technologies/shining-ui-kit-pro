@@ -73,7 +73,6 @@ async function newestMtime(dir) {
 function declarationErrors(dir) {
   const dist = join(dir, 'dist')
   if (!existsSync(dist)) return []
-  // `.d.cts` files are byte-for-byte copies (scripts/emit-cjs-types.mjs).
   const roots = ts.sys.readDirectory(dist, ['.d.ts'], undefined, undefined, 1)
   if (roots.length === 0) return []
   const program = ts.createProgram(roots, {

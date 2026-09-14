@@ -49,7 +49,7 @@ The documentation ships with the package, in [`packages/ui/docs`](packages/ui/do
 | [Next.js](packages/ui/docs/nextjs.md)                       | Server Components, URL-driven tables, per-tenant themes  |
 | [Data table](packages/ui/docs/data-table.md)                | Columns, filters, server mode, selection, export         |
 | [Components](packages/ui/docs/README.md#components)         | Every component family with its props                    |
-| [API reference](packages/ui/docs/README.md#api-reference)   | `/core`, `/theme`, `/csv`                                |
+| [API reference](packages/ui/docs/README.md#api-reference)   | `/core`, `/theme`, `/csv`, utility hooks                 |
 | [Migrating from V1](packages/ui/MIGRATION.md)               | From the `@shining-technologies/ui-kit-*` packages       |
 | [Changelog](packages/ui/CHANGELOG.md)                       | Release notes                                            |
 
@@ -64,21 +64,24 @@ apps/gallery          the component gallery, running against packages/ui
 integration/          Next.js, Vite and TypeScript apps that install the packed tarball
 docs/                 contributor documentation: development, releasing, architecture
 scripts/              publish preflight, docs link check, release script
+.changeset/           pending release notes (Changesets)
 ```
 
-`packages/core`, `packages/react`, `packages/themes` and `packages/export-csv` are the V1
-`@shining-technologies/ui-kit-*` packages. They stay in the repository, unchanged, until they
-are removed; new work goes into `packages/ui`.
+The V1 `@shining-technologies/ui-kit-*` packages (`core`, `react`, `themes`, `export-csv`) are
+no longer in this repository. To upgrade an application, follow the
+[migration guide](packages/ui/MIGRATION.md).
 
 ## Development
 
+Requires Node 18.18+ and pnpm 9.15.4 (`corepack enable`).
+
 ```bash
 pnpm install
-pnpm gallery          # the component gallery
-pnpm build:ui         # build @shining-technologies/ui and verify the output
-pnpm test:ui          # its test suite
-pnpm typecheck:ui     # its type check
-pnpm check            # every gate CI runs
+pnpm gallery          # the component gallery on http://localhost:5180
+pnpm test             # the test suite
+pnpm typecheck        # packages/ui and the gallery
+pnpm build            # build @shining-technologies/ui and verify the output
+pnpm check            # lint, type check, tests (Recharts 2 and 3), docs links
 ```
 
 Details: [Development](docs/contributing/development.md) ·

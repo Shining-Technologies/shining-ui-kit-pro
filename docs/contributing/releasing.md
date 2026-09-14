@@ -77,7 +77,7 @@ Check the tarball contents: `cd packages/ui && npm pack --dry-run` should list `
 [.github/workflows/release.yml](../../.github/workflows/release.yml) runs on every push to
 `master`:
 
-1. The same gates as CI (lint, both type checks, all test suites, docs links, build, preflight).
+1. The same gates as CI (lint, type check, test suites, docs links, build, preflight).
 2. If changesets are pending, it opens or updates a **Version Packages** pull request that bumps
    versions and writes changelogs. Merging that pull request is the release.
 3. If none are pending, it runs `scripts/publish.mjs`, which publishes every package whose
@@ -101,7 +101,8 @@ already on the registry.
 
 `pnpm prepublish:check` must pass before anything is published. It runs:
 
-[`scripts/check-publish.mjs`](../../scripts/check-publish.mjs), for every non-private package:
+[`scripts/check-publish.mjs`](../../scripts/check-publish.mjs), for every non-private package in
+`packages/`:
 
 - `name`, `version`, `description`, `license`, `repository` and `files` are present;
 - `publishConfig.access` is `public`;
@@ -113,10 +114,9 @@ already on the registry.
 - the shipped declarations type-check with `skipLibCheck: false`.
 
 Then [`@arethetypeswrong/cli`](https://arethetypeswrong.github.io) on the packed tarball, with the
-ESM-only profile for `@shining-technologies/ui`: every entry point's types must resolve under
-`node16` (ESM) and `bundler`.
+ESM-only profile: every entry point's types must resolve under `node16` (ESM) and `bundler`.
 
-`pnpm build:ui` has already run `packages/ui/scripts/check-dist.mjs`, which verifies the
+`pnpm build` has already run `packages/ui/scripts/check-dist.mjs`, which verifies the
 client/server directives and the import boundaries of the built modules.
 
 ## Release candidates
@@ -155,10 +155,11 @@ From then on, every release of `@shining-technologies/ui` goes through changeset
 
 ## The V1 packages
 
-`@shining-technologies/ui-kit-core`, `-react`, `-themes` and `-export-csv` are published at
-`0.1.0` and remain in `packages/` until they are removed. They are still a Changesets `fixed`
-group (`core`, `react`, `themes`), so a changeset that names them releases them. Do not add new
-work to them.
+`@shining-technologies/ui-kit-core`, `-react`, `-themes` and `-export-csv` were published at
+`0.1.0`. Their source has been removed from this repository (the last commit containing it is
+`7880f44`), and they are not released again. Their versions stay on npm until they are
+deprecated in step 6 of [Releasing 2.0.0](#releasing-200). Users move to
+`@shining-technologies/ui` with [packages/ui/MIGRATION.md](../../packages/ui/MIGRATION.md).
 
 ## Troubleshooting
 

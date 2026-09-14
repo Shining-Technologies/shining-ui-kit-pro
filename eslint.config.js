@@ -1,14 +1,12 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
-import storybook from 'eslint-plugin-storybook'
 
 export default tseslint.config(
   {
     ignores: [
       '**/dist/**',
       '**/coverage/**',
-      '**/storybook-static/**',
       '**/node_modules/**',
       '**/*.d.ts',
       // Consumer test applications with their own toolchains (see integration/README.md).
@@ -17,7 +15,6 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  ...storybook.configs['flat/recommended'],
   {
     files: ['**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
@@ -47,8 +44,8 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   {
-    // Test + story + example files may be looser.
-    files: ['**/*.test.{ts,tsx}', '**/*.stories.{ts,tsx}', 'examples/**', 'apps/**'],
+    // Tests and the gallery may be looser.
+    files: ['**/*.test.{ts,tsx}', 'apps/**'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       'no-console': 'off',

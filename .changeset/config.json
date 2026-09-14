@@ -2,10 +2,10 @@
   "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [["@shining-technologies/ui-kit-core", "@shining-technologies/ui-kit-react", "@shining-technologies/ui-kit-themes"]],
+  "fixed": [],
   "linked": [],
   "access": "public",
   "baseBranch": "master",
   "updateInternalDependencies": "patch",
-  "ignore": ["@shining-technologies/ui-kit-gallery", "@shining-technologies/ui-kit-examples"]
+  "ignore": ["@shining-technologies/ui-gallery"]
 }
