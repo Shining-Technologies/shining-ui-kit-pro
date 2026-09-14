@@ -280,20 +280,7 @@
   color: var(--muted-foreground);
 }
 
-.sui-input:focus-visible {
-  border-color: var(--ring);
-}
-
-.sui-input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: var(--muted);
-}
-
-/* A control the form layer has marked invalid, however it tracks validity. */
-.sui-input[aria-invalid='true'] {
-  border-color: var(--destructive);
-}
+/* Focus, invalid and disabled are shared by every field: see "field focus" in inputs.css. */
 
 .sui-input--sm {
   height: var(--sui-control-height-sm);

@@ -80,10 +80,6 @@
   gap: 0.375rem;
 }
 
-.sui-phone[data-disabled] {
-  opacity: 0.5;
-}
-
 /*
  * The country sits inside the field's own border, divided from the number by a
  * rule — one control with two parts, rather than two controls that happen to
@@ -146,10 +142,6 @@
 
 .sui-number {
   padding-inline-end: 0.25rem;
-}
-
-.sui-number[data-disabled] {
-  opacity: 0.5;
 }
 
 .sui-number__input {
@@ -219,17 +211,6 @@
   border-color: color-mix(in srgb, var(--primary) 45%, var(--input));
 }
 
-.sui-otp__box:focus {
-  border-color: var(--ring);
-  outline: none;
-}
-
-.sui-otp__box:disabled {
-  opacity: 0.5;
-  background: var(--muted);
-  cursor: not-allowed;
-}
-
 /* The gap that turns 123456 into 123 456. */
 .sui-otp__box[data-gap] {
   margin-inline-start: 0.625rem;
@@ -262,20 +243,6 @@
   background: var(--card);
   cursor: text;
   transition: border-color 120ms ease;
-}
-
-.sui-tags:focus-within {
-  border-color: var(--ring);
-}
-
-.sui-tags[aria-invalid='true'] {
-  border-color: var(--destructive);
-}
-
-.sui-tags[data-disabled] {
-  opacity: 0.5;
-  background: var(--muted);
-  cursor: not-allowed;
 }
 
 .sui-tags__list {
@@ -711,12 +678,6 @@
   color: var(--foreground);
 }
 
-.sui-time-input[data-disabled] {
-  opacity: 0.5;
-  background: var(--muted);
-  cursor: not-allowed;
-}
-
 .sui-time-input__icon {
   flex: none;
   color: var(--muted-foreground);
@@ -830,7 +791,11 @@
     box-shadow 120ms ease;
 }
 
-/* An open list or picker keeps its field lit: focus has moved into the panel. */
+/*
+ * An open list or picker keeps its field lit: focus has moved into the panel.
+ * A table's inline filter trigger is a button, but it opens a picker just as a
+ * select does, so it lights the same way — on click, not only from the keyboard.
+ */
 .sui-input:focus-visible,
 .sui-textarea:focus-visible,
 .sui-input-group:focus-within,
@@ -843,14 +808,53 @@
 .sui-combobox__trigger[data-state='open'],
 .sui-date-field__trigger:focus-visible,
 .sui-date-field__trigger[data-state='open'],
-.sui-time-input:focus-within {
+.sui-time-input:focus-within,
+.sui-inline-filter__trigger:focus-visible,
+.sui-inline-filter__trigger[data-state='open'] {
   outline: none;
   border-color: var(--sui-field-focus-border);
   box-shadow: var(--sui-field-focus-ring);
 }
 
+/*
+ * An applied inline filter is one object — the trigger and its clear button —
+ * so it lights as one: both borders take the focus colour and the halo goes
+ * round the pair. Drawn on the trigger alone, the halo stopped at the seam and
+ * the clear button kept its own border, so the focus looked misplaced.
+ */
+.sui-inline-filter[data-active]:has(> :is(.sui-inline-filter__trigger:is(:focus-visible, [data-state='open']), .sui-inline-filter__reset:focus-visible)) {
+  border-radius: var(--sui-radius-control);
+  box-shadow: var(--sui-field-focus-ring);
+}
+
+.sui-inline-filter[data-active]:has(> :is(.sui-inline-filter__trigger:is(:focus-visible, [data-state='open']), .sui-inline-filter__reset:focus-visible)) > * {
+  border-color: var(--sui-field-focus-border);
+}
+
+.sui-inline-filter[data-active] > .sui-inline-filter__trigger:is(:focus-visible, [data-state='open']) {
+  box-shadow: none;
+}
+
+/*
+ * Tabbed onto the clear button, the pair lights the same way and the × takes
+ * its hover tint, rather than the kit's generic outline — a square drawn off
+ * the button's edge that ignored the pair's shared corners.
+ */
+.sui-inline-filter .sui-inline-filter__reset:focus-visible {
+  outline: none;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--destructive) 12%, var(--card));
+  color: var(--destructive);
+}
+
+/* Invalid, and invalid while focused: the same two states on every box. */
+.sui-input[aria-invalid='true'],
+.sui-textarea[aria-invalid='true'],
 .sui-input-group:has(> .sui-input-group__input[aria-invalid='true']),
+.sui-tags[aria-invalid='true'],
+.sui-otp__box[aria-invalid='true'],
 .sui-select__trigger[aria-invalid='true'],
+.sui-combobox__trigger[aria-invalid='true'],
 .sui-date-field__trigger[aria-invalid='true'],
 .sui-time-input[data-invalid] {
   border-color: var(--destructive);
@@ -860,12 +864,32 @@
 .sui-textarea[aria-invalid='true']:focus-visible,
 .sui-input-group:has(> .sui-input-group__input[aria-invalid='true']):focus-within,
 .sui-tags[aria-invalid='true']:focus-within,
+.sui-otp__box[aria-invalid='true']:focus-visible,
 .sui-select__trigger[aria-invalid='true']:focus-visible,
 .sui-combobox__trigger[aria-invalid='true']:focus-visible,
 .sui-date-field__trigger[aria-invalid='true']:focus-visible,
 .sui-time-input[data-invalid]:focus-within {
   border-color: var(--destructive);
   box-shadow: var(--sui-field-invalid-ring);
+}
+
+/*
+ * Disabled is one look as well: the box fades onto the muted surface, whichever
+ * element carries the state — the control itself, or the box around a bare input.
+ */
+.sui-input:disabled,
+.sui-textarea:disabled,
+.sui-input-group[data-disabled],
+.sui-input-group:has(> .sui-input-group__input:disabled),
+.sui-tags[data-disabled],
+.sui-otp__box:disabled,
+.sui-select__trigger:disabled,
+.sui-combobox__trigger:disabled,
+.sui-date-field__trigger:disabled,
+.sui-time-input[data-disabled] {
+  opacity: 0.5;
+  background: var(--muted);
+  cursor: not-allowed;
 }
 
 .sui-input-group :focus-visible,

@@ -102,16 +102,19 @@ export function MultiSelect({
       </PopoverTrigger>
 
       <PopoverContent className="sui-multiselect">
-        <div className="sui-multiselect__search">
-          <SearchIcon className="sui-multiselect__search-icon" />
-          <input
-            className="sui-multiselect__input"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search options…"
-            aria-label={`Search ${label} options`}
-            aria-controls={listId}
-          />
+        {/* The same search field as the combobox, so every list panel searches alike. */}
+        <div className="sui-combobox__search">
+          <div className="sui-input-group sui-combobox__search-field">
+            <SearchIcon className="sui-combobox__search-icon" aria-hidden="true" />
+            <input
+              className="sui-input-group__input sui-combobox__search-input"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search options…"
+              aria-label={`Search ${label} options`}
+              aria-controls={listId}
+            />
+          </div>
         </div>
 
         <ul className="sui-multiselect__list" id={listId} role="listbox" aria-multiselectable>

@@ -351,6 +351,20 @@ code {
   gap: 0.5rem;
 }
 
+/* A demo held at a set width, to show how a component responds to its space. */
+.width-frame {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.width-frame[data-width='tablet'] {
+  max-width: 48rem;
+}
+
+.width-frame[data-width='phone'] {
+  max-width: 23.5rem;
+}
+
 .code-block {
   margin: 0;
   padding: 1rem;

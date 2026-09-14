@@ -243,32 +243,35 @@ function OptionList({
 
   return (
     <>
+      {/* A field box like any other input: same corners, same focus. */}
       <div className="sui-combobox__search">
-        <SearchIcon className="sui-combobox__search-icon" />
-        <input
-          className="sui-combobox__search-input"
-          value={query}
-          autoFocus
-          role="combobox"
-          aria-expanded="true"
-          aria-controls={listId}
-          aria-autocomplete="list"
-          aria-activedescendant={active && !loading ? optionId(active) : undefined}
-          aria-label={searchPlaceholder}
-          placeholder={searchPlaceholder}
-          onChange={(event) => onQueryChange(event.target.value)}
-          onKeyDown={onKeyDown}
-        />
-        {query ? (
-          <button
-            type="button"
-            className="sui-combobox__search-clear"
-            aria-label="Clear search"
-            onClick={() => onQueryChange('')}
-          >
-            <CloseIcon />
-          </button>
-        ) : null}
+        <div className="sui-input-group sui-combobox__search-field">
+          <SearchIcon className="sui-combobox__search-icon" aria-hidden="true" />
+          <input
+            className="sui-input-group__input sui-combobox__search-input"
+            value={query}
+            autoFocus
+            role="combobox"
+            aria-expanded="true"
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={active && !loading ? optionId(active) : undefined}
+            aria-label={searchPlaceholder}
+            placeholder={searchPlaceholder}
+            onChange={(event) => onQueryChange(event.target.value)}
+            onKeyDown={onKeyDown}
+          />
+          {query ? (
+            <button
+              type="button"
+              className="sui-combobox__search-clear"
+              aria-label="Clear search"
+              onClick={() => onQueryChange('')}
+            >
+              <CloseIcon />
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div ref={listRef} id={listId} role="listbox" className="sui-combobox__list" {...listName}>

@@ -265,6 +265,39 @@ function FullDataTable() {
   )
 }
 
+/* --------------------------------------------------------- inline filters */
+
+type FrameWidth = 'full' | 'tablet' | 'phone'
+const FRAME_WIDTHS: FrameWidth[] = ['full', 'tablet', 'phone']
+
+function InlineFiltersDemo() {
+  const [width, setWidth] = useState<FrameWidth>('full')
+
+  return (
+    <div className="stack-sm">
+      <Choice label="Width" options={FRAME_WIDTHS} value={width} onChange={setWidth} />
+      <div className="width-frame" data-width={width}>
+        <DataTable
+          label="Work orders with inline filters"
+          data={WORK_ORDERS}
+          columns={workOrderColumns}
+          getRowId={(row) => row.id}
+          locale={LOCALE}
+          timeZone={TIME_ZONE}
+          filterLayout="inline"
+          // Measured by its own width, so the frame above drives the layout.
+          responsiveMode="auto"
+          pageSize={5}
+          showFooter={false}
+          defaultColumnFilters={[
+            { id: 'status', value: { operator: 'includes', value: ['scheduled', 'in_progress'] } },
+          ]}
+        />
+      </div>
+    </div>
+  )
+}
+
 /* --------------------------------------------------------------- products */
 
 type Category = 'Filters' | 'Pumps' | 'Valves' | 'Sensors'
@@ -581,6 +614,14 @@ export function Tables() {
         inline={false}
       >
         <FullDataTable />
+      </Demo>
+
+      <Demo
+        title="Inline filters"
+        note="The search box and the filters share one line and wrap control by control as space runs out; Clear filters follows the last filter. Switch the width to see the toolbar at tablet and phone sizes."
+        inline={false}
+      >
+        <InlineFiltersDemo />
       </Demo>
 
       <Demo

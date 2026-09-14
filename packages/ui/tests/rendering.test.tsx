@@ -263,6 +263,16 @@ describe('the toolbar layout', () => {
     expect(end.querySelector('.sui-inline-filters')).not.toBeInTheDocument()
   })
 
+  it('runs "Clear filters" on straight after the last inline filter', () => {
+    const { container } = render(
+      <DataTable data={users} columns={userColumns} filterLayout="inline" defaultGlobalFilter="a" />,
+    )
+
+    // Next in the same flow, not a separate item pushed to the edge of the row.
+    const filters = container.querySelector<HTMLElement>('.sui-toolbar__start > .sui-inline-filters')!
+    expect(filters.nextElementSibling).toHaveClass('sui-clear-filters')
+  })
+
   it('puts the panel layout button in the same flow', () => {
     const { container } = render(<DataTable data={users} columns={userColumns} />)
     const start = container.querySelector<HTMLElement>('.sui-toolbar__row .sui-toolbar__start')!

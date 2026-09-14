@@ -297,24 +297,26 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function
 
         <PopoverContent className="sui-combobox__panel sui-phone__panel" align="start">
           <div className="sui-combobox__search">
-            <SearchIcon className="sui-combobox__search-icon" />
-            <input
-              className="sui-combobox__search-input"
-              value={query}
-              autoFocus
-              role="combobox"
-              aria-expanded="true"
-              aria-controls={listId}
-              aria-autocomplete="list"
-              aria-activedescendant={activeEntry ? optionId(activeEntry.code) : undefined}
-              placeholder={searchPlaceholder}
-              aria-label="Search countries"
-              onChange={(event) => {
-                setQuery(event.target.value)
-                setActive(0)
-              }}
-              onKeyDown={onSearchKeyDown}
-            />
+            <div className="sui-input-group sui-combobox__search-field">
+              <SearchIcon className="sui-combobox__search-icon" aria-hidden="true" />
+              <input
+                className="sui-input-group__input sui-combobox__search-input"
+                value={query}
+                autoFocus
+                role="combobox"
+                aria-expanded="true"
+                aria-controls={listId}
+                aria-autocomplete="list"
+                aria-activedescendant={activeEntry ? optionId(activeEntry.code) : undefined}
+                placeholder={searchPlaceholder}
+                aria-label="Search countries"
+                onChange={(event) => {
+                  setQuery(event.target.value)
+                  setActive(0)
+                }}
+                onKeyDown={onSearchKeyDown}
+              />
+            </div>
           </div>
           <div
             ref={listRef}

@@ -118,19 +118,7 @@
   color: var(--muted-foreground);
 }
 
-.sui-textarea:focus-visible {
-  border-color: var(--ring);
-}
-
-.sui-textarea:disabled {
-  opacity: 0.5;
-  background: var(--muted);
-  cursor: not-allowed;
-}
-
-.sui-textarea[aria-invalid='true'] {
-  border-color: var(--destructive);
-}
+/* Focus, invalid and disabled are shared by every field: see "field focus" in inputs.css. */
 
 /* ----------------------------------------------------------- input adornments */
 /*
@@ -151,10 +139,6 @@
   background: var(--card);
   color: var(--foreground);
   transition: border-color 120ms ease;
-}
-
-.sui-input-group:focus-within {
-  border-color: var(--ring);
 }
 
 .sui-input-group__addon {
@@ -604,6 +588,12 @@
   flex-direction: column;
   gap: 0.625rem;
   width: 17.5rem;
+}
+
+/* It takes focus when it opens; the panel is already its own outline. */
+.sui-range-panel:focus-visible {
+  outline: none;
+  box-shadow: var(--sui-shadow-overlay);
 }
 
 .sui-range-panel__title {

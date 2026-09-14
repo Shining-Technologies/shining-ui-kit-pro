@@ -169,7 +169,7 @@ function InlineFilter<TData>({ column, config, label }: InlineFilterProps<TData>
             aria-label={`${label} filter`}
           >
             <span className="sui-inline-filter__name">{label}</span>
-            <SelectValue placeholder={config.placeholder ?? 'Any'} />
+            <SelectValue className="sui-inline-filter__value" placeholder={config.placeholder ?? 'Any'} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ANY}>{config.placeholder ?? 'Any'}</SelectItem>
@@ -194,7 +194,7 @@ function InlineFilter<TData>({ column, config, label }: InlineFilterProps<TData>
             aria-label={`${label} filter`}
           >
             <span className="sui-inline-filter__name">{label}</span>
-            <SelectValue placeholder={config.placeholder ?? 'Any'} />
+            <SelectValue className="sui-inline-filter__value" placeholder={config.placeholder ?? 'Any'} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ANY}>{config.placeholder ?? 'Any'}</SelectItem>
@@ -238,7 +238,17 @@ function InlineFilter<TData>({ column, config, label }: InlineFilterProps<TData>
               <span className="sui-inline-filter__value">{summary}</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="sui-range-panel" align="start">
+          <PopoverContent
+            className="sui-range-panel"
+            align="start"
+            // Focus the panel itself, not its first preset: a ring on "Today"
+            // the moment the panel opened read as that preset being picked.
+            // Tab still moves straight on to the presets.
+            onOpenAutoFocus={(event) => {
+              event.preventDefault()
+              ;(event.currentTarget as HTMLElement | null)?.focus()
+            }}
+          >
             <p className="sui-range-panel__title">{label}</p>
 
             {isDate && !single ? (

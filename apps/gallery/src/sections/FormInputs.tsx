@@ -94,9 +94,10 @@ export function FormInputs() {
     <div className="stack">
       <Demo
         title="One box, one focus"
-        note="Every field is the same box: the border turns the ring colour on focus, with a soft halo on the same corners. Nothing inside the box — a prefix, a country, a stepper — draws a second outline. Tab through these to compare."
+        note="Every field is the same box: the border turns the ring colour on focus — and stays lit while its list is open — with a soft halo on the same corners. Nothing inside the box, including the search box inside a list, draws a second outline. Invalid and disabled look the same on every field too. Click or tab through these to compare."
         inline={false}
       >
+        <div className="stack-sm">
         <div className="grid-3">
           <Field label="Text">
             <Input placeholder="Priya Raman" />
@@ -124,6 +125,35 @@ export function FormInputs() {
           <Field label="Invalid" error="That address is already in use.">
             <InputGroup type="email" defaultValue="priya@example.com" prefix="@" />
           </Field>
+          <Field label="Select with search">
+            <Combobox options={REGIONS} value={region} onValueChange={setRegion} />
+          </Field>
+          <Field label="Multi select">
+            <MultiCombobox options={REGIONS} value={regions} onValueChange={setRegions} />
+          </Field>
+          <Field label="Tags">
+            <TagsInput value={tags} onValueChange={setTags} max={6} />
+          </Field>
+        </div>
+        <div className="grid-3">
+          <Field label="Disabled text" disabled>
+            <Input defaultValue="Priya Raman" />
+          </Field>
+          <Field label="Disabled select" disabled>
+            <Select defaultValue="deep">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="regular">Regular clean</SelectItem>
+                <SelectItem value="deep">Deep clean</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Disabled select with search" disabled>
+            <Combobox options={REGIONS} value={region} onValueChange={setRegion} />
+          </Field>
+        </div>
         </div>
       </Demo>
 
