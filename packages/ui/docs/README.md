@@ -48,6 +48,7 @@ One page per component family. Each family is also an entry point:
 | `@shining-technologies/ui/core`                    | [Core](./api/core.md)         |
 | `@shining-technologies/ui/theme`                   | [Theme](./api/theme.md)       |
 | `@shining-technologies/ui/csv`                     | [CSV](./api/csv.md)           |
+| `@shining-technologies/ui` (utility hooks)         | [Hooks](./api/hooks.md)       |
 
 ## Entry points
 

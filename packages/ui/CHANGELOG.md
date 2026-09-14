@@ -1,5 +1,44 @@
 # @shining-technologies/ui
 
+## 2.0.1
+
+First stable release of `@shining-technologies/ui`. It includes everything in `2.0.0-rc.0` below,
+plus these changes.
+
+### Changed
+
+- Theme: in dark mode `--input` now clears 3:1 against the card, like light mode. The default dark
+  `--input` changes from `#54545d` to `#65656e`, and generated and preset themes follow.
+- `TooltipProvider` defaults `delayDuration` to 300ms, the same as a standalone `Tooltip`, instead of
+  Radix's 700ms.
+- DataTable inline filters: the search box and the filters share one line and wrap control by
+  control onto the next, with "Clear filters" right after the last filter and a wider gap before the
+  row count and column picker. Filter triggers are the same height as the search box and the column
+  picker, select filters look like the other triggers, triggers light up like a field while their
+  picker is open, and below 640px the row count and column picker take a line of their own. An
+  applied filter and its clear button light up as one control (focus border and halo around both,
+  including when the clear button has keyboard focus).
+- Fields: one box and one set of states for every field. The search box in the combobox, the
+  multi-select filter and the phone country list is now a rounded field with the shared focus,
+  instead of a bare input with a square focus outline. Invalid and disabled look the same on every
+  field (one-time code boxes gain the invalid border; select, combobox and date triggers gain the
+  disabled look), and the leftover per-component focus borders are removed.
+
+### Fixed
+
+- DataTable: a column with `enableFiltering: false` now ignores a filter set in code in a
+  client-mode table too, so the table and `applyQuery` return the same rows.
+- DataTable: the filter panel now starts a new filter on the column's `filter.defaultOperator`, as
+  the inline layout already did.
+- DataTable: `disabled` on a `select` filter option is honoured, as it already was for
+  `multiSelect`.
+- DataTable: opening a date or number range filter no longer rings its first preset.
+- `Sparkline`: passing `style` (for example a width) no longer drops the height, which left the
+  sparkline empty.
+- `Spinner`: with `prefers-reduced-motion: reduce` it pulses as intended instead of stopping after
+  one cycle.
+- Forms: a disabled `Slider`, and a `Select` disabled through its `Field`, no longer submit a value.
+
 ## 2.0.0-rc.0
 
 First release of the unified V2 package. It replaces `@shining-technologies/ui-kit-react`,

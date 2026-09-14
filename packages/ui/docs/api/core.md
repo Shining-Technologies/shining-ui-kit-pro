@@ -1188,7 +1188,8 @@ Steps:
    clamped with `clampPageIndex`.
 
 `data` is not mutated. Throws `RangeError` for an invalid `timeZone` (when a date filter needs it)
-or an invalid `locale` (when a text comparison runs).
+or an invalid `locale` (as soon as a sort on an `auto` or `text` column is requested, even with no
+rows).
 
 ```ts
 // app/users/page.tsx (Server Component)

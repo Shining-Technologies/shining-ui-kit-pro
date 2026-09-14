@@ -78,7 +78,10 @@ rating still carry the field id, and clicking the label moves focus to their tab
 an input. The one-time code group gives the id to its first box.
 
 If the control is given its own `id`, `aria-describedby`, `disabled` or `required` prop, that prop wins
-over the value from the field.
+over the value from the field. Two exceptions: on the wrapper-based controls (`TagsInput`, `OtpInput`,
+`ColorInput`, `FileUpload`, `ImageUpload`) an `id` goes to the wrapper while the field id stays on the
+inner input, so set the id with `Field htmlFor`; and `FileUpload` and `ImageUpload` are disabled when
+either the prop or the field is.
 
 Styling hooks: `data-slot="field"`, `data-disabled`, `.sui-field`, `.sui-field--horizontal`,
 `.sui-field__label`, `.sui-field__required`, `.sui-field__description`, `.sui-field__error`.
@@ -285,7 +288,7 @@ export function NewPassword() {
 | `score` | `PasswordScore` (`0`–`4`) | computed | Overrides the computed score, for example with a score from zxcvbn on the server. The checklist still uses `rules`. |
 | `announce` | `boolean` | `true` | Makes the verdict a polite live region. Set `false` when something else announces the strength. |
 
-Also accepts all `<div>` props except `children`.
+Also accepts all `<div>` props except `children`. The ref goes to the root `<div>`.
 
 Verdicts by score: `0` Too short, `1` Weak, `2` Fair, `3` Good, `4` Strong. The bars are `aria-hidden`.
 The verdict is text that starts with a visually hidden "Password strength: ", and each rule ends with a
@@ -297,7 +300,7 @@ read when the input gains focus. That is not a change, so the verdict is not spo
 Styling hooks: `data-slot="password-strength"`, `data-score`, `.sui-strength`, `.sui-strength__meter`,
 `.sui-strength__bar`, `.sui-strength__bar--{destructive|warning|info|success}`,
 `.sui-strength__verdict`, `.sui-strength__verdict--{tone}`, `.sui-strength__rules`, `.sui-strength__rule`,
-`.sui-strength__rule--met`.
+`.sui-strength__rule--met`, `.sui-strength__rule-icon`.
 
 See [scorePassword](#scorepassword) for how the score is calculated.
 
@@ -566,10 +569,14 @@ Styling hooks: `.sui-combobox`, `.sui-combobox--multi`, `.sui-combobox__overlay`
 `.sui-combobox__trigger`, `.sui-combobox__trigger--multi`, `.sui-combobox__value`,
 `.sui-combobox__value--empty`, `.sui-combobox__clear`, `.sui-combobox__chips`, `.sui-combobox__chip`,
 `.sui-combobox__chip--more`, `.sui-combobox__chip-remove`, `.sui-combobox__panel`,
-`.sui-combobox__search`, `.sui-combobox__search-input`, `.sui-combobox__list`, `.sui-combobox__group`,
+`.sui-combobox__chevron`, `.sui-combobox__search`, `.sui-combobox__search-field` (a standard field box,
+`.sui-input-group`), `.sui-combobox__search-icon`, `.sui-combobox__search-input`,
+`.sui-combobox__search-clear` (the "Clear search" button, shown while there is a query),
+`.sui-combobox__list`, `.sui-combobox__group`,
 `.sui-combobox__group-label`, `.sui-combobox__option` (`[data-active]`, `[aria-selected]`),
-`.sui-combobox__option--disabled`, `.sui-combobox__option-label`, `.sui-combobox__option-description`,
-`.sui-combobox__status`, `.sui-combobox__footer`.
+`.sui-combobox__option--disabled`, `.sui-combobox__option-icon`, `.sui-combobox__option-text`,
+`.sui-combobox__option-label`, `.sui-combobox__option-description`,
+`.sui-combobox__check`, `.sui-combobox__status`, `.sui-combobox__footer`.
 
 ## Toggle and ToggleGroup
 
@@ -706,7 +713,8 @@ default).
   `+61` Australia, `+262` Réunion, `+599` Curaçao).
 - **Country picker.** The country button is labelled "Country: {name} (+{dial})". The list can be
   searched by name, exact alpha-2 code, or dialling code with or without the `+`. ArrowUp and ArrowDown
-  move and Enter picks. After a pick, focus returns to the number input. Backspace in an empty number
+  move and Enter picks. When the list closes (after a pick, Escape or a click outside), focus returns to the
+  number input. Backspace in an empty number
   field opens the picker.
 - **Length.** Digits beyond what the number can hold are dropped, so the field and the value always
   agree. `+1` numbers keep ten digits after the country code, and a `1` typed in front of ten digits is
@@ -931,8 +939,8 @@ Styling hooks: `data-slot="slider"`, `data-required`, `data-disabled`, `data-ori
 
 ## FileUpload
 
-A drop zone with a file list. The real control is a native `<input type="file">`, and the styled area is
-its label, so keyboard access and the operating system's file picker work as usual. The component
+A drop zone with a file list. The real control is a native `<input type="file">`, and the text inside the
+zone is its label, so keyboard access and the operating system's file picker work as usual. The component
 validates files and reports rejections to you. How to show a rejection is up to you.
 
 ```tsx
@@ -980,7 +988,7 @@ export function Attachments() {
 | `onFilesAccepted` | `(files: File[]) => void` | — | Called with the files added to the selection. |
 | `onFileRejected` | `(file: File, reason: 'size' \| 'type' \| 'count') => void` | — | Called once for each rejected file. Checks run in the order type, size, count. |
 | `children` | `ReactNode` | "Choose a file or drag it here" | Replaces the text inside the drop zone. |
-| `hint` | `ReactNode` | "Up to {size}" when `maxSize` is set | Replaces the hint under the text. Linked to the file input with `aria-describedby`. |
+| `hint` | `ReactNode` | "Up to {size}" when `maxSize` is set | Replaces the hint under the text; `false` or `''` hides it (`null` keeps the default). Linked to the file input with `aria-describedby`. |
 | `name` | `string` | — | Adds a hidden file input holding the selected files. |
 
 Also accepts all `<div>` props except `onChange`. The ref and `className` go to the outer wrapper.
@@ -996,7 +1004,7 @@ Styling hooks: `data-slot="file-upload"`, `.sui-dropzone-wrap`, `.sui-dropzone`,
 `[data-disabled]`, `.sui-dropzone__input`, `.sui-dropzone__icon`, `.sui-dropzone__label`,
 `.sui-dropzone__action`, `.sui-dropzone__hint`, `.sui-dropzone__hint-slot` (wraps a custom `hint`,
 `display: contents`), `.sui-dropzone__list`, `.sui-dropzone__file`,
-`.sui-dropzone__file-name`, `.sui-dropzone__file-meta`, `.sui-dropzone__file-bar`.
+`.sui-dropzone__file-icon`, `.sui-dropzone__file-text`, `.sui-dropzone__file-name`, `.sui-dropzone__file-meta`, `.sui-dropzone__file-bar`.
 
 ## ImageUpload
 
@@ -1026,7 +1034,7 @@ released when an image is removed.
 | `shape` | `'square' \| 'circle'` | `'square'` | Tile shape. |
 | `disabled` | `boolean` | `false` | Disables adding and removing. A disabled `Field` also disables it. |
 | `required` | `boolean` | from `Field` | Sets `required` on the file input while there are no images, so an empty field blocks a native submission and is announced as required. |
-| `hint` | `ReactNode` | "Up to {maxFiles} images, {size} each" when `maxSize` is set | Replaces the hint below the grid. Linked to the file input with `aria-describedby`. |
+| `hint` | `ReactNode` | "{size} each" when `maxSize` is set, prefixed with "Up to {maxFiles} images, " when `multiple` and `maxFiles` are set | Replaces the hint below the grid; `false` or `''` hides it (`null` keeps the default). Linked to the file input with `aria-describedby`. |
 | `children` | `ReactNode` | "Add images", or "Add more" once there are images | Text in the add tile. |
 | `name` | `string` | — | Adds a hidden file input holding the newly added files. Items that only have a `url` are not submitted. |
 
@@ -1043,7 +1051,7 @@ That input carries the field id, description and invalid state, so the `Field` l
 | --- | ---- | ----------- |
 | `url` | `string` | Required. Thumbnail source: an object URL or a remote URL. |
 | `file` | `File` | The file. Absent for an image that is already on the server. |
-| `name` | `string` | Used as the `alt` text and in the "Remove {name}" label. Without it, "Image n" is used. |
+| `name` | `string` | Used as the `alt` text and in the "Remove {name}" label. Without it, the `alt` text is "Image n" and the button "Remove image n". |
 | `size` | `number` | Shown as the caption. |
 | `progress` | `number` | 0–100 while uploading. |
 | `error` | `string` | Shown as the caption, with `data-error` on the tile. |
@@ -1197,7 +1205,9 @@ meter follows `reset()` and `setValue()`.
 Every other control reports its value through `onValueChange` or `onCheckedChange` and ignores a native
 `onChange`, so connect it with `Controller`. Pass `field.ref` so that `shouldFocusError` can focus the
 control. It is focusable for `NumberInput` and `PhoneInput` (the text input), `Combobox` and
-`MultiCombobox` (the trigger), the Radix controls, and `ColorInput` (the native picker).
+`MultiCombobox` (the trigger), `Checkbox`, `Switch` and `RadioGroup`, `SelectTrigger` (pass the ref
+there, not to `Select`), `RatingInput`, and `ColorInput` (the native picker). The refs of `Slider`,
+`OtpInput` and `TagsInput` point at wrappers that cannot take focus.
 
 ```tsx
 'use client'
@@ -1438,7 +1448,8 @@ export async function createListing(formData: FormData) {
 Details that apply to all of them:
 
 - **Disabled controls submit nothing.** The hidden inputs are disabled together with the control, just as
-  native inputs are.
+  native inputs are. That includes `Slider` and `Select`, whether disabled by their own prop or by a
+  disabled `Field`.
 - **`required` is only enforced by the browser on native inputs.** It works for:
   - `Input`, `InputGroup`, `Textarea`, `PasswordInput`, `NumberInput` and `PhoneInput` (the visible input).
   - `OtpInput` (every box, so an incomplete code is blocked too) and `ColorInput` (the hex field).
@@ -1514,10 +1525,10 @@ and `ProfileState` is `{ errors: { name?: string } }`.
   submit, move focus to the first invalid control (React Hook Form's `shouldFocusError` does this when
   `field.ref` is passed). `TagsInput` validation messages use `role="alert"`.
 - **Focus.** All boxed controls share one focus treatment: the border takes the ring colour and a soft
-  halo is drawn around it. Buttons inside a box (show/hide, country, steppers, chip remove) show focus
+  halo is drawn around it. Buttons inside a box (show/hide, country, chip remove) show focus
   as a tint instead of a second ring. The border and halo are the theme tokens
-  `--sui-field-focus-border` and `--sui-field-focus-ring`, and `--sui-field-invalid-ring` is used when the
-  control is invalid. Set `--sui-field-focus-ring: none` for a border-only focus. See
+  `--sui-field-focus-border` and `--sui-field-focus-ring`. An invalid control has a destructive border,
+  and while it is focused its halo uses `--sui-field-invalid-ring`. Set `--sui-field-focus-ring: none` for a border-only focus. See
   [theming.md](../theming.md).
 - **Keyboard.** Popover lists (`Combobox`, `MultiCombobox`, the `PhoneInput` country picker) keep focus
   in their search box and use `aria-activedescendant`. `NumberInput` and `RatingInput` step with the arrow

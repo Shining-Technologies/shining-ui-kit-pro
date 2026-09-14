@@ -165,7 +165,7 @@ Also accepts all `Button` props except `onCopy`. The ref goes to the `<button>`.
 `aria-label` prop takes precedence over `label`.
 
 **Clipboard.** It uses `navigator.clipboard.writeText` first. If that API is missing or rejects,
-it falls back to `document.execCommand('copy')` on a temporary off-screen `<textarea>`, then returns
+it falls back to `document.execCommand('copy')` on a temporary, invisible `<textarea>`, then returns
 focus to the element that had it. The Clipboard API is missing on plain-HTTP origins and rejects
 in iframes without `clipboard-write`; the fallback works in both. If both methods fail,
 `onCopyError` receives the error.

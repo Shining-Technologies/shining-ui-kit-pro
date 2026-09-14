@@ -61,8 +61,9 @@ The names are shadcn/ui's, so a shadcn `globals.css` works unchanged.
 
 ### Derived and component tokens
 
-Prefixed `--sui-`, defined in `tokens.css`, computed from the semantic tokens. Override any of
-them globally or on one element.
+Prefixed `--sui-` and defined in `tokens.css`. Radii and table colours are computed from the
+semantic tokens; typography, rhythm and elevation are fixed defaults. Override any of them
+globally or on one element.
 
 | Group      | Tokens                                                                                            |
 | ---------- | ------------------------------------------------------------------------------------------------- |
@@ -141,6 +142,9 @@ import '@shining-technologies/ui/presets.css'
 <html data-theme="ember" class="dark"></html>
 ```
 
+Import `presets.css` after `styles.css`: both define tokens with zero specificity in the same
+cascade layer, so the file imported later wins.
+
 Available: `shining`, `slate`, `midnight`, `violet`, `ember`, `forest`, `rose`, `mono`,
 `darwind`, `unn`. Each has light and dark values.
 
@@ -155,7 +159,7 @@ import { createThemeCss } from '@shining-technologies/ui/theme'
 
 const css = createThemeCss({
   primary: '#be123c',
-  accent: '#f59e0b', // optional: chart series and highlights
+  accent: '#f59e0b', // optional: second hue for chart series (does not set --accent)
   neutralTint: 'subtle', // 'pure' | 'subtle' | 'tinted'
   radius: '0.5rem',
 })
@@ -166,7 +170,7 @@ const css = createThemeCss({
 Guarantees:
 
 - every filled colour and its foreground clear WCAG AA (4.5:1) in both modes;
-- `--input` clears 3:1 against cards;
+- `--input` clears 3:1 against cards in both modes;
 - colours are parsed and every other value validated, so the output is safe to inline even when
   the seed comes from user input.
 
@@ -186,6 +190,10 @@ export default async function TenantLayout({ children, params }) {
   )
 }
 ```
+
+`createThemeCss` throws `TypeError` on an invalid colour or value. When the seed comes from a
+database or user input, call it in a `try` block and keep the default theme on failure; see the
+[API reference](./api/theme.md#createthemecss).
 
 Options: `selector` (default `:root`), `darkSelector` (default `.dark`) and `layer`. Use
 `createTheme()` to get the tokens as objects instead of CSS.
@@ -266,5 +274,5 @@ Table variants: `default`, `minimal`, `compact`, `borderless`, `striped`, `dashb
 
 ## Browser support
 
-The theme uses `@layer`, `:where()` and `color-mix(in oklab, …)`: Chrome and Edge 111,
-Safari 16.4, Firefox 113 and later.
+The styles use `@layer`, `:where()`, `:has()`, container queries and `color-mix(in oklab, …)`:
+Chrome and Edge 111, Safari 16.4, Firefox 121 and later.

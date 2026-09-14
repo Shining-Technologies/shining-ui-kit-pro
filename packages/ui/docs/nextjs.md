@@ -1,7 +1,8 @@
 # Next.js (App Router)
 
-Works with the App Router and the Pages Router, in development and production, with Turbopack or
-webpack, and with no provider. This guide covers the App Router.
+Tested with the App Router in development and production builds, with no provider. This guide
+covers the App Router. The Pages Router needs nothing extra (import `styles.css` in `_app.tsx`) but
+is not covered by the integration tests.
 
 ## Setup
 
@@ -200,7 +201,7 @@ import type { Order } from '@/lib/orders'
 
 const columns: ColumnDef<Order>[] = [
   { ...orderColumns[0], header: 'Customer' },
-  { ...orderColumns[1], header: 'Status', cell: ({ value }) => <Badge>{value}</Badge> },
+  { ...orderColumns[1], header: 'Status', cell: ({ value }) => <Badge>{String(value)}</Badge> },
   { ...orderColumns[2], header: 'Total' },
   { ...orderColumns[3], header: 'Placed' },
 ]

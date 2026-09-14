@@ -42,8 +42,8 @@ The package ships four stylesheets. They are CSS, not part of the JavaScript ent
 | Import | Contents |
 | --- | --- |
 | `@shining-technologies/ui/styles.css` | Everything a component needs: the default theme, derived tokens and every component rule, minified. Theme and tokens are in the `base` cascade layer and components in `components`, declared as `@layer theme, base, components, utilities;` to match Tailwind v4, so application styles win. Import this once. |
-| `@shining-technologies/ui/theme.css` | The default theme values only (the semantic tokens on `:where(:root)` and `.dark`, in `@layer base`). Already included in `styles.css`. |
-| `@shining-technologies/ui/presets.css` | The named themes, generated at build time from [`THEME_PRESETS`](#theme_presets) with `createThemeCss`. Apply one with `data-theme="<id>"` on any element; dark values apply under `.dark`. Ids: `shining`, `slate`, `midnight`, `violet`, `ember`, `forest`, `rose`, `mono`, `darwind`, `unn`. Selectors use `:where()` (zero specificity) inside `@layer base`. |
+| `@shining-technologies/ui/theme.css` | The default theme values only (the semantic tokens on `:where(:root)` and `:where(.dark)`, zero specificity, in `@layer base`). Already included in `styles.css`. |
+| `@shining-technologies/ui/presets.css` | The named themes, generated at build time from [`THEME_PRESETS`](#theme_presets) with `createThemeCss`. Apply one with `data-theme="<id>"` on any element; dark values apply under `.dark`. Ids: `shining`, `slate`, `midnight`, `violet`, `ember`, `forest`, `rose`, `mono`, `darwind`, `unn`. Selectors use `:where()` (zero specificity) inside `@layer base`, the same as the default theme, so source order decides: **import it after `styles.css`**, or the default theme wins. |
 | `@shining-technologies/ui/tailwind.css` | Tailwind CSS v4 integration: an `@theme inline` block mapping the semantic tokens to Tailwind colours (`bg-card`, `text-muted-foreground`, …) and `--radius-sm` to `--radius-xl`, plus a `dark` custom variant on `.dark`. Import after `tailwindcss` and `styles.css`. |
 
 ```css
@@ -68,7 +68,7 @@ The colours a theme is authored from. Every other colour is derived.
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
 | `primary` | `string` | required | The brand colour: filled buttons, active states, focus rings. |
-| `accent` | `string` | derived | A second brand colour, used for chart series. Defaults to `primary` with its hue rotated by 150°, lightness 0.7 and chroma of at least 0.12 (OKLCH). |
+| `accent` | `string` | derived | A second brand colour, used for chart series (`--chart-*`); it does not set `--accent`. Defaults to `primary` with its hue rotated by 150°, lightness 0.7 and chroma of at least 0.12 (OKLCH). |
 | `neutral` | `string` | derived | The hue of the greys. Defaults to a grey carrying `primary`'s hue at the chroma set by `neutralTint`. |
 | `surface` | `string` | lightest neutral step | Page background (`--background`) in light mode. Not used in dark mode. |
 | `destructive` | `string` | `#dc2626` | |
@@ -130,7 +130,7 @@ still apply in dark mode.
 
 | Input | Rule | Message |
 | --- | --- | --- |
-| `primary` | required; a string `parseColor` accepts | `[shining-ui] primary is not a colour: <value>` |
+| `primary` | required; a string `parseColor` accepts | `[shining-ui] primary is not a colour: "<value>"` |
 | every other seed colour that is present | a string `parseColor` accepts | `[shining-ui] <field> is not a colour: "<value>"` |
 | `neutralTint` | `'pure'`, `'subtle'` or `'tinted'` | `[shining-ui] neutralTint must be 'pure', 'subtle' or 'tinted': "<value>"` |
 | `radius` | the [value rules of `tokensToCss`](#tokenstocss), and: not empty; only letters, digits, `_`, `.`, `%`, `+`, `-`, `*`, `/`, `,`, parentheses and spaces; no functions other than `calc()`, `min()`, `max()`, `clamp()` and `var()` | `[shining-ui] Unsafe value for radius: "<value>"` |
@@ -146,7 +146,8 @@ still apply in dark mode.
   hue and chroma, until the pair reaches 4.5:1. The adjustment runs for a bounded number of steps
   and stops at the extremes of lightness.
 - The primary is first adjusted until it reaches 3.2:1 against the card colour of the mode.
-- `--input` is set darker than `--border` so a form control boundary clears 3:1.
+- `--input` is set apart from `--border` (darker in light mode, lighter in dark mode) until a form
+  control boundary clears 3:1 against the card.
 - Dark mode is not an inversion: page, card and popover lightness are fixed values carrying the
   neutral hue, and status colours are re-lit for a dark background.
 - Every colour in the result is a hex string (`#rrggbb`, or `#rrggbbaa` with transparency)
@@ -199,7 +200,7 @@ live in `@layer base`.
 }
 ```
 
-**Validation** (all throw `TypeError`): everything `createTheme` checks, plus every check in
+**Validation** (all throw `TypeError`): everything `createTheme` checks (for seed input), plus every check in
 [`tokensToCss`](#tokenstocss) for both rules, plus `[shining-ui] Invalid layer name: "<name>"`.
 
 **Using untrusted input.** Seed colours are parsed strictly and re-serialised, and every other value

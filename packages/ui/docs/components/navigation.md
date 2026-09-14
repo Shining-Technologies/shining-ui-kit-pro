@@ -206,13 +206,13 @@ The path from the top of the site to the current page. The parts are plain marku
 
 | Part | Element | Accepts | Notes |
 | ---- | ------- | ------- | ----- |
-| `Breadcrumb` | `<nav>` | All `<nav>` props | `aria-label="Breadcrumb"`; pass `aria-label` to replace it. No class of its own. |
+| `Breadcrumb` | `<nav>` | All `<nav>` props | `aria-label="Breadcrumb"`; pass `aria-label` to replace it. No class of its own; style it with `[data-slot="breadcrumb"]`. |
 | `BreadcrumbList` | `<ol>` | All `<ol>` props | `.sui-breadcrumb__list`: a wrapping flex row. |
 | `BreadcrumbItem` | `<li>` | All `<li>` props | `.sui-breadcrumb__item`. |
 | `BreadcrumbLink` | `<a>` | All `<a>` props | `.sui-breadcrumb__link sui-focusable`. |
 | `BreadcrumbPage` | `<span>` | All `<span>` props | The current page: `role="link"`, `aria-disabled="true"`, `aria-current="page"`. Not a link. |
 | `BreadcrumbSeparator` | `<li>` | All `<li>` props | `role="presentation"`, `aria-hidden="true"`. Children replace the default `ChevronRightIcon`. Place it directly in `BreadcrumbList`. |
-| `BreadcrumbEllipsis` | `<span>` | All `<span>` props, plus `label?: string` (default `'More'`) | Marks collapsed levels: a decorative `MoreIcon` followed by `label` as visually hidden text. Place it inside a `BreadcrumbItem`. Props type: `BreadcrumbEllipsisProps`. |
+| `BreadcrumbEllipsis` | `<span>` | All `<span>` props, plus `label?: string` (default `'More'`) | Marks collapsed levels: a decorative `MoreIcon` followed by `label` as visually hidden text. Place it inside a `BreadcrumbItem`. Styling hook: `.sui-breadcrumb__separator`. Props type: `BreadcrumbEllipsisProps`. |
 
 Every part forwards its ref to the element listed.
 

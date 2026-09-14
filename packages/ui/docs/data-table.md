@@ -209,11 +209,12 @@ shared module too.
 ```
 
 - `page` is 1-based; `sort` lists column ids, `-` for descending; `q` is the search box.
-- `f.<id>` is `<operator>:<JSON value>`, or a bare value for the column's default operator.
+- `f.<id>` is `<operator>:<JSON value>`, or a bare value for the filter type's default operator.
 - Defaults are omitted, so an untouched table has a clean URL.
 - `prefix` namespaces keys for several tables on one page; `base` keeps unrelated keys.
 - Parsing treats the URL as untrusted: with `columns`, only known columns can be sorted or
-  filtered; unknown operators are dropped; page and size are validated (`pageSizeOptions`,
+  filtered, and operators not valid for a column's filter type are dropped (text before `:` that is
+  not an operator name is read as part of a bare value); page and size are validated (`pageSizeOptions`,
   `maxPageSize`, default `500`). `defaultPageSize` defaults to `10`.
 
 Keep `pageSizeOptions` in step: the table reads it from `features.pagination.pageSizeOptions`,
@@ -306,8 +307,8 @@ const columns: ColumnDef<Order>[] = [
 | `DisplayColumnDef`           | `id`                           | `undefined` (no accessor)            |
 | `GroupColumnDef`             | `id`, `columns`                | no `cell`                            |
 
-A column's id is `id`, else `accessorKey`. A column with neither throws
-`A column needs an id when it has no accessorKey` when the table builds its columns.
+A column's id is `id`, else `accessorKey`. A column with neither throws an error ("A column needs an `id` when it
+has no `accessorKey`") when the table builds its columns.
 
 ### Column definition fields
 
@@ -343,8 +344,8 @@ The `filter` object (`ColumnFilterConfig`):
 | `type`            | `'text' \| 'number' \| 'date' \| 'select' \| 'multiSelect' \| 'boolean'` | required |
 | `options`         | `{ label: string; value: TValue; group?: string; disabled?: boolean }[]` | — (used by `select` and `multiSelect`) |
 | `operators`       | `FilterOperator[]`                                     | every operator of `type`       |
-| `defaultOperator` | `FilterOperator`                                       | `contains`, `equals`, `on`, `equals`, `includes`, `isTrue` by type |
-| `placeholder`     | `string`                                               | `'Value'` or `'Any'` depending on the control |
+| `defaultOperator` | `FilterOperator`                                       | `contains`, `equals`, `on`, `equals`, `includes`, `isTrue` by type. The operator a new filter starts on, in both layouts; a bare value (in code or a URL) uses the type's default |
+| `placeholder`     | `string`                                               | `'Value'` or `'Any'` depending on the control; the inline text input uses the column label |
 | `label`           | `string`                                               | the column label               |
 | `hidden`          | `boolean`                                              | `false` — `true` hides the column from the filter UI but keeps programmatic filtering |
 | `predicate`       | `(rowValue: unknown, filter: { operator, value }) => boolean` | built-in operators      |
@@ -535,7 +536,7 @@ Row action helpers (`RowAction`, `RowActionGroup`, `RowActions`) are described u
 | `mode`                 | `'client' \| 'server'`      | `'client'` | Default mode for sorting, filtering and pagination. |
 | `features`             | `DataTableFeatures<TData>`  | —          | See [Features](#features). |
 | `enableRowSelection`   | `boolean`                   | `false`    | Shorthand for `features.selection.enabled`; takes precedence. |
-| `pageSize`             | `number`                    | `10`       | Shorthand for `features.pagination.pageSize`; takes precedence. Changing it resets an uncontrolled page to the first page. |
+| `pageSize`             | `number`                    | `10`       | Shorthand for `features.pagination.pageSize`; takes precedence. Changing it resets the page to the first page (a controlled page gets `onPaginationChange` with `pageIndex: 0`). |
 | `rowCount`             | `number`                    | —          | Total rows on the server. Shorthand for `features.pagination.rowCount`; takes precedence. |
 | `keepPageOnDataChange` | `boolean`                   | `false`    | Client pagination only: stay on the current page when `data` changes identity. |
 | `locale`               | `string`                    | `'en-US'`  | See [Time zones and locale](#time-zones-and-locale). |
@@ -630,7 +631,7 @@ Handlers receive the next value, not an updater function.
 | `id`               | `string`    | Root id, and the base of generated ids (caption, title, detail rows). Generated with `useId` when omitted. |
 | `label`            | `string`    | Accessible name, applied as `aria-label`. Not needed with `title` or `caption`. |
 | `caption`          | `ReactNode` | Visible `<caption>`; names the table and takes precedence over `label` and `title`. |
-| `aria-label`       | `string`    | Applied as given; wins over everything above. |
+| `aria-label`       | `string`    | Applied as given, replacing `label`. A `caption`, or a `title` without `label`, still sets `aria-labelledby`, which takes precedence over `aria-label`. |
 | `aria-labelledby`  | `string`    | Applied as given. |
 | `aria-describedby` | `string`    | Applied as given. |
 
@@ -695,7 +696,7 @@ and an open end (`[10, null]`).
 
 Other rules the predicates apply:
 
-- `isEmpty` matches `null`, `undefined` and empty strings.
+- `isEmpty` matches `null`, `undefined`, empty or whitespace-only strings and empty arrays.
 - `select` compares as text, so the option `2` matches the URL value `"2"`.
 - `multiSelect` matches when any selected value is in the row value (a single value or an array).
 - `boolean` treats `true`, `'true'` and `1` as true.
@@ -738,10 +739,13 @@ Only columns with a `filter` config appear in the filter UI, unless `filter.hidd
 
 - Each filter is its own control in the toolbar, labelled with its column name
   (`Status: 2 selected`).
+- The search box and the filters share one line. When they run out of room they wrap, one control
+  at a time, onto the next line; "Clear filters" follows the last filter. The row count and the
+  column picker stay at the top right, and below 640px take a line of their own.
 - `select` and `boolean` use a select with an "Any" entry; `multiSelect` a searchable
   multi-select; `number` and `date` a popover with a range (`between`) unless
   `filter.defaultOperator` names a single-value operator. Date ranges offer presets.
-- A plain `text` filter on a column the search box already covers is not shown; set
+- While the search box is on, a plain `text` filter on a column it already covers is not shown; set
   `operators` or `defaultOperator` to keep it.
 - Every active control has its own clear button. No chips are shown.
 - The toolbar row count is shown by default (`showToolbarCount`).
@@ -822,7 +826,8 @@ numeric collation, so `item 9` sorts before `item 10`.
 - The click cycle is ascending, descending, unsorted. `features.sorting.removable: false` drops the
   unsorted step; `sortDescFirst` on a column starts at descending.
 - In a multi-column sort each header shows its position.
-- Each header's menu has "Sort ascending", "Sort descending" and "Clear sort".
+- Each header's menu has "Sort ascending", "Sort descending" and, while the column is sorted,
+  "Clear sort".
 - `features.sorting.enabled: false` or a column's `enableSorting: false` removes sorting.
 - `features.sorting.multi: false` allows one sorted column at a time.
 
@@ -1021,7 +1026,8 @@ Widths are `columnSizing` state.
 cast a shadow only while content is scrolled beneath them. Pinning turns on when a column sets
 `enablePinning` or `defaultPinned`, when `rowActions` is given, when
 `features.pinning.selection` is set, or with `features.pinning.enabled`. Once on, each header
-menu offers "Pin to left", "Pin to right" and "Unpin" for every column that does not set
+menu offers "Pin to left" and "Pin to right" (except the side it is already pinned to) and, while
+pinned, "Unpin", for every column that does not set
 `enablePinning: false`. The actions column is pinned to `features.pinning.actions` (default
 `'right'`); the selection column to `features.pinning.selection` (default not pinned). Positions
 are `columnPinning` state.
@@ -1061,9 +1067,9 @@ Error wins over loading.
 While `loading`, the `<table>` has `aria-busy="true"` and the root `data-loading`. The toolbar,
 pagination and footer stay in place; the footer is hidden while there are no rows.
 
-A custom state component receives `EmptyStateProps` (`table`, `isFiltered`, `clearFilters`,
-`colSpan`), `LoadingStateProps` (`table`, `columnCount`, `rowCount`, `colSpan`) or
-`ErrorStateProps` (`table`, `error`, `retry?`, `colSpan`), and must render table rows
+A custom state component receives `DataTableEmptyStateProps` (`table`, `isFiltered`,
+`clearFilters`, `colSpan`), `DataTableLoadingStateProps` (`table`, `columnCount`, `rowCount`,
+`colSpan`) or `DataTableErrorStateProps` (`table`, `error`, `retry?`, `colSpan`), and must render table rows
 (`<tr><td colSpan={colSpan}>…</td></tr>`), because it is placed inside `<tbody>`. Slot content is
 wrapped in such a row for you.
 
@@ -1301,8 +1307,8 @@ Semantics the table provides:
 
 - Explicit roles on every element (`table`, `rowgroup`, `row`, `columnheader`, `cell`), so the
   card layout keeps table semantics after restyling.
-- An accessible name from, in order: `aria-label`, `caption`, `title` (when `label` is not set),
-  `label`. Give every table one of these.
+- An accessible name: `aria-labelledby` (yours, else the caption, else the title when `label` is
+  not set) takes precedence over `aria-label` (yours, else `label`). Give every table one of these.
 - `aria-sort` on sortable headers only; `scope="col"` or `scope="colgroup"`.
 - `aria-rowcount` on the table and `aria-rowindex` on every rendered row, counting header, detail
   and footer rows and offset by the current page. In server pagination without `rowCount` the
@@ -1311,7 +1317,7 @@ Semantics the table provides:
   `aria-busy` on the table while loading.
 - Checkboxes named "Select row N" (N is the position on screen) and "Select all rows on this page".
 - Expander buttons with `aria-expanded` and `aria-controls` pointing at the detail row.
-- Live regions for the page number, the number of applied filters and the selection count; the
+- Live regions for the page number, the number of applied filters (panel layout) and the selection count; the
   error state is `role="alert"`.
 - On cards, each cell includes its column name as text.
 
@@ -1448,6 +1454,13 @@ For custom layouts and engine-level work, the package also exports:
 | `useTableInstance(props)`, `resolveFeatures`, `adaptColumns`, `getEmptyLastSortedRowModel` | The engine the component is built on. |
 | `renderSlot(content, table)`, `DEFAULT_TABLE_LOCALE` | Helpers. |
 | `Row`, `Column`, `Cell`, `Header`, `TableInstance` | TanStack Table types used in callback signatures. |
+| `ColumnHelper<TData>` | The return type of `createColumnHelper<TData>()`. |
+| `ColumnFilterHandle` | What `useColumnFilter` returns. |
+| `FilterableColumn<TData>` | `{ column, config }`, an item of `filterableColumns(table, configs)`. |
+| `RowClassName<TData>`, `CellClassName<TData>` | `string`, or a function of the `Row` / `Cell` returning a class name: the types of `rowClassName` and `cellClassName`. |
+| `SlotContent<TData>` | `ReactNode`, or `({ table }) => ReactNode`: the type of every slot. |
+| `RowActivationEvent` | The mouse or keyboard event passed to `onRowClick`. |
+| `DataTableProps<TData>`, `DataTableEmptyStateProps`, `DataTableLoadingStateProps`, `DataTableErrorStateProps` | Props of the table and of its state components. |
 
 ## Related pages
 

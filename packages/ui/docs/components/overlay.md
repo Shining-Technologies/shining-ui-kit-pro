@@ -480,7 +480,7 @@ import { Button, Tooltip, TrashIcon } from '@shining-technologies/ui'
 | `side`          | `'top' \| 'right' \| 'bottom' \| 'left'`  | `'top'`                                  |                                                                                             |
 | `align`         | `'start' \| 'center' \| 'end'`            | Radix default                            |                                                                                             |
 | `sideOffset`    | `number`                                  | `6`                                      | Distance from the trigger, in px.                                                           |
-| `delayDuration` | `number`                                  | the `TooltipProvider`'s delay, or `300`  | Hover time before the tooltip opens, in ms.                                                 |
+| `delayDuration` | `number`                                  | `300`; inside a `TooltipProvider`, its delay | Hover time before the tooltip opens, in ms.                                                 |
 | `open`          | `boolean`                                 |                                          | Controlled open state.                                                                      |
 | `defaultOpen`   | `boolean`                                 |                                          | Initial open state when uncontrolled.                                                       |
 | `onOpenChange`  | `(open: boolean) => void`                 |                                          |                                                                                             |
@@ -488,7 +488,8 @@ import { Button, Tooltip, TrashIcon } from '@shining-technologies/ui'
 
 No provider is required. A `Tooltip` with no `TooltipProvider` above it creates its own, with a
 300ms delay. Inside a `TooltipProvider` it uses that provider's settings instead, so the shared
-delay and the reduced delay when moving between tooltips apply.
+delay and the reduced delay when moving between tooltips apply. A `TooltipProvider` without
+`delayDuration` uses the same 300ms.
 
 A disabled `<button>` receives no pointer events, so it cannot show a tooltip. To explain why a
 control is disabled, wrap it in a focusable element:
@@ -504,7 +505,8 @@ control is disabled, wrap it in a focusable element:
 ### TooltipProvider
 
 Shares tooltip settings across its subtree. Optional. Accepts all Radix `Tooltip.Provider` props
-(`delayDuration`, `skipDelayDuration`, `disableHoverableContent`).
+(`delayDuration`, `skipDelayDuration`, `disableHoverableContent`). `delayDuration` defaults to
+`300`, the same as a standalone `Tooltip`, not Radix's `700`.
 
 ```tsx
 <TooltipProvider delayDuration={150}>{children}</TooltipProvider>
@@ -635,7 +637,8 @@ export function TenantPreview({ children }: { children: React.ReactNode }) {
 
 These components read the container: `DialogPortal`, and therefore `DialogContent`,
 `AlertDialogContent`, `SheetContent` and `ConfirmDialog`; `PopoverContent`; `HoverCardContent`;
-`DropdownMenuContent` and `DropdownMenuSubContent`; and `Tooltip`. No provider is needed for a
+`DropdownMenuContent` and `DropdownMenuSubContent`; `SelectContent`; and `Tooltip`. Form panels
+built on `PopoverContent` (comboboxes, the phone country list, date and time fields) follow it too. No provider is needed for a
 theme that applies to the whole application.
 
 To send a single overlay somewhere else, wrap just that overlay in its own

@@ -358,7 +358,7 @@ export function QuoteScatter() {
 | `yFormatter` | `(value: number) => string`   | —                | Formats y values, as above. |
 
 Plus the [shared frame props](#shared-frame-props). `legend` applies only when `groupKey` is set.
-The axes use Recharts' automatic domains and are not forced to include zero. A `sizeKey` value
+The axes use Recharts' default number domain (`[0, 'auto']`), so all-positive data starts at zero. A `sizeKey` value
 uses full precision in `locale`.
 
 ## Sparkline
@@ -386,7 +386,7 @@ export function WeeklyTrend() {
 | `color`        | `string`              | `var(--chart-1)`  | Any CSS colour. |
 | `variant`      | `'line' \| 'area'`    | `'area'`          | Line only, or a line with a fading fill. |
 | `showEndPoint` | `boolean`             | `true`            | Mark the most recent value with a dot. |
-| `height`       | `number`              | `40`              | Height in pixels. Width fills the container (`width: 100%`). |
+| `height`       | `number`              | `40`              | Height in pixels. Width fills the container (`width: 100%`). A `height` in `style` takes precedence. |
 | `ariaLabel`    | `string`              | —                 | When set, the sparkline has `role="img"` and this name. When unset, it is `aria-hidden="true"`. |
 
 Other `HTMLAttributes<HTMLDivElement>` (except `children`) are spread onto the wrapper
@@ -491,7 +491,8 @@ Recharts `<Tooltip>`. The tooltip is not animated and does not capture the point
 - **Values in text.** The [data table view](#data-table-view) is the way screen-reader users get
   the numbers. Leave `showTableToggle` on. It is also what makes up for the palette's limited
   contrast between series.
-- **Keyboard.** `TrendChart`, `BarChart` and `ScatterChart` enable Recharts' `accessibilityLayer`.
+- **Keyboard.** `TrendChart`, `BarChart` and `ScatterChart` enable Recharts' `accessibilityLayer`
+  (Recharts 3 enables it by default, so there `DonutChart` is focusable too).
   The plot is focusable, and Recharts moves the tooltip between data points with the arrow keys.
   The kit replaces Recharts' focus outline with its own ring. Interactive legend entries are
   `<button>`s with `aria-pressed` (pressed means visible). The "Show data" toggle is a `<button>`
@@ -729,7 +730,7 @@ Types: `ChartSize` (`'xs' | 'sm' | 'md' | 'lg'`), `Responsive<T>` (`T | Partial<
 | `.sui-viz__header`, `.sui-viz__title`, `.sui-viz__description`, `.sui-viz__actions` | Header |
 | `.sui-viz__canvas` | Plot box (inline height) |
 | `.sui-viz__empty`, `.sui-viz__loading` | Empty and loading states |
-| `.sui-viz__legend`, `.sui-viz__legend-item[data-hidden]`, `.sui-viz__swatch` | Legend |
+| `.sui-viz__legend`, `.sui-viz__legend-item[data-hidden="true"]`, `.sui-viz__swatch` | Legend |
 | `.sui-viz__center`, `.sui-viz__center-value`, `.sui-viz__center-label` | Donut and gauge centre |
 | `.sui-viz__tooltip`, `.sui-viz__tooltip-label`, `.sui-viz__tooltip-row`, `.sui-viz__tooltip-footer` | Tooltip |
 | `.sui-viz__table-toggle`, `.sui-viz__table` | Data table view |

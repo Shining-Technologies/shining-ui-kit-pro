@@ -183,8 +183,8 @@ Full guide, including URL-driven tables with `useDataTableQueryState`:
 | [Accessibility](./docs/accessibility.md)        | What the components guarantee                                 |
 | [Troubleshooting](./docs/troubleshooting.md)    | Common errors and their fixes                                 |
 
-Every component family has its own page, and `/core`, `/theme` and `/csv` have API references:
-see the [documentation index](./docs/README.md).
+Every component family has its own page, and `/core`, `/theme`, `/csv` and the utility hooks
+have API references: see the [documentation index](./docs/README.md).
 
 ## Browser support
 

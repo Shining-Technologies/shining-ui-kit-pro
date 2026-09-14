@@ -83,7 +83,8 @@ to provide.
 ### Development warnings
 
 - In development, a `Dialog`, `AlertDialog` or `Sheet` without an accessible name logs a
-  warning. Give it a title (wrap the title in `VisuallyHidden` to hide it) or an `aria-label`.
+  warning. Give it a title (add `className="sui-visually-hidden"` to the title to hide it; do not
+  wrap it in `VisuallyHidden`, which would put a heading inside a `<span>`) or an `aria-label`.
 
 ## Keyboard
 

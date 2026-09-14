@@ -319,6 +319,45 @@ window.ResizeObserver ??= class {
   disconnect() {}
 } as unknown as typeof ResizeObserver
 
+window.IntersectionObserver ??= class {
+  readonly root = null
+  readonly rootMargin = ''
+  readonly thresholds: number[] = []
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return []
+  }
+} as unknown as typeof IntersectionObserver
+
+window.DOMRect ??= class {
+  constructor(
+    public x = 0,
+    public y = 0,
+    public width = 0,
+    public height = 0,
+  ) {}
+  get top() {
+    return this.y
+  }
+  get left() {
+    return this.x
+  }
+  get right() {
+    return this.x + this.width
+  }
+  get bottom() {
+    return this.y + this.height
+  }
+  toJSON() {
+    return { ...this }
+  }
+  static fromRect(rect?: DOMRectInit) {
+    return new window.DOMRect(rect?.x, rect?.y, rect?.width, rect?.height)
+  }
+} as unknown as typeof DOMRect
+
 Element.prototype.scrollIntoView ??= () => {}
 Element.prototype.hasPointerCapture ??= () => false
 Element.prototype.setPointerCapture ??= () => {}
@@ -326,7 +365,8 @@ Element.prototype.releasePointerCapture ??= () => {}
 ```
 
 Without the pointer-capture stubs, opening a `Select` or `DropdownMenu` in a test hangs instead of
-failing.
+failing. Without `IntersectionObserver`, every popper (Popover, Select, Tooltip, DropdownMenu) throws
+inside an effect, which also shows up as a hung render rather than a readable error.
 
 ## Next steps
 

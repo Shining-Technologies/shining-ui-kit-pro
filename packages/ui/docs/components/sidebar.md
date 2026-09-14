@@ -214,7 +214,7 @@ Returns `SidebarContextValue`:
 | `rail` | `boolean` | Rendering as the icon rail right now: `collapsed && !isMobile`. |
 | `sidebarId` | `string` | The `id` on the sidebar panel, for `aria-controls`. |
 | `storageKey` | `string \| undefined` | As given to the provider. |
-| `mobileBreakpoint` | `string \| false \| undefined` | As given to the provider. |
+| `mobileBreakpoint` | `string \| false` | The provider's value, `'48rem'` by default. |
 
 ## Icon rail
 

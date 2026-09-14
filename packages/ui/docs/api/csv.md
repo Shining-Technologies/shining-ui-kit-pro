@@ -42,7 +42,7 @@ For how export fits into a table, see [Data table](../data-table.md#csv-export).
 
 ## Getting the table instance
 
-`DataTable` passes the instance to slot render functions, and `useDataTable()` returns it inside
+`DataTable` passes the instance to slot render functions, and `useDataTable().table` gives it to
 any component rendered within the table.
 
 ```tsx
@@ -333,7 +333,8 @@ return is prefixed with a single quote, which spreadsheets display as text.
 A field that is a plain decimal number (optional sign, digits, optional decimal point and exponent,
 for example `-42`, `+1.5e3`, `.5`) is left unchanged, so negative amounts stay numeric.
 
-Sanitisation applies to headers and to the output of `formatValue`. It changes the text in the
+Sanitisation applies to every header and value, whether it comes from `formatValue` or the
+built-in conversion. It changes the text in the
 file: a value such as `-abc` is exported as `'-abc`. Set `sanitizeFormulas: false` only when the
 file will never be opened in a spreadsheet application.
 

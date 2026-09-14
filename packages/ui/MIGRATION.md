@@ -12,7 +12,8 @@ V2 replaces four V1 packages with one:
 | `…/ui-kit-react/virtualized`              | `@shining-technologies/ui/virtualized` |
 | `…/ui-kit-react/styles.css`               | `@shining-technologies/ui/styles.css` |
 
-The V1 packages keep working and stay published, so you can migrate one application at a time.
+The V1 packages keep working and stay published (with no further releases), so you can migrate
+one application at a time.
 Do not install V1 and V2 in the same application: both style the same `sui-*` class names.
 
 Most of an application's code does not change. Components keep their names, props and
@@ -141,7 +142,7 @@ on `cn()` merging conflicting Tailwind classes, use `tailwind-merge` directly.
 
 | V1                                                    | V2                                                                                  |
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `theme={…}` prop, `createTheme`, `createTableTheme`, `mergeThemes`, `themeToCssVars` | Removed. Use `variant`, `density`, `className`, or CSS variables in `style` (`style={{ '--sui-header-background': '…' }}`) |
+| `theme={…}` prop, V1's table `createTheme`, `createTableTheme`, `mergeThemes`, `themeToCssVars` | Removed (`createTheme` from `/theme` is an unrelated V2 function that generates a colour theme). Use `variant`, `density`, `className`, or CSS variables in `style` (`style={{ '--sui-header-background': '…' }}`) |
 | `minimalTheme`, `dashboardTheme` (themes package)      | `variant="minimal"`, `variant="dashboard" density="compact"`                         |
 | `midnightTheme`                                       | `className="dark"` on a wrapper, or your own `--sui-*` overrides                     |
 | Density/variant inherited from the active project      | Pass `density` / `variant` (defaults: `comfortable`, `default`)                      |
@@ -246,7 +247,8 @@ The Recharts set (`@shining-technologies/ui/charts`, requires `recharts`) replac
 **`Sparkline` → `Sparkline` from `/charts`**: `area` becomes `variant` (default `'area'`);
 `smooth` and `strokeWidth` have no equivalent; default `height` is 40 instead of 28.
 
-Common to all charts: `showTableToggle` now defaults to `true`; `title`, `description`,
+Common to all charts: `showTableToggle` now defaults to `true` (the new `GaugeChart` defaults to
+`false`); `title`, `description`,
 `actions`, `loading` and `unit` are new.
 
 ## 6. Next.js

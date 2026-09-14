@@ -231,12 +231,13 @@ input, so it does not submit with a native form on its own.
 | Key                | Action                                                                                                                                           |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Digits             | Fill the segment. Focus moves to the minute once the hour cannot take another digit. On a 12-hour clock, `3` sets 03 and moves on; `1` sets 01 and waits in case a second digit follows. A digit that would overflow starts the segment again. |
-| Arrow Up / Down    | Step the segment. The hour moves by 1 and wraps. The minute first snaps to the `minuteStep` grid (09:07 → 09:10), then carries into the hour. |
+| Arrow Up / Down    | Step the segment. The hour moves by 1 and wraps. The minute first snaps to the `minuteStep` grid (with a step of 5, 09:07 → 09:10), then carries into the hour. |
 | Arrow Left / Right | Move between the hour and minute segments                                                                                                        |
 | `a` / `p`          | Set AM / PM (12-hour only)                                                                                                                       |
 | Backspace / Delete | Discard the digits typed so far. They do not clear the value.                                                                                   |
 
-When the value is empty, typing into one segment fills the other with `00`. Choosing AM sets
+When the value is empty, typing into one segment fills the other with `00` (shown as 12 AM on a
+12-hour clock). Choosing AM sets
 `00:00` and choosing PM sets `12:00`. Each segment is a text input with `inputMode="numeric"`, so
 phones show a digit keypad.
 
@@ -496,7 +497,7 @@ Exported types: `IsoDate`, `IsoTime`, `IsoDateTime`, `CalendarProps`, `ClockProp
   [Next.js: time zone and locale](../nextjs.md#time-zone-and-locale)).
 - **Popovers** are closed in server HTML. The calendar and clock inside them render only on the
   client, after the user opens them.
-- **Click-time values.** "Now", the presets, and the today's date a `DateTimeField` fills in are
+- **Click-time values.** "Now", the presets, and the date a `DateTimeField` fills in for today are
   computed when the user acts, in the browser, so they never reach server HTML.
 
 ## Accessibility
