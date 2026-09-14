@@ -82,7 +82,8 @@ export const SelectItem = forwardRef<
       className={cn('sui-menu__item sui-select__item', className)}
       {...props}
     >
-      <span className="sui-menu__indicator">
+      {/* The box is always there; only the tick waits for the item to be picked. */}
+      <span className="sui-option-check" aria-hidden="true">
         <Primitive.ItemIndicator>
           <CheckIcon />
         </Primitive.ItemIndicator>

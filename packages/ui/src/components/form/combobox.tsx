@@ -305,7 +305,11 @@ function OptionList({
                       if (index >= 0) setCursor(index)
                     }}
                   >
-                    <span className="sui-combobox__check" aria-hidden="true">
+                    <span
+                      className="sui-option-check"
+                      data-checked={selected || undefined}
+                      aria-hidden="true"
+                    >
                       {selected ? <CheckIcon /> : null}
                     </span>
                     {option.icon ? (

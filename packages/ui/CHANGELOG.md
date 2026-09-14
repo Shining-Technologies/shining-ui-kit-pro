@@ -23,6 +23,12 @@ plus these changes.
   instead of a bare input with a square focus outline. Invalid and disabled look the same on every
   field (one-time code boxes gain the invalid border; select, combobox and date triggers gain the
   disabled look), and the leftover per-component focus borders are removed.
+- Option lists: `Select`, `Combobox`, `MultiCombobox` and the DataTable multi-select filter mark each
+  option with a checkbox that fills and ticks when picked, instead of a bare tick.
+  `.sui-option-check` replaces `.sui-combobox__check` and `.sui-multiselect__check`.
+- DataTable filter panels end with the same footer: the multi-select filter's is always shown, with
+  the selection count on the left and Clear on the right, and the range panel moves Clear to the
+  right of its hint.
 
 ### Fixed
 

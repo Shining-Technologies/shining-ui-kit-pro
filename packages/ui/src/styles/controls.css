@@ -226,22 +226,31 @@
   background: var(--muted);
 }
 
-.sui-multiselect__check {
-  display: inline-flex;
-  flex: none;
-  width: 1rem;
-  color: var(--primary);
-}
-
 .sui-multiselect__empty {
   padding: 0.75rem 0.5rem;
   color: var(--muted-foreground);
   text-align: center;
 }
 
+/* The range panel's foot, in a list panel: the state on the left, Clear on the right. */
 .sui-multiselect__footer {
-  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   border-top: var(--sui-border-width) solid var(--border);
+}
+
+.sui-multiselect__count {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.sui-multiselect__footer .sui-link:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: none;
 }
 
 /* ------------------------------------------------------------ clear filters */

@@ -1418,15 +1418,6 @@
   cursor: not-allowed;
 }
 
-.sui-combobox__check {
-  display: inline-flex;
-  justify-content: center;
-  width: 0.875rem;
-  color: var(--primary);
-  font-size: 0.75rem;
-  flex: none;
-}
-
 .sui-combobox__option-icon {
   display: inline-flex;
   color: var(--muted-foreground);

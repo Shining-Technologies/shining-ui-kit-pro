@@ -576,7 +576,8 @@ Styling hooks: `.sui-combobox`, `.sui-combobox--multi`, `.sui-combobox__overlay`
 `.sui-combobox__group-label`, `.sui-combobox__option` (`[data-active]`, `[aria-selected]`),
 `.sui-combobox__option--disabled`, `.sui-combobox__option-icon`, `.sui-combobox__option-text`,
 `.sui-combobox__option-label`, `.sui-combobox__option-description`,
-`.sui-combobox__check`, `.sui-combobox__status`, `.sui-combobox__footer`.
+`.sui-option-check` (`[data-checked]`; the checkbox-style indicator shared with `Select` and the
+DataTable multi-select filter), `.sui-combobox__status`, `.sui-combobox__footer`.
 
 ## Toggle and ToggleGroup
 

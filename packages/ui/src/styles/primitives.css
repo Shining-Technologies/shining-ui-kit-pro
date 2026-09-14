@@ -621,3 +621,39 @@
 .sui-select__item {
   padding-inline-end: 1.5rem;
 }
+
+/*
+ * The option indicator every list panel shares — Select, the filter
+ * multi-select and the combobox. An empty box on every row, so the list reads
+ * as a set of choices before anything is picked; picked, it fills with the
+ * primary and ticks, exactly like `.sui-checkbox`.
+ *
+ * Radix Select marks the chosen item `data-state="checked"`; the hand-written
+ * lists set `data-checked` on the box itself.
+ */
+.sui-option-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  border: var(--sui-border-width) solid var(--input);
+  border-radius: var(--sui-radius-sm);
+  background: var(--card);
+  color: var(--primary-foreground);
+  font-size: 0.75rem;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.sui-option-check > span {
+  display: inline-flex;
+}
+
+.sui-option-check[data-checked],
+[data-state='checked'] > .sui-option-check {
+  border-color: var(--primary);
+  background: var(--primary);
+}

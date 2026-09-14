@@ -677,7 +677,6 @@
 .sui-range-panel__hint {
   color: var(--muted-foreground);
   font-size: 0.6875rem;
-  text-align: end;
 }
 
 .sui-range-panel__foot .sui-link:disabled {

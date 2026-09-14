@@ -346,7 +346,11 @@ function InlineFilter<TData>({ column, config, label }: InlineFilterProps<TData>
               </>
             )}
 
+            {/* The hint on the left, Clear on the right — the multi-select's foot too. */}
             <div className="sui-range-panel__foot">
+              <span className="sui-range-panel__hint">
+                {isDate ? 'Open a field to pick a date' : 'Leave either end empty for open-ended'}
+              </span>
               <button
                 type="button"
                 className="sui-link"
@@ -356,9 +360,6 @@ function InlineFilter<TData>({ column, config, label }: InlineFilterProps<TData>
               >
                 Clear
               </button>
-              <span className="sui-range-panel__hint">
-                {isDate ? 'Open a field to pick a date' : 'Leave either end empty for open-ended'}
-              </span>
             </div>
           </PopoverContent>
         </Popover>

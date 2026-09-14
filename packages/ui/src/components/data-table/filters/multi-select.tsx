@@ -71,7 +71,9 @@ export function MultiSelect({
           className={cn('sui-multiselect__option', isSelected && 'sui-multiselect__option--selected')}
           onClick={() => toggle(option)}
         >
-          <span className="sui-multiselect__check">{isSelected ? <CheckIcon /> : null}</span>
+          <span className="sui-option-check" data-checked={isSelected || undefined} aria-hidden="true">
+            {isSelected ? <CheckIcon /> : null}
+          </span>
           {option.label}
         </button>
       </li>
@@ -140,13 +142,25 @@ export function MultiSelect({
           )}
         </ul>
 
-        {value.length > 0 ? (
-          <div className="sui-multiselect__footer">
-            <button type="button" className="sui-link" onClick={() => onChange([])}>
-              Clear selection
-            </button>
-          </div>
-        ) : null}
+        {/*
+         * Always there, so the way out does not appear and disappear under the
+         * pointer as options are ticked. The same foot as the range panel: what
+         * is set on the left, Clear on the right.
+         */}
+        <div className="sui-multiselect__footer">
+          <span className="sui-multiselect__count">
+            {value.length === 0 ? 'None selected' : `${value.length} selected`}
+          </span>
+          <button
+            type="button"
+            className="sui-link"
+            onClick={() => onChange([])}
+            disabled={value.length === 0}
+            aria-label={`Clear ${label} selection`}
+          >
+            Clear
+          </button>
+        </div>
       </PopoverContent>
     </Popover>
   )

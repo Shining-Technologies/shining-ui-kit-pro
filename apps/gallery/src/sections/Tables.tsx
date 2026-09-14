@@ -618,7 +618,7 @@ export function Tables() {
 
       <Demo
         title="Inline filters"
-        note="The search box and the filters share one line and wrap control by control as space runs out; Clear filters follows the last filter. Switch the width to see the toolbar at tablet and phone sizes."
+        note="The search box and the filters share one line and wrap control by control as space runs out; Clear filters follows the last filter. Every option list — Technician, Status — shows a checkbox that ticks when picked, and every panel ends with the same foot: its state on the left, Clear on the right. Switch the width to see the toolbar at tablet and phone sizes."
         inline={false}
       >
         <InlineFiltersDemo />
