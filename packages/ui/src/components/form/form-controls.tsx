@@ -255,6 +255,7 @@ export const Slider = forwardRef<
     value,
     defaultValue,
     disabled,
+    name,
     'aria-label': ariaLabel,
     'aria-labelledby': ariaLabelledBy,
     'aria-describedby': ariaDescribedBy,
@@ -263,6 +264,7 @@ export const Slider = forwardRef<
   ref,
 ) {
   const field = useFieldControl()
+  const isDisabled = disabled ?? field.disabled
   const labelId = useFieldLabelId()
   const thumbId = useId()
   // One thumb per value. Reading it from the props is what lets the same
@@ -280,7 +282,11 @@ export const Slider = forwardRef<
       data-required={field.required || undefined}
       value={value}
       defaultValue={defaultValue}
-      disabled={disabled ?? field.disabled}
+      disabled={isDisabled}
+      // Radix's hidden input is never disabled, so a disabled slider would still
+      // submit. Without a name the input is left out of the form data, as a
+      // disabled native input is.
+      name={isDisabled ? undefined : name}
       className={cn('sui-slider', className)}
       {...props}
     >

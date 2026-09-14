@@ -7,7 +7,23 @@ import { cn } from '../../lib/cn'
 import { useFieldControl } from './field-context'
 import { usePortalContainer } from '../overlay/portal-container'
 
-export const Select = Primitive.Root
+export type SelectProps = ComponentPropsWithoutRef<typeof Primitive.Root>
+
+/**
+ * Radix `Select.Root`, disabled by a surrounding disabled `<Field>` as well.
+ *
+ * The trigger already takes the field's `disabled`, but the hidden `<select>`
+ * Radix submits reads it from the root only, so a field-disabled select would
+ * otherwise still send its value with the form. The name is withheld while
+ * disabled, as `Slider` does, so nothing is submitted whatever the hidden
+ * element does with `disabled`.
+ */
+export function Select({ disabled, name, ...props }: SelectProps) {
+  const field = useFieldControl()
+  const isDisabled = disabled ?? field.disabled
+  return <Primitive.Root disabled={isDisabled} name={isDisabled ? undefined : name} {...props} />
+}
+
 export const SelectValue = Primitive.Value
 export const SelectGroup = Primitive.Group
 

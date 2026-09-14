@@ -17,7 +17,11 @@ export function SelectOptionItems({ options }: { options: readonly SelectOption<
     <>
       {groupOptions(options).map((entry, index) => {
         const items = entry.options.map((option) => (
-          <SelectItem key={String(option.value)} value={String(option.value)}>
+          <SelectItem
+            key={String(option.value)}
+            value={String(option.value)}
+            disabled={option.disabled}
+          >
             {option.label}
           </SelectItem>
         ))

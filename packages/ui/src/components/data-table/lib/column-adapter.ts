@@ -185,9 +185,14 @@ function adaptOne<TData>(
     sortingFn: wrapSortingFn(def, options),
     // A column without a `filter` config still filters as text, the same way
     // `applyQuery` treats it, rather than with the engine's own "auto" filter.
-    filterFn: createColumnFilterFn(def.filter ?? DEFAULT_FILTER_CONFIG, {
-      timeZone: options.timeZone,
-    }),
+    // With filtering switched off, a filter set in code must not narrow the rows
+    // either: the engine never checks `getCanFilter`, but `applyQuery` does.
+    filterFn:
+      behavior.enableFiltering === false
+        ? () => true
+        : createColumnFilterFn(def.filter ?? DEFAULT_FILTER_CONFIG, {
+            timeZone: options.timeZone,
+          }),
   }
 
   // Accessors are always compiled to a function so that `accessorPath` (and a

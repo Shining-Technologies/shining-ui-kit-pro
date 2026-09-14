@@ -45,6 +45,7 @@ export function Sparkline({
   height = 40,
   ariaLabel,
   className,
+  style,
   ...props
 }: SparklineProps) {
   const gradientId = useId().replace(/:/g, '')
@@ -68,7 +69,9 @@ export function Sparkline({
   return (
     <div
       className={cn('sui-viz__sparkline', className)}
-      style={{ height }}
+      // Merged, not replaced: a `style={{ width }}` must not drop the height,
+      // which is the only thing giving the drawing a box to fill.
+      style={{ height, ...style }}
       role={ariaLabel ? 'img' : undefined}
       aria-label={ariaLabel}
       aria-hidden={ariaLabel ? undefined : true}

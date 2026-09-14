@@ -37,7 +37,16 @@ export function useColumnFilter<TData>(
   config: ColumnFilterConfig,
 ): ColumnFilterHandle {
   const raw = column.getFilterValue()
-  const filter = useMemo(() => normalizeFilterValue(raw, config.type), [raw, config.type])
+  const filter = useMemo(
+    () =>
+      // No filter yet: start on the column's own `defaultOperator`, so the
+      // operator the panel shows is the one its first value is written with.
+      raw === undefined || raw === null
+        ? { operator: initialOperator(config), value: undefined }
+        : normalizeFilterValue(raw, config.type),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only these two fields are read
+    [raw, config.type, config.defaultOperator],
+  )
 
   const operators = useMemo(
     () => getOperators(config.type, config.operators),

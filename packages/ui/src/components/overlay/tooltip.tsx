@@ -14,10 +14,12 @@ export type TooltipProviderProps = ComponentPropsWithoutRef<typeof Primitive.Pro
  * Shares one delay — and the "skip the delay when moving between tooltips"
  * behaviour — across everything under it. Optional: see `Tooltip`.
  */
-export function TooltipProvider(props: TooltipProviderProps) {
+export function TooltipProvider({ delayDuration = 300, ...props }: TooltipProviderProps) {
+  // The same 300ms a `Tooltip` uses on its own: adding a provider must not make
+  // every tooltip under it slower (Radix's own default is 700ms).
   return (
     <HasTooltipProvider.Provider value={true}>
-      <Primitive.Provider {...props} />
+      <Primitive.Provider delayDuration={delayDuration} {...props} />
     </HasTooltipProvider.Provider>
   )
 }

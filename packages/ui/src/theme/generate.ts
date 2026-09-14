@@ -302,6 +302,10 @@ function dark(d: Derived, n: ColorScale): ThemeColors {
   const background = shade(0.16)
   const card = shade(0.21)
   const ink = shade(0.13)
+  // WCAG 1.4.11 wants 3:1 for a control boundary, as in light mode: lift the
+  // input border until it clears that against the card it sits on.
+  let inputLightness = 0.45
+  while (contrastRatio(shade(inputLightness), card) < 3 && inputLightness < 0.9) inputLightness += 0.01
 
   const brand = harmonizeFill(fitToMode(d.primary, card, 'dark'), 'dark', ink)
   const primary = brand.fill
@@ -353,7 +357,7 @@ function dark(d: Derived, n: ColorScale): ThemeColors {
     infoForeground: infoInk,
 
     border: shade(0.3),
-    input: shade(0.45),
+    input: shade(inputLightness),
     ring: primary,
 
     ...chartColors(primary, d.accent, 'dark'),

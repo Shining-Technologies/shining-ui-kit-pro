@@ -649,6 +649,11 @@
 @media (prefers-reduced-motion: reduce) {
   .sui-spinner {
     animation: sui-pulse 1.4s ease-in-out infinite;
+    /* The kit-wide reduced-motion rule in base.css forces every animation to
+       one near-instant cycle; the pulse is the still equivalent, so it keeps
+       running. Later in the same layer, so these win over base.css. */
+    animation-duration: 1.4s !important;
+    animation-iteration-count: infinite !important;
     border-color: currentColor;
   }
 }
