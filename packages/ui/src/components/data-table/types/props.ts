@@ -25,6 +25,24 @@ import type { RowActionSpec } from '../cells/row-action'
 import type { ColumnDef } from './column'
 import type { DataTableComponents } from './components'
 
+/** The state slices `persist` can remember. */
+export type PersistedTableState = 'columnPinning' | 'columnSizing' | 'columnVisibility'
+
+/**
+ * Where and what the table remembers between visits. See `DataTableProps.persist`.
+ */
+export interface DataTablePersistOptions {
+  /**
+   * Names this table in storage. Tables with the same key share what they
+   * remember. Defaults to the table's `id`, or else to its column ids.
+   */
+  key?: string
+  /** What to remember. Defaults to `['columnPinning']`. */
+  state?: readonly PersistedTableState[]
+  /** `'local'` survives the browser closing; `'session'` lasts for the tab. Defaults to `'local'`. */
+  storage?: 'local' | 'session'
+}
+
 /** Slot content is either a node or a function of the live table instance. */
 export type SlotContent<TData> = ReactNode | ((context: { table: Table<TData> }) => ReactNode)
 
@@ -158,6 +176,18 @@ export interface DataTableProps<TData> {
   expanded?: ExpandedState
   defaultExpanded?: ExpandedState
   onExpandedChange?: (expanded: ExpandedState) => void
+
+  /**
+   * Remember the user's column layout in the browser.
+   *
+   * On by default for pinning: a column pinned from the header menu stays
+   * pinned on the next visit until the user changes it. `false` turns it off;
+   * a string is shorthand for `{ key }`; an options object also chooses what
+   * to remember (`columnPinning`, `columnSizing`, `columnVisibility`) and in
+   * which storage. A slice the application controls is never restored — it
+   * belongs to the application.
+   */
+  persist?: boolean | string | DataTablePersistOptions
 
   /** Fires whenever the server-relevant state changes. The server-mode entry point. */
   onQueryChange?: (query: DataTableQuery) => void

@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { GalleryShell } from './GalleryShell'
-import { SECTIONS } from './sections'
+import { SECTIONS, findSection } from './sections'
 import { GalleryThemeProvider } from './theme'
 
-const sectionFromHash = () => {
-  const id = window.location.hash.slice(1)
-  return SECTIONS.some((section) => section.id === id) ? id : SECTIONS[0]!.id
-}
+const sectionFromHash = () => (findSection(window.location.hash.slice(1)) ?? SECTIONS[0]!).id
 
 /**
  * The gallery for `@shining-technologies/ui`.

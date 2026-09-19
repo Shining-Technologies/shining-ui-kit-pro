@@ -100,9 +100,11 @@ function declarations(body: string): Map<string, string> {
   return out
 }
 
-/** The one rule in `css` with exactly this selector. */
-function ruleFor(css: string, selector: string): Rule {
-  const found = parseRules(css).filter((rule) => rule.selector === selector)
+/** The one rule in `css` with exactly this selector (and, when given, inside this layer). */
+function ruleFor(css: string, selector: string, layer?: string): Rule {
+  const found = parseRules(css).filter(
+    (rule) => rule.selector === selector && (layer === undefined || rule.path.includes(layer)),
+  )
   expect(found, `exactly one "${selector}" rule`).toHaveLength(1)
   return found[0]!
 }
@@ -137,8 +139,10 @@ function splitTopLevel(list: string): string[] {
   return out
 }
 
-const rootTokens = declarations(ruleFor(themeCss, ':where(:root)').body)
-const darkTokens = declarations(ruleFor(themeCss, ':where(.dark)').body)
+// The palette: theme.css's `base` rules. Its `theme` rule holds fonts, tracking and spacing.
+const rootTokens = declarations(ruleFor(themeCss, ':where(:root)', '@layer base').body)
+const darkTokens = declarations(ruleFor(themeCss, ':where(.dark)', '@layer base').body)
+const sharedRootTokens = declarations(ruleFor(themeCss, ':where(:root)', '@layer theme').body)
 
 /* ------------------------------------------------------------------ V1 port */
 
@@ -252,7 +256,7 @@ describe('header and cell alignment', () => {
     // `comfortable` is explicit too, so a comfortable island inside a compact wrapper works.
     expect(names).toEqual(['compact', 'comfortable', 'spacious'])
     const root = rules.find((rule) => rule.selector === ':where(:root)')
-    expect(declarations(root!.body).get('--sui-cell-padding-x')).toMatch(/rem$/)
+    expect(declarations(root!.body).get('--sui-cell-padding-x')).toMatch(/^calc\(var\(--spacing\) \* [\d.]+\)$/)
   })
 
   it('pads header and cell identically in every rule that sets either', () => {
@@ -263,7 +267,7 @@ describe('header and cell alignment', () => {
     expect(setting.length).toBeGreaterThanOrEqual(4)
     for (const rule of setting) {
       const decl = declarations(rule.body)
-      expect(decl.get('--sui-cell-padding-x'), rule.selector).toMatch(/rem$/)
+      expect(decl.get('--sui-cell-padding-x'), rule.selector).toMatch(/^calc\(var\(--spacing\) \* [\d.]+\)$/)
       expect(decl.get('--sui-header-padding-x'), rule.selector).toBe(decl.get('--sui-cell-padding-x'))
     }
   })
@@ -317,23 +321,52 @@ describe('the default theme (theme.css)', () => {
   })
 
   it('defines no token the API does not know about, and only parseable colours', () => {
-    const known = new Set([...SEMANTIC_TOKENS.map((t) => `--${t}`), '--radius'])
+    const shadows = new Set(['--shadow-2xs', '--shadow-xs', '--shadow-sm', '--shadow', '--shadow-md', '--shadow-lg', '--shadow-xl', '--shadow-2xl'])
+    const known = new Set([...SEMANTIC_TOKENS.map((t) => `--${t}`), '--radius', ...shadows])
     for (const [mode, tokens] of [
       ['light', rootTokens],
       ['dark', darkTokens],
     ] as const) {
       for (const [name, value] of tokens) {
         expect(known.has(name), `${mode}: unexpected ${name}`).toBe(true)
-        if (name !== '--radius') expect(parseColor(value), `${mode}: ${name}: ${value}`).not.toBeNull()
+        if (name !== '--radius' && !shadows.has(name)) {
+          expect(parseColor(value), `${mode}: ${name}: ${value}`).not.toBeNull()
+        }
       }
     }
   })
 
-  it('is two zero-specificity rules inside @layer base, after the layer order', () => {
-    expect(topLevel(themeCss)).toEqual(['@layer theme, base, components, utilities;', '@layer base'])
+  it('is zero-specificity rules: Tailwind-configured names in @layer theme, the rest in @layer base', () => {
+    expect(topLevel(themeCss)).toEqual([
+      '@layer theme, base, components, utilities;',
+      '@layer theme',
+      '@layer base',
+    ])
     const rules = parseRules(themeCss)
-    expect(rules.map((rule) => rule.selector)).toEqual([':where(:root)', ':where(.dark)'])
-    for (const rule of rules) expect(rule.path).toEqual(['@layer base'])
+    expect(rules.map((rule) => [rule.path.join(' '), rule.selector])).toEqual([
+      ['@layer theme', ':where(:root)'],
+      ['@layer base', ':where(:root)'],
+      ['@layer base', ':where(.dark)'],
+    ])
+  })
+
+  it('ships the tweakcn font, tracking, spacing and shadow tokens', () => {
+    const configured = ['--font-sans', '--font-serif', '--font-mono', '--tracking-normal', '--spacing']
+    // Names an app configures in Tailwind's @theme live in the theme layer, below Tailwind's values.
+    expect([...sharedRootTokens.keys()]).toEqual(configured)
+    // Shadows sit in base, with a dark value each: Tailwind's :root defaults must not replace them.
+    for (const name of ['--shadow-2xs', '--shadow-xs', '--shadow-sm', '--shadow', '--shadow-md', '--shadow-lg', '--shadow-xl', '--shadow-2xl']) {
+      expect(rootTokens.has(name), name).toBe(true)
+      expect(darkTokens.has(name), name).toBe(true)
+    }
+  })
+
+  it('still honours the deprecated 2.0 font and shadow names', () => {
+    expect(sharedRootTokens.get('--font-sans')).toMatch(/^var\(\s*--sui-font-family,/)
+    expect(sharedRootTokens.get('--font-mono')).toMatch(/^var\(\s*--sui-font-family-mono,/)
+    expect(rootTokens.get('--shadow-sm')).toMatch(/^var\(--sui-shadow-surface,/)
+    expect(rootTokens.get('--shadow-md')).toMatch(/^var\(\s*--sui-shadow-overlay,/)
+    expect(rootTokens.get('--shadow-lg')).toMatch(/^var\(\s*--sui-shadow-modal,/)
   })
 
   it('leaves dark mode to the application: no prefers-color-scheme', () => {
@@ -342,8 +375,8 @@ describe('the default theme (theme.css)', () => {
   })
 
   it('declares color-scheme for both modes', () => {
-    expect(ruleFor(themeCss, ':where(:root)').body).toMatch(/color-scheme:\s*light/)
-    expect(ruleFor(themeCss, ':where(.dark)').body).toMatch(/color-scheme:\s*dark/)
+    expect(ruleFor(themeCss, ':where(:root)', '@layer base').body).toMatch(/color-scheme:\s*light/)
+    expect(ruleFor(themeCss, ':where(.dark)', '@layer base').body).toMatch(/color-scheme:\s*dark/)
   })
 })
 
@@ -371,10 +404,11 @@ describe('derived tokens (tokens.css)', () => {
     }
   })
 
-  it('names only --sui-* tokens, never a semantic token an app owns', () => {
+  it('names only --sui-* tokens and shadcn radius scale, never a semantic token an app owns', () => {
     for (const rule of rules) {
       for (const name of declarations(rule.body).keys()) {
-        expect(name, rule.selector).toMatch(/^--sui-/)
+        // `--radius-sm…xl` are derived from `--radius`, exactly as shadcn's `@theme inline` derives them.
+        expect(name, rule.selector).toMatch(/^--sui-|^--radius-(sm|md|lg|xl)$/)
       }
     }
   })
@@ -477,6 +511,7 @@ describe('component stylesheets', () => {
         const name = m[1]!
         // `--radix-*` are measured and set by Radix on the element at runtime.
         if (name.startsWith('--sui-') || name.startsWith('--radix-') || local.has(name)) continue
+        if (sharedRootTokens.has(name)) continue
         if (!rootTokens.has(name)) {
           missing.push(`${file}: ${name}`)
           continue
@@ -497,6 +532,15 @@ describe('component stylesheets', () => {
 describe('the Tailwind mapping (tailwind.css)', () => {
   const theme = parseRules(tailwindCss).find((rule) => rule.selector === '@theme inline')
   const mapping = declarations(theme?.body ?? '')
+
+  it('maps every shadow as tweakcn does, in a reference block that writes no variable', () => {
+    // Without `reference`, Tailwind writes `--shadow-sm: var(--shadow-sm)` onto :root: a cycle.
+    const reference = parseRules(tailwindCss).find((rule) => rule.selector === '@theme inline reference')
+    const shadows = ['--shadow-2xs', '--shadow-xs', '--shadow-sm', '--shadow', '--shadow-md']
+    shadows.push('--shadow-lg', '--shadow-xl', '--shadow-2xl')
+    expect([...declarations(reference?.body ?? '')]).toEqual(shadows.map((name) => [name, `var(${name})`]))
+    expect([...mapping.keys()].filter((name) => name.startsWith('--shadow'))).toEqual([])
+  })
 
   it('has one @theme inline block and the class-based dark variant', () => {
     expect(theme).toBeDefined()

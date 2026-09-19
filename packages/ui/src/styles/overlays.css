@@ -40,10 +40,10 @@
   max-height: calc(100dvh - 4rem);
   padding: var(--sui-surface-padding);
   border: var(--sui-border-width) solid var(--border);
-  border-radius: var(--sui-radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--popover);
   color: var(--popover-foreground);
-  box-shadow: var(--sui-shadow-modal);
+  box-shadow: var(--shadow-lg);
   overflow-y: auto;
 }
 
@@ -118,7 +118,7 @@
   height: 1.75rem;
   padding: 0;
   border: 0;
-  border-radius: var(--sui-radius-sm);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--muted-foreground);
   cursor: pointer;
@@ -147,7 +147,7 @@
   padding: var(--sui-surface-padding);
   background: var(--popover);
   color: var(--popover-foreground);
-  box-shadow: var(--sui-shadow-modal);
+  box-shadow: var(--shadow-lg);
   overflow-y: auto;
 }
 

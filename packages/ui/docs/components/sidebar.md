@@ -143,6 +143,7 @@ Also accepts all `<div>` props except `id`. The element's `id` comes from the pr
 | `[data-appearance="subtle" \| "primary"]` | The `appearance` prop. |
 | `[data-breakpoint-pending]`, `[data-breakpoint-scope]` | Set in server HTML before hydration. See [Mobile drawer](#mobile-drawer). |
 | `--sui-sidebar-width`, `--sui-sidebar-rail-width` | Full and rail widths. |
+| `--sui-shell-header-height` | Minimum height of the header, border included (default `4rem`). `AppShellHeader` uses the same token, so the two line up. |
 | `--sui-sidebar-indent` | Indent of nested lists (default `1.1875rem`). |
 | `--sidebar`, `--sidebar-foreground`, `--sidebar-accent`, `--sidebar-accent-foreground`, `--sidebar-primary`, `--sidebar-border` | Theme tokens for the sidebar surface. See [Theming](../theming.md). |
 
@@ -749,7 +750,7 @@ See [Accessibility](../accessibility.md) for the package-wide approach.
 ## Related
 
 - [Layout](./layout.md): `AppShell`, the header the trigger usually sits in, and a complete Next.js layout
-- [Navigation](./navigation.md): breadcrumbs, tabs and pagination
+- [Navigation](./navigation.md): breadcrumbs, tabs and pagination, and `VerticalNav` and `NavigationRail` for navigation that is not the app sidebar
 - [Next.js](../nextjs.md): server and client components, CSP
 - [Overlay](./overlay.md): `DropdownMenuItem`, `Tooltip`, `Popover`
 - [Avatar](./avatar.md): `UserAvatar` and presence status

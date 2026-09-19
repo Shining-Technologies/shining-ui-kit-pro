@@ -1,4 +1,5 @@
 import {
+  ChevronDownIcon,
   ColorModeToggle,
   Select,
   SelectContent,
@@ -7,6 +8,7 @@ import {
   SelectValue,
 } from '@shining-technologies/ui'
 import { THEME_PRESETS } from '@shining-technologies/ui/theme'
+import { useEffect, useState } from 'react'
 import type { GallerySection } from './sections'
 import { CATEGORIES, SECTIONS } from './sections'
 import { useGalleryTheme } from './theme'
@@ -25,6 +27,36 @@ export interface GalleryShellProps {
  */
 export function GalleryShell({ section, onSelectSection }: GalleryShellProps) {
   const { theme, setThemeId } = useGalleryTheme()
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(
+    () => new Set(section.group ? [section.group.id] : []),
+  )
+
+  // Landing on a page inside a sub-menu (a link, the back button) opens that sub-menu.
+  const currentGroup = section.group?.id
+  useEffect(() => {
+    if (currentGroup) setOpenGroups((open) => (open.has(currentGroup) ? open : new Set(open).add(currentGroup)))
+  }, [currentGroup])
+
+  const toggleGroup = (id: string) =>
+    setOpenGroups((open) => {
+      const next = new Set(open)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const navItem = (item: GallerySection) => (
+    <li key={item.id}>
+      <button
+        type="button"
+        className="gallery__nav-item"
+        aria-current={item.id === section.id ? 'page' : undefined}
+        onClick={() => onSelectSection(item.id)}
+      >
+        {item.label}
+      </button>
+    </li>
+  )
 
   return (
     <div className="gallery">
@@ -72,18 +104,30 @@ export function GalleryShell({ section, onSelectSection }: GalleryShellProps) {
             <div key={category} className="gallery__nav-group">
               <p className="gallery__nav-title">{category}</p>
               <ul>
-                {SECTIONS.filter((s) => s.category === category).map((item) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      className="gallery__nav-item"
-                      aria-current={item.id === section.id ? 'page' : undefined}
-                      onClick={() => onSelectSection(item.id)}
-                    >
-                      {item.label}
-                    </button>
-                  </li>
-                ))}
+                {navTree(SECTIONS.filter((s) => s.category === category)).map((node) => {
+                  if (!('group' in node)) return navItem(node.section)
+                  const { group, sections } = node
+                  const open = openGroups.has(group.id)
+                  const listId = `gallery-subnav-${group.id}`
+                  return (
+                    <li key={group.id}>
+                      <button
+                        type="button"
+                        className="gallery__nav-item gallery__nav-toggle"
+                        aria-expanded={open}
+                        aria-controls={listId}
+                        data-current={sections.some((s) => s.id === section.id) || undefined}
+                        onClick={() => toggleGroup(group.id)}
+                      >
+                        {group.label}
+                        <ChevronDownIcon className="gallery__nav-chevron" aria-hidden="true" />
+                      </button>
+                      <ul id={listId} className="gallery__subnav" hidden={!open}>
+                        {sections.map(navItem)}
+                      </ul>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ))}
@@ -92,6 +136,7 @@ export function GalleryShell({ section, onSelectSection }: GalleryShellProps) {
         <main id="gallery-main" className="gallery__main" tabIndex={-1}>
           <div className="gallery__heading">
             <div>
+              {section.group ? <p className="gallery__eyebrow">{section.group.label}</p> : null}
               <h1>{section.label}</h1>
               <p>{section.blurb}</p>
             </div>
@@ -103,4 +148,28 @@ export function GalleryShell({ section, onSelectSection }: GalleryShellProps) {
       </div>
     </div>
   )
+}
+
+type NavNode =
+  | { section: GallerySection }
+  | { group: NonNullable<GallerySection['group']>; sections: GallerySection[] }
+
+/** Sections in order, with each group's sections gathered where the group first appears. */
+function navTree(sections: GallerySection[]): NavNode[] {
+  const nodes: NavNode[] = []
+  const groups = new Map<string, GallerySection[]>()
+  for (const item of sections) {
+    if (!item.group) {
+      nodes.push({ section: item })
+      continue
+    }
+    const members = groups.get(item.group.id)
+    if (members) members.push(item)
+    else {
+      const created = [item]
+      groups.set(item.group.id, created)
+      nodes.push({ group: item.group, sections: created })
+    }
+  }
+  return nodes
 }

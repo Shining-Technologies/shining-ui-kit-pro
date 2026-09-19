@@ -80,12 +80,15 @@
     'content';
 }
 
+/* The same height as `AppShellHeader`, so the two bottom borders meet in one line. */
 .sui-sidebar__header {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 0.5rem;
-  min-height: 3.75rem;
-  padding: 0.625rem;
+  box-sizing: border-box;
+  min-height: var(--sui-shell-header-height, 4rem);
+  padding: 0.25rem 0.625rem;
   border-bottom: var(--sui-border-width) solid var(--sidebar-border);
 }
 
@@ -113,7 +116,7 @@
   inset-inline-start: 0;
   z-index: 70;
   width: min(calc(var(--sui-sidebar-width, 16rem) + 2rem), 85vw);
-  box-shadow: var(--sui-shadow-overlay);
+  box-shadow: var(--shadow-md);
   transform: translateX(-100%);
   /* Hidden, not merely off-screen, so a closed drawer is out of the tab order. */
   visibility: hidden;
@@ -175,7 +178,7 @@
   min-width: 0;
   padding: 0.375rem;
   border: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: transparent;
   color: inherit;
   font: inherit;
@@ -201,7 +204,7 @@
   width: 2.25rem;
   height: 2.25rem;
   overflow: hidden;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
 }
 
 .sui-sidebar-identity__media > :is(img, svg) {
@@ -273,7 +276,7 @@
   height: 2.125rem;
   padding-inline: 0.625rem 0.25rem;
   border: var(--sui-border-width) solid var(--_sb-line);
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--sidebar-foreground) 3%, transparent);
   color: var(--_sb-muted);
   cursor: text;
@@ -321,7 +324,7 @@
   height: 1.5rem;
   padding: 0;
   border: 0;
-  border-radius: calc(var(--sui-radius-control) - 2px);
+  border-radius: calc(var(--radius-md) - 2px);
   background: transparent;
   color: var(--_sb-muted);
   cursor: pointer;
@@ -387,7 +390,7 @@
   margin: 0;
   padding: 0.25rem 0.5rem;
   border: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--_sb-muted);
   font: inherit;
@@ -506,7 +509,7 @@ button.sui-sidebar-section__label:hover {
   min-height: 2.25rem;
   padding: 0.375rem 0.625rem;
   border: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--_sb-fg);
   font: inherit;
@@ -617,7 +620,7 @@ button.sui-sidebar-section__label:hover {
   height: 1.75rem;
   padding: 0;
   border: 0;
-  border-radius: calc(var(--sui-radius-control) - 2px);
+  border-radius: calc(var(--radius-md) - 2px);
   background: transparent;
   color: var(--_sb-muted);
   cursor: pointer;

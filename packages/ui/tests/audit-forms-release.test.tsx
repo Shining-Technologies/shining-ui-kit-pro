@@ -70,7 +70,9 @@ describe('checkbox indeterminate glyph', () => {
     expect(indicator.querySelector('.sui-checkbox__minus')).not.toBeNull()
     // The stylesheet is what picks the glyph from the state.
     const css = read(join(SRC, 'styles', 'inputs.css'))
-    expect(css).toContain(".sui-checkbox__indicator[data-state='indeterminate'] .sui-checkbox__check")
+    expect(css).toContain(
+      ".sui-checkbox__indicator[data-state='indeterminate'] .sui-checkbox__check",
+    )
     expect(css).toContain(
       ".sui-checkbox__indicator:not([data-state='indeterminate']) .sui-checkbox__minus",
     )
@@ -159,7 +161,12 @@ describe('combobox trigger contents', () => {
   it('keeps the chip remove buttons out of the trigger and still removes', async () => {
     const user = userEvent.setup()
     const { data } = renderInForm(
-      <MultiCombobox options={REGIONS} name="regions" defaultValue={['syd', 'mel']} aria-label="Regions" />,
+      <MultiCombobox
+        options={REGIONS}
+        name="regions"
+        defaultValue={['syd', 'mel']}
+        aria-label="Regions"
+      />,
     )
     const trigger = screen.getByRole('combobox', { name: 'Regions' })
     expect(trigger.querySelector('button, [role="button"]')).toBeNull()
@@ -181,6 +188,44 @@ describe('combobox trigger contents', () => {
       </>,
     )
     expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('keeps the chips on one line: as many as fit, then a +n summary', () => {
+    // jsdom has no layout: a 200px line, 60px chips and a 30px summary.
+    const width = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return this.classList.contains('sui-combobox__chips') ? 200 : 0
+      })
+    const rect = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        const size = this.classList.contains('sui-combobox__chip--more') ? 30 : 60
+        return { width: size } as DOMRect
+      })
+    try {
+      const cities: ComboboxOption[] = [
+        ...REGIONS,
+        { value: 'per', label: 'Perth' },
+        { value: 'adl', label: 'Adelaide' },
+      ]
+      render(
+        <MultiCombobox
+          aria-label="Cities"
+          options={cities}
+          defaultValue={cities.map((city) => city.value)}
+        />,
+      )
+      const trigger = screen.getByRole('combobox', { name: 'Cities' })
+      // Three chips would need 3 × 60 + 30 = 210px; two and the summary fit.
+      expect(
+        trigger.querySelectorAll('.sui-combobox__chip:not(.sui-combobox__chip--more)'),
+      ).toHaveLength(2)
+      expect(trigger).toHaveTextContent('+3')
+    } finally {
+      width.mockRestore()
+      rect.mockRestore()
+    }
   })
 
   it('names the listbox from the field label, an aria-label, or the placeholder', async () => {
@@ -253,7 +298,12 @@ describe('number input stepping', () => {
     const onValueChange = vi.fn()
     render(
       <>
-        <NumberInput defaultValue={0.2} step={0.1} onValueChange={onValueChange} aria-label="Rate" />
+        <NumberInput
+          defaultValue={0.2}
+          step={0.1}
+          onValueChange={onValueChange}
+          aria-label="Rate"
+        />
       </>,
     )
     screen.getByLabelText('Rate').focus()
@@ -269,7 +319,12 @@ describe('phone input length', () => {
     const user = userEvent.setup()
     const onValueChange = vi.fn()
     const { data } = renderInForm(
-      <PhoneInput defaultCountry="US" name="phone" onValueChange={onValueChange} aria-label="Phone" />,
+      <PhoneInput
+        defaultCountry="US"
+        name="phone"
+        onValueChange={onValueChange}
+        aria-label="Phone"
+      />,
     )
     const input = screen.getByLabelText('Phone')
     await user.type(input, '41555501234567')
@@ -371,7 +426,10 @@ describe('floating form actions', () => {
         <FloatingFormActions submitting onSubmit={() => undefined} />
       </>,
     )
-    expect(screen.getByRole('button', { name: 'Save changes' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('button', { name: 'Save changes' })).toHaveAttribute(
+      'aria-busy',
+      'true',
+    )
   })
 })
 
@@ -383,7 +441,11 @@ describe('single-file pickers', () => {
     const onFileRejected = vi.fn()
     const { container } = render(
       <>
-        <FileUpload maxFiles={3} onFilesAccepted={onFilesAccepted} onFileRejected={onFileRejected} />
+        <FileUpload
+          maxFiles={3}
+          onFilesAccepted={onFilesAccepted}
+          onFileRejected={onFileRejected}
+        />
       </>,
     )
     const a = new File(['a'], 'a.pdf', { type: 'application/pdf' })
@@ -514,7 +576,9 @@ describe('pure helpers stay server-callable', () => {
       expect(DIRECTIVE.test(read(join(FORM, file))), file).toBe(false)
     }
     const barrel = read(join(FORM, 'index.ts'))
-    expect(barrel).toContain("export { DEFAULT_PASSWORD_RULES, scorePassword } from './password-rules'")
+    expect(barrel).toContain(
+      "export { DEFAULT_PASSWORD_RULES, scorePassword } from './password-rules'",
+    )
     expect(barrel).toContain("export { DEFAULT_SWATCHES, normalizeHex } from './color'")
     expect(barrel).toContain("export { formatBytes } from './format-bytes'")
     // And no client module exports them any more.

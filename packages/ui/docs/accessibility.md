@@ -61,8 +61,10 @@ to provide.
 ### Navigation
 
 - The current page is marked with `aria-current="page"` in `Breadcrumb`, `Pagination`,
-  `SidebarNav`, `SectionTabs` and the bottom navigation; the current step in `StepCard` and
-  `StatusFlow` uses `aria-current="step"`.
+  `SidebarNav`, `SectionTabs`, `VerticalNav`, `NavigationRail` and the bottom navigation; the
+  current step in `Stepper`, `StepCard` and `StatusFlow` uses `aria-current="step"`, and each
+  `Stepper` step's status is read as text after its label.
+- `SegmentedControl` is a radio group: one option is always checked, and the arrow keys move it.
 - `SkipToContent` provides a skip link to the main content.
 
 ### Data table
@@ -95,6 +97,7 @@ radio groups; Escape closes overlays). Components with their own keyboard handli
 | -------------------------- | -------------------------------------------------------------------------------------- |
 | `DataTable` rows           | One tab stop for all rows. Up / Down move between rows, Home / End jump to the first and last. Space toggles selection, Enter activates the row, Right / Left expand and collapse. Keys pressed inside a control in a row go to that control. |
 | `SidebarNav`               | Arrow-key navigation between items; see [Sidebar](./components/sidebar.md)            |
+| `Command`, `CommandMenu`   | Focus stays in the search box; Up / Down move the highlighted option (linked with `aria-activedescendant`), Enter runs it. ⌘K / Ctrl+K opens `CommandMenu`; see [Navigation](./components/navigation.md#command-and-commandmenu) |
 | `Calendar`, `Clock`, `TimeInput` | Arrow keys move the date or time; see [Date and time](./components/date-time.md) |
 | `Combobox`, `TagsInput`, `OtpInput`, `NumberInput`, `PhoneInput`, `RatingInput` | See [Form](./components/form.md) |
 | `HoldButton`               | Hold Space or Enter to confirm; see [Button](./components/button.md)                 |

@@ -3,14 +3,18 @@
 The theme is CSS. There is no provider and nothing to configure in JavaScript.
 
 ```text
-semantic tokens         --primary, --background, --radius …     you own these
+shadcn / tweakcn tokens   --primary, --radius, --font-sans, --shadow-md, --spacing …   you own these
       ↓
-derived tokens          --sui-row-hover, --sui-radius-control … computed from them
+derived tokens            --radius-md, --sui-row-hover, --sui-control-height …        computed from them
       ↓
-components              .sui-btn { background: var(--primary) }
+components                .sui-btn { background: var(--primary); border-radius: var(--radius-md) }
       ↓
-your CSS and utilities  always win
+your CSS and utilities    always win
 ```
+
+The token set is shadcn/ui's, in the shape [tweakcn](https://tweakcn.com) exports. Components read
+those names directly; the kit adds a `--sui-` token only where shadcn has no equivalent (status
+colours aside, that is density, table sizing and a few component details).
 
 ## 1. Use the default
 
@@ -43,6 +47,56 @@ because the defaults have zero specificity and sit in a lower cascade layer.
 
 Set only what you want to change; everything else keeps the default.
 
+### Use a tweakcn or shadcn theme
+
+Paste the theme [tweakcn](https://tweakcn.com) exports, or your shadcn `globals.css`, as it is.
+Every token in it reaches the components: colours, `--radius`, fonts, shadows, `--tracking-normal`
+and `--spacing`.
+
+```css
+/* globals.css */
+@import 'tailwindcss';
+@import '@shining-technologies/ui/styles.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: oklch(0.994 0 0);
+  --primary: oklch(0.8545 0.1675 159.66);
+  /* … the rest of the export … */
+  --success: oklch(0.52 0.14 150); /* the kit's status colours: add them, or keep the defaults */
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --radius: 1.4rem;
+  --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --spacing: 0.27rem;
+}
+
+.dark {
+  /* … */
+}
+
+@theme inline {
+  /* the export's block, unchanged, plus the status colours: */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+}
+```
+
+Before you ship a generated theme, check the two tokens exports most often get wrong:
+
+- **`--input`** is the border of every field. Keep it at 3:1 against `--card`; the near-white value
+  many exports use makes fields invisible.
+- **`--ring`** is the focus border of every field. A bright brand colour on a white page is often
+  below 3:1; use a deeper shade of it for light mode.
+
+tweakcn's `@custom-variant dark (&:is(.dark *))` misses the element that carries `.dark` itself;
+`(&:where(.dark, .dark *))` covers both. The `@layer base { * { … } body { … } }` block of the
+export is yours to keep: the kit never styles `body` or `*`.
+
 ### Semantic tokens
 
 The names are shadcn/ui's, so a shadcn `globals.css` works unchanged.
@@ -51,36 +105,62 @@ The names are shadcn/ui's, so a shadcn `globals.css` works unchanged.
 | -------- | ---------------------------------------------------------------------------------------------- |
 | Surfaces | `--background`, `--foreground`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground` |
 | Intent   | `--primary`, `--secondary`, `--muted`, `--accent`, each with `-foreground`                       |
-| Status   | `--destructive`, `--success`, `--warning`, `--info`, each with `-foreground`                     |
+| Status   | `--destructive`, `--success`, `--warning`, `--info`, each with `-foreground` (`success`, `warning`, `info` are the kit's additions) |
 | Lines    | `--border` (decorative), `--input` (form-control boundary, keep it at 3:1), `--ring`             |
 | Charts   | `--chart-1` … `--chart-5`                                                                        |
 | Sidebar  | `--sidebar`, `--sidebar-foreground`, `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-accent`, `--sidebar-accent-foreground`, `--sidebar-border`, `--sidebar-ring` |
 | Shape    | `--radius`                                                                                       |
+| Type     | `--font-sans` (every component), `--font-mono` (code, numbers in some cells), `--font-serif`, `--tracking-normal` |
+| Shadows  | `--shadow-2xs`, `--shadow-xs`, `--shadow-sm` (cards, tables), `--shadow`, `--shadow-md` (menus, popovers, tooltips), `--shadow-lg` (dialogs, sheets), `--shadow-xl`, `--shadow-2xl` |
+| Spacing  | `--spacing`, the unit component rhythm is a multiple of (`0.25rem`)                              |
 
 `--accent` is the subtle hover surface, not the brand colour. The brand colour is `--primary`.
 
-### Derived and component tokens
-
-Prefixed `--sui-` and defined in `tokens.css`. Radii and table colours are computed from the
-semantic tokens; typography, rhythm and elevation are fixed defaults. Override any of them
-globally or on one element.
-
-| Group      | Tokens                                                                                            |
-| ---------- | ------------------------------------------------------------------------------------------------- |
-| Geometry   | `--sui-radius-sm`, `--sui-radius-control`, `--sui-radius-surface`, `--sui-radius-lg`, `--sui-border-width` |
-| Typography | `--sui-font-family`, `--sui-font-family-mono`, `--sui-font-size`, `--sui-line-height`, `--sui-title-font-size`, `--sui-title-font-weight` |
-| Rhythm     | `--sui-gap`, `--sui-stack`, `--sui-surface-padding`, `--sui-control-height`, `--sui-control-height-sm`, `--sui-control-height-lg` |
-| Table      | `--sui-header-background`, `--sui-header-foreground`, `--sui-header-border`, `--sui-header-font-size`, `--sui-header-text-transform`, `--sui-row-hover`, `--sui-row-selected`, `--sui-row-striped`, `--sui-row-border`, `--sui-row-height`, `--sui-cell-padding-x`, `--sui-cell-padding-y` |
-| Elevation  | `--sui-shadow-surface`, `--sui-shadow-overlay`, `--sui-shadow-modal`                               |
-
-Typography tokens are prefixed so they never collide with Tailwind's `--font-*` theme variables.
-To use your application's font:
+To use your application's font, set `--font-sans`. With `next/font`:
 
 ```css
 :root {
-  --sui-font-family: var(--font-inter), system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 ```
+
+In a Tailwind project, `@theme { --font-sans: … }` works as well: the kit reads the same variable
+Tailwind's `font-sans` does.
+
+### Derived tokens
+
+Defined in `tokens.css` and computed from the tokens above, so you rarely set them. Override any
+of them globally or on one element.
+
+| Group      | Tokens                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------------------- |
+| Radius     | `--radius-sm`, `--radius-md` (controls), `--radius-lg` (cards, tables, popovers), `--radius-xl` (dialogs). shadcn's scale: `--radius` − 4px, − 2px, ± 0, + 4px |
+| Rhythm     | `--sui-gap`, `--sui-stack`, `--sui-surface-padding`, `--sui-control-height`, `--sui-control-height-sm`, `--sui-control-height-lg`, `--sui-shell-header-height` (the app bar and the sidebar header, `--spacing` × 16): multiples of `--spacing` (a control is `--spacing` × 9, like shadcn's `h-9`) |
+| Table      | `--sui-header-background`, `--sui-header-foreground`, `--sui-header-border`, `--sui-header-font-size`, `--sui-header-text-transform`, `--sui-row-hover`, `--sui-row-selected`, `--sui-row-striped`, `--sui-row-border`, `--sui-row-height`, `--sui-cell-padding-x`, `--sui-cell-padding-y` |
+| Other      | `--sui-border-width`, `--sui-font-size`, `--sui-line-height`, `--sui-title-font-size`, `--sui-title-font-weight`, `--sui-shadow-pinned-left`, `--sui-shadow-pinned-right` |
+
+`--spacing` is read where the rhythm is declared: on `:root` and on density wrappers
+(`data-sui-density`). To change it for one subtree, set it together with `data-sui-density`.
+
+#### Deprecated names
+
+2.0 used kit names for radius, fonts and shadows. A value set on `:root` still works in 2.x; on a
+single element, use the new name. The old names will be removed in 3.0:
+
+| 2.0                                   | Now             |
+| ------------------------------------- | --------------- |
+| `--sui-radius-sm`                     | `--radius-sm`   |
+| `--sui-radius-control`                | `--radius-md`   |
+| `--sui-radius-surface`                | `--radius-lg`   |
+| `--sui-radius-lg`                     | `--radius-xl`   |
+| `--sui-font-family`                   | `--font-sans`   |
+| `--sui-font-family-mono`              | `--font-mono`   |
+| `--sui-shadow-surface`                | `--shadow-sm`   |
+| `--sui-shadow-overlay`                | `--shadow-md`   |
+| `--sui-shadow-modal`                  | `--shadow-lg`   |
+
+In a Tailwind project, Tailwind's own `--font-sans` takes precedence over `--sui-font-family`;
+set `--font-sans` instead.
 
 ## 3. Dark mode
 
@@ -146,7 +226,11 @@ Import `presets.css` after `styles.css`: both define tokens with zero specificit
 cascade layer, so the file imported later wins.
 
 Available: `shining`, `slate`, `midnight`, `violet`, `ember`, `forest`, `rose`, `mono`,
-`darwind`, `unn`. Each has light and dark values.
+`darwind`, `unn`, `mint`. Each has light and dark values.
+
+`mint` is built from a tweakcn palette: electric mint on white and true black, 1.4rem corners. In
+light mode its primary is a deeper mint (`#008455`), because components also draw text, links and
+focus borders in `--primary`, and bright mint on white does not reach 3:1.
 
 ## 5. Generate a theme from a brand colour
 
@@ -230,9 +314,26 @@ const [container, setContainer] = useState<HTMLElement | null>(null)
 @import '@shining-technologies/ui/tailwind.css';
 ```
 
-`tailwind.css` maps the tokens to Tailwind colours and radii (`bg-primary`,
-`text-muted-foreground`, `border-border`, `rounded-lg`) and makes the `dark:` variant follow
-`.dark`. Skip it if your project already has shadcn's `@theme inline` block.
+`tailwind.css` is the `@theme inline` block of a tweakcn export plus the status colours: it maps
+the tokens to Tailwind colours, radii and shadows (`bg-primary`, `text-success`, `border-border`,
+`rounded-lg`, `shadow-md`) and makes the `dark:` variant follow `.dark`, including on the `.dark`
+element itself. If your `globals.css` already has that block, skip this file and add the
+`--color-success/warning/info` pairs to your block.
+
+The shadow lines are tweakcn's (`--shadow-sm: var(--shadow-sm)`), in a separate
+`@theme inline reference` block. Plain `@theme inline` also makes Tailwind write each line onto
+`:root`, where it refers to itself and erases the shadow; a tweakcn export survives that only
+because its own `:root` defines every `--shadow-*`. `reference` gives the same utilities and writes
+no variable, so `shadow-md` follows the theme's shadows, dark mode included, whether or not you
+define them. Consider the same change in your own `globals.css`.
+
+Fonts and spacing need no mapping: Tailwind's `font-sans` and spacing utilities already read
+`--font-sans` and `--spacing`, the variables the kit reads, and a value set in your `@theme` reaches
+both. The kit's defaults for these names sit in Tailwind's `theme` layer, below Tailwind's own
+values, so importing the kit never changes your Tailwind configuration.
+
+Like shadcn, the kit derives `--radius-sm` … `--radius-xl` from `--radius`, and Tailwind's
+`rounded-sm` … `rounded-xl` read the same variables: they follow your `--radius` too.
 
 Utilities override component styles:
 

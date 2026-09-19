@@ -113,6 +113,20 @@ export const THEME_PRESETS = [
     seed: { primary: '#0f766e', accent: '#f97362', neutral: '#78716c', surface: '#fbfaf7' },
     radius: '1.25rem',
   },
+  {
+    id: 'mint',
+    name: 'Mint',
+    description: 'Electric mint on pure white and true black, pill-round corners. Bright and friendly.',
+    neutralTint: 'pure',
+    seed: {
+      primary: '#51f0a8',
+      accent: '#2ebdf6',
+      neutral: '#737373',
+      surface: '#fdfdfd',
+      destructive: '#f54a88',
+    },
+    radius: '1.4rem',
+  },
 ] as const satisfies readonly ThemePreset[]
 
 export type ThemePresetId = (typeof THEME_PRESETS)[number]['id']

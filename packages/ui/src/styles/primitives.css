@@ -42,7 +42,7 @@
   font: inherit;
   text-decoration: none;
   cursor: pointer;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
 }
 
 .sui-link:hover {
@@ -77,7 +77,7 @@
   justify-content: center;
   gap: 0.5rem;
   flex-shrink: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   border: var(--sui-border-width) solid transparent;
   font-family: inherit;
   font-size: 0.875rem;
@@ -162,7 +162,7 @@
   background: var(--card);
   border-color: var(--border);
   color: var(--foreground);
-  box-shadow: var(--sui-shadow-surface);
+  box-shadow: var(--shadow-sm);
 }
 .sui-btn--outline:hover:not(:disabled) {
   background: var(--accent);
@@ -222,13 +222,13 @@
 }
 
 .sui-button-group > .sui-btn:nth-child(1 of .sui-btn) {
-  border-start-start-radius: var(--sui-radius-control);
-  border-end-start-radius: var(--sui-radius-control);
+  border-start-start-radius: var(--radius-md);
+  border-end-start-radius: var(--radius-md);
 }
 
 .sui-button-group > .sui-btn:nth-last-child(1 of .sui-btn) {
-  border-start-end-radius: var(--sui-radius-control);
-  border-end-end-radius: var(--sui-radius-control);
+  border-start-end-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
 }
 
 /* The focused and pressed buttons must paint over their neighbours' edges. */
@@ -245,7 +245,7 @@
   height: 1.875rem;
   padding: 0;
   border: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--muted-foreground);
   cursor: pointer;
@@ -266,7 +266,7 @@
   height: var(--sui-control-height);
   padding: 0 0.75rem;
   border: var(--sui-border-width) solid var(--input);
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--card);
   color: var(--foreground);
   font-family: inherit;
@@ -299,7 +299,7 @@
   height: 1rem;
   padding: 0;
   border: var(--sui-border-width) solid var(--input);
-  border-radius: var(--sui-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--card);
   color: var(--primary-foreground);
   cursor: pointer;
@@ -446,7 +446,7 @@
   /* Block even as a `span`, the form it takes inside a button. */
   display: block;
   height: 0.75rem;
-  border-radius: var(--sui-radius-sm);
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--foreground) 9%, transparent);
   animation: sui-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -474,9 +474,10 @@
   background: var(--popover);
   color: var(--popover-foreground);
   border: var(--sui-border-width) solid var(--sui-popover-border);
-  border-radius: var(--sui-radius-surface);
-  box-shadow: var(--sui-shadow-overlay);
-  font-family: var(--sui-font-family);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
   font-size: var(--sui-header-font-size);
 }
 
@@ -498,7 +499,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.375rem 0.5rem;
-  border-radius: calc(var(--sui-radius-control) - 1px);
+  border-radius: calc(var(--radius-md) - 1px);
   color: inherit;
   cursor: pointer;
   outline: none;
@@ -565,7 +566,7 @@
   /* A sentence-long tooltip wraps instead of running the width of the screen. */
   max-width: min(20rem, calc(100vw - 1rem));
   padding: 0.25rem 0.5rem;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--foreground);
   color: var(--background);
   font-size: 0.75rem;
@@ -582,7 +583,7 @@
   height: var(--sui-control-height-sm);
   padding: 0 0.5rem;
   border: var(--sui-border-width) solid var(--input);
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--card);
   color: var(--foreground);
   font-family: inherit;
@@ -639,7 +640,7 @@
   width: 1rem;
   height: 1rem;
   border: var(--sui-border-width) solid var(--input);
-  border-radius: var(--sui-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--card);
   color: var(--primary-foreground);
   font-size: 0.75rem;

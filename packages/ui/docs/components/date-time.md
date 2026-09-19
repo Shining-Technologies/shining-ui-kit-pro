@@ -1,8 +1,8 @@
 # Date and time
 
 Pickers and fields for calendar days and times of day: a month grid (`Calendar`), a clock face
-(`Clock`), a typed time (`TimeInput`), and three form fields built from them (`DateField`,
-`TimeField`, `DateTimeField`). The appearance comes from the theme tokens, not from the browser.
+(`Clock`), a typed time (`TimeInput`), and four form fields built from them (`DateField`,
+`DateRangeField`, `TimeField`, `DateTimeField`). The appearance comes from the theme tokens, not from the browser.
 Values are plain strings with no time zone.
 
 ```tsx
@@ -10,16 +10,18 @@ import {
   Calendar,
   Clock,
   DateField,
+  DateRangeField,
   DateTimeField,
   TimeField,
   TimeInput,
 } from '@shining-technologies/ui' // or '@shining-technologies/ui/date-time'
 ```
 
-**Server and client.** All six components (`Calendar`, `Clock`, `TimeInput`, `DateField`,
-`TimeField`, `DateTimeField`) are client components (`'use client'`). They take an `onChange`
+**Server and client.** All seven components (`Calendar`, `Clock`, `TimeInput`, `DateField`,
+`DateRangeField`, `TimeField`, `DateTimeField`) are client components (`'use client'`). They take an `onChange`
 function, so you render them from a client component. The helper functions (`toIso`, `fromIso`,
-`fromTime`, `toTime`, `formatTime`, `splitDateTime`, `joinDateTime`), `DATE_RANGE_PRESETS` and the
+`fromTime`, `toTime`, `formatTime`, `splitDateTime`, `joinDateTime`, `formatDateRange`, `countDays`),
+`DATE_RANGE_PRESETS` and the
 value types come from a module without the directive, so they can also be called in Server
 Components and route handlers. See [SSR and hydration](#ssr-and-hydration).
 
@@ -30,8 +32,10 @@ Components and route handlers. See [SSR and hydration](#ssr-and-hydration).
 | `IsoDate`     | `yyyy-mm-dd`       | `'2026-03-12'`       | `Calendar`, `DateField`, `min`/`max` everywhere |
 | `IsoTime`     | `HH:mm`, 24-hour   | `'09:30'`, `'17:05'` | `Clock`, `TimeInput`, `TimeField`               |
 | `IsoDateTime` | `yyyy-mm-ddTHH:mm` | `'2026-03-12T09:30'` | `DateTimeField`                                 |
+| `DateRange`   | `{ from, to }`     | `{ from: '2026-03-12', to: '2026-03-19' }` | `DateRangeField`          |
 
-All three are `string` aliases. No component accepts or returns a `Date`.
+The first three are `string` aliases, and `DateRange` is two `IsoDate`s, both ends included. No
+component accepts or returns a `Date`.
 
 - **No time zone.** A value is a wall-clock reading: the day and time the user picked on their own
   calendar. There is no offset and no `Z`. `'2026-03-12T09:30'` means 9:30 on 12 March wherever
@@ -90,8 +94,10 @@ export function DeliveryDay() {
 
 | Prop           | Type                      | Default           | Description                                                                                   |
 | -------------- | ------------------------- | ----------------- | --------------------------------------------------------------------------------------------- |
-| `value`        | `IsoDate`                 | —                 | The selected day. An invalid string counts as no selection.                                   |
-| `onChange`     | `(value: IsoDate) => void` | —                | Required. Called with the day that was clicked or activated with Enter or Space.              |
+| `value`        | `IsoDate`                 | —                 | The selected day. An invalid string counts as no selection. Ignored when `range` is set.      |
+| `onChange`     | `(value: IsoDate) => void` | —                | Required. Called with the day that was clicked or activated with Enter or Space. With `range`, you decide which end the day becomes. |
+| `range`        | `CalendarRange`           | —                 | `{ from?, to? }`. Marks a range instead of one day: both ends filled, the days between tinted. While only `from` is set, the span up to the day under the pointer (or keyboard focus) is previewed. |
+| `months`       | `1 \| 2`                  | `1`               | Months shown side by side. With `2`, the arrow keys move straight from one month into the next. |
 | `min`          | `IsoDate`                 | —                 | Days before this one cannot be chosen. `min` itself can be chosen.                            |
 | `max`          | `IsoDate`                 | —                 | Days after this one cannot be chosen. `max` itself can be chosen.                             |
 | `label`        | `string`                  | `'Choose a date'` | Accessible name of the grid. Ignored when `aria-labelledby` is set.                           |
@@ -105,10 +111,12 @@ No other props are accepted. The root does not take `<div>` attributes and has n
 **Controlled only.** `Calendar` does not store the selection. It highlights `value` and reports
 clicks through `onChange`. Without a `value`, nothing is shown as selected.
 
-**Visible month.** The grid opens on the month of `value`, or on the current month when there is
-none. If `value` changes while the grid is mounted, the grid moves to the new month. The grid is
-always six weeks (42 days). Days from the neighbouring months are shown and can be chosen. The
-Previous month and Next month buttons are not limited by `min` or `max`.
+**Visible month.** The grid opens on the month of `value` (or of `range.from`), or on the current
+month when there is none. If that day changes while the grid is mounted and is not in view, the
+grid moves to show it. Each month is always six weeks (42 days). With one month, days from the
+neighbouring months are shown and can be chosen. With two, they are left blank so no day appears
+twice. The Previous month and Next month buttons are not limited by `min` or `max`, and with two
+months they sit on the outer edges.
 
 **Out-of-range days** get `aria-disabled="true"` rather than `disabled`. They can still receive
 focus, so the arrow keys can move past them, but clicking one does nothing.
@@ -124,16 +132,20 @@ focus, so the arrow keys can move past them, but clicking one does nothing.
 | Enter / Space          | Choose the focused day                                                                 |
 | Tab                    | Leave the grid. The grid has one tab stop.                                             |
 
-Moving focus into another month changes the visible month. The tab stop is chosen in this order:
+Moving focus into a month that is not in view changes the visible months. The tab stop is chosen in this order:
 the day that last had focus, the selected day, today, then the first day of the visible month that
 can be chosen. If `min`/`max` rule out the whole month, the tab stop is a disabled day in that
 month.
 
-**Styling hooks.** The elements are `.sui-calendar`, `.sui-calendar__head`, `.sui-calendar__nav`,
+**Styling hooks.** The elements are `.sui-calendar` (plus `.sui-calendar--months` with two months
+and `data-range` with `range`), `.sui-calendar__month`, `.sui-calendar__head`, `.sui-calendar__nav`,
 `.sui-calendar__caption` (an `aria-live="polite"` region, so month changes are announced),
-`.sui-calendar__grid`, `.sui-calendar__weekdays`, `.sui-calendar__week` and `.sui-calendar__day`.
-Each day button has `data-day="yyyy-mm-dd"` and, when they apply, `data-outside`, `data-today`,
-`data-selected`, `data-disabled` and `aria-disabled="true"`.
+`.sui-calendar__grid`, `.sui-calendar__weekdays`, `.sui-calendar__week`, `.sui-calendar__cell`
+(the gridcell) and `.sui-calendar__day`. Each day button has `data-day="yyyy-mm-dd"` and, when they
+apply, `data-outside`, `data-today`, `data-selected`, `data-preview-end`, `data-disabled` and
+`aria-disabled="true"`. In a range, the cells carry `data-range-start`, `data-range-end` and
+`data-in-range`. The band's tint is the `--sui-calendar-range` token. Today is ringed in
+`--primary`.
 
 ## Clock
 
@@ -432,9 +444,77 @@ Without one, inside a labelled `<Field>`, they are named by the field's label fo
 uses `.sui-datetime__popover`, `.sui-datetime__time`, `.sui-datetime__time-label` and
 `.sui-datetime__foot`. The trigger shares the `.sui-date-field` classes.
 
+## DateRangeField
+
+A form field for a span of days: one trigger that shows the range (`Sep 3 – 12, 2026`) and opens
+a panel with the presets on top and a month under them, with Previous and Next buttons. The first
+click picks the start and the second picks the end, in either order. Before the second click, the span under the pointer is previewed.
+
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { DateRangeField, Field, type DateRange } from '@shining-technologies/ui'
+
+export function Leave() {
+  const [leave, setLeave] = useState<DateRange>()
+  return (
+    <Field label="Leave" description="First and last day away">
+      <DateRangeField value={leave} onChange={setLeave} name="leave" min="2026-01-01" />
+    </Field>
+  )
+}
+```
+
+| Prop           | Type                                      | Default                | Description                                                                                          |
+| -------------- | ----------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| `value`        | `DateRange \| undefined`                  | —                      | Required prop; pass `undefined` for empty.                                                           |
+| `onChange`     | `(value: DateRange \| undefined) => void` | —                      | Required. Called with a complete range, never a half-picked one, or with `undefined` when cleared.  |
+| `placeholder`  | `string`                                  | `'Pick a date range'`  | Shown when there is no valid value.                                                                  |
+| `label`        | `string`                                  | —                      | Accessible name. Same rules as `DateField`. The fallback words are `Date range`.                    |
+| `min`          | `IsoDate`                                 | —                      | Passed to the calendar. A preset that starts before `min` is disabled.                              |
+| `max`          | `IsoDate`                                 | —                      | Passed to the calendar. A preset that ends after `max` is disabled.                                 |
+| `presets`      | `DateRangePreset[]`                       | `DATE_RANGE_PRESETS`   | One-click ranges above the calendar. Pass `[]` for none, or your own list.                           |
+| `months`       | `1 \| 2`                                  | `1`                    | Months side by side. Pass `2` for two on wider screens; below 40rem of viewport width the panel always shows one. |
+| `weekStartsOn` | `0 \| 1`                                  | `1`                    | Passed to the calendar.                                                                              |
+| `locale`       | `string`                                  | `'en-US'`              | Formats the trigger (`formatDateRange`) and the calendar.                                           |
+| `id`           | `string`                                  | —                      | The trigger's id. Overrides the id a surrounding `<Field>` supplies.                               |
+| `name`         | `string`                                  | —                      | Renders a hidden input containing the range as an ISO 8601 interval, `yyyy-mm-dd/yyyy-mm-dd`, or `''`. |
+| `required`     | `boolean`                                 | —                      | Sets `aria-required` only. If not set, the value comes from a surrounding `<Field>`.               |
+| `onBlur`       | `FocusEventHandler<HTMLButtonElement>`    | —                      | Called when the trigger loses focus.                                                                |
+| `disabled`     | `boolean`                                 | —                      | Disables the trigger and hidden input and hides the clear button. If not set, the value comes from a surrounding `<Field>`. |
+| `className`    | `string`                                  | —                      | Added to the root `div`.                                                                             |
+
+The ref goes to the trigger `<button>`.
+
+**Behaviour.**
+
+- The panel keeps a draft. The first click starts a new range, and the second completes it, calls
+  `onChange` and closes the popover. A click after a complete range starts a new one.
+- Closing the panel after one click (Escape, clicking outside) discards the draft and leaves
+  `value` as it was. The panel starts from `value` each time it opens.
+- A preset applies in one click and closes the popover. The preset matching the current value is
+  pressed (`aria-pressed`) and ticked.
+- The footer states what to do next ("Pick the first day", "Now pick the last day") or the picked
+  range and its length in days, in an `aria-live` region. **Clear** empties the draft and the value.
+- The clear button on the trigger follows the same rule as `DateField`: shown only for a valid
+  value on an enabled field, and named `Clear <label>`.
+- `min` and `max` limit what can be picked. A `value` outside them is still shown and submitted.
+- The presets are the same buttons as the data table's date filter, two to a row over one month
+  and four over two. On a phone (below 40rem), `months={2}` falls back to one.
+
+**Accessible name.** The trigger follows the `DateField` rules. Each month grid is named by `label`
+(or the field's label). With `months={2}`, each grid's name is followed by its month, for example
+"Leave, September 2026".
+
+**Styling hooks:** the trigger shares the `.sui-date-field` classes, and the root also has
+`.sui-date-range`. The panel uses `.sui-date-range__popover`, `__body`, `__presets` (with
+`.sui-range-panel__presets`; `role="group"`, named "Presets"), `.sui-range-panel__preset`
+(`aria-pressed`, `data-selected`), `__foot` and `__status`.
+
 ## DATE_RANGE_PRESETS
 
-Common date ranges, as used by the data table's date-range filter. Each preset computes its range
+Common date ranges, as used by `DateRangeField` and the data table's date-range filter. Each preset computes its range
 when it is called, from the local clock of the runtime (normally the browser).
 
 ```tsx
@@ -473,13 +553,16 @@ of whichever runtime calls them.
 | `formatTime`    | `(value: string \| undefined, locale = 'en-US', hour12 = true) => string \| null` | `Intl.DateTimeFormat` with `hour: 'numeric', minute: '2-digit'`. Returns `null` for an invalid time. |
 | `splitDateTime` | `(value: string \| undefined) => { date: IsoDate \| undefined; time: IsoTime \| undefined }` | Splits on `T`. Drops seconds. An invalid half is `undefined`. |
 | `joinDateTime`  | `(date: IsoDate \| undefined, time: IsoTime \| undefined) => IsoDateTime \| undefined` | `undefined` without a date. A missing time becomes `'00:00'`. |
+| `formatDateRange` | `(range: DateRange \| undefined, locale = 'en-US') => string \| null`      | `Intl.DateTimeFormat#formatRange` with `dateStyle: 'medium'`, so shared parts are written once (`Sep 3 – 12, 2026`). The separator has thin spaces around the dash. `null` when either end is not a date. |
+| `countDays`     | `(range: DateRange) => number`                                                | Calendar days covered, both ends included: a single day is `1`. Correct across a daylight-saving change. `0` for an invalid range. |
 
-Exported types: `IsoDate`, `IsoTime`, `IsoDateTime`, `CalendarProps`, `ClockProps`,
-`TimeInputProps`, `DateFieldProps`, `TimeFieldProps`, `DateTimeFieldProps` and `DateRangePreset`.
+Exported types: `IsoDate`, `IsoTime`, `IsoDateTime`, `DateRange`, `CalendarProps`,
+`CalendarRange`, `ClockProps`, `TimeInputProps`, `DateFieldProps`, `DateRangeFieldProps`,
+`TimeFieldProps`, `DateTimeFieldProps` and `DateRangePreset`.
 
 ## SSR and hydration
 
-- **Client components.** The six components are client code (`'use client'`). Render them from a
+- **Client components.** The seven components are client code (`'use client'`). Render them from a
   client component that owns the state.
 - **Helpers on the server.** `toIso`, `fromIso`, `splitDateTime`, `formatTime`,
   `DATE_RANGE_PRESETS` and the other helpers are server-safe and can be called from Server
@@ -497,7 +580,7 @@ Exported types: `IsoDate`, `IsoTime`, `IsoDateTime`, `CalendarProps`, `ClockProp
   [Next.js: time zone and locale](../nextjs.md#time-zone-and-locale)).
 - **Popovers** are closed in server HTML. The calendar and clock inside them render only on the
   client, after the user opens them.
-- **Click-time values.** "Now", the presets, and the date a `DateTimeField` fills in for today are
+- **Click-time values.** "Now", the presets (including the ones in `DateRangeField`'s panel), and the date a `DateTimeField` fills in for today are
   computed when the user acts, in the browser, so they never reach server HTML.
 
 ## Accessibility
@@ -506,7 +589,8 @@ Exported types: `IsoDate`, `IsoTime`, `IsoDateTime`, `CalendarProps`, `ClockProp
   Inside a `<Field>`, they use the field's label (`aria-labelledby`), description and error
   (`aria-describedby`, `aria-invalid`), and required state (`aria-required`).
 - `Calendar` implements the ARIA grid pattern: `role="grid"`, `row`, `columnheader` (full weekday
-  name as `aria-label`), and `gridcell` with `aria-selected`. It has a single tab stop. Each day's
+  name as `aria-label`), and `gridcell` with `aria-selected`. In a range, every committed day is
+  `aria-selected`; a previewed span is not. It has a single tab stop. Each day's
   `aria-label` is the full date (`dateStyle: 'full'`). Out-of-range days are `aria-disabled`, not
   removed from focus.
 - `Clock` exposes Hour and Minute as `role="spinbutton"` with `aria-valuenow` (0–23 and 0–59) and
@@ -517,7 +601,8 @@ Exported types: `IsoDate`, `IsoTime`, `IsoDateTime`, `CalendarProps`, `ClockProp
 - Clear buttons are named `Clear <label>`. Disabled fields do not show one.
 - Motion is limited under `prefers-reduced-motion: reduce`.
 - Built-in UI strings are English and are not configurable: Previous month, Next month, Hour,
-  Minute, AM or PM, Now, Done, Time, Clear, and the Date / Time / Date and time fallbacks.
+  Minute, AM or PM, Now, Done, Time, Clear, Presets, Pick the first day, Now pick the last day,
+  days, and the Date / Time / Date and time / Date range fallbacks.
   `locale` changes only the formatting of dates and times.
 
 See [Accessibility](../accessibility.md) for the package-wide approach.

@@ -37,6 +37,8 @@ export {
   DataTableTable,
 } from './parts/structure'
 export { DataTableHeaderCell } from './parts/header-cell'
+export { DataTableColumnResizer } from './parts/column-resizer'
+export type { ColumnResizerProps } from './parts/column-resizer'
 export { DataTableHeading } from './parts/heading'
 export { DataTableCell, DataTableExpandedRow, DataTableRow, renderCellContent } from './parts/row'
 export { SortIndicator } from './parts/sort-indicator'
@@ -152,8 +154,10 @@ export type {
 export type {
   CellClassName,
   DataTableClassNames,
+  DataTablePersistOptions,
   DataTableProps,
   DataTableSlots,
+  PersistedTableState,
   RowActivationEvent,
   RowClassName,
   SlotContent,

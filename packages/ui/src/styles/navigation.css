@@ -1,8 +1,11 @@
 /*
- * Navigation and disclosure: tabs, accordion, breadcrumb, page navigation.
+ * Navigation and disclosure: tabs, segmented control, accordion, breadcrumb,
+ * page navigation, stepper, vertical navigation, navigation rail, menubar,
+ * context menu and command menu.
  *
  * The table's own row pagination lives in controls.css; the `.sui-pager` here
- * is the standalone page-navigation control a page uses outside a table.
+ * is the standalone page-navigation control a page uses outside a table. The
+ * menu item row (`.sui-menu__item`) is shared with DropdownMenu, in primitives.css.
  */
 
 /* -------------------------------------------------------------------- tabs */
@@ -19,7 +22,7 @@
   align-items: center;
   gap: 0.125rem;
   padding: 0.1875rem;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--muted);
   color: var(--muted-foreground);
   width: fit-content;
@@ -41,7 +44,7 @@
   height: calc(var(--sui-control-height) - 0.375rem);
   padding: 0 0.75rem;
   border: var(--sui-border-width) solid transparent;
-  border-radius: calc(var(--sui-radius-control) - 2px);
+  border-radius: calc(var(--radius-md) - 2px);
   background: transparent;
   color: inherit;
   font-family: inherit;
@@ -58,7 +61,7 @@
 .sui-tabs__trigger[data-state='active'] {
   background: var(--card);
   color: var(--foreground);
-  box-shadow: var(--sui-shadow-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .sui-tabs__trigger:disabled {
@@ -135,7 +138,7 @@
 
 .sui-accordion--separated .sui-accordion__item {
   border: var(--sui-border-width) solid var(--border);
-  border-radius: var(--sui-radius-surface);
+  border-radius: var(--radius-lg);
   background: var(--card);
   overflow: hidden;
 }
@@ -282,7 +285,7 @@
 .sui-breadcrumb__link {
   color: inherit;
   text-decoration: none;
-  border-radius: var(--sui-radius-sm);
+  border-radius: var(--radius-sm);
   transition: color 120ms ease;
 }
 
@@ -317,7 +320,7 @@
   height: var(--sui-control-height-sm);
   padding: 0 0.5rem;
   border: var(--sui-border-width) solid transparent;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--foreground);
   font-family: inherit;
@@ -339,7 +342,7 @@
   border-color: var(--border);
   background: var(--card);
   font-weight: 500;
-  box-shadow: var(--sui-shadow-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .sui-pager__item:disabled {
@@ -355,4 +358,802 @@
   height: var(--sui-control-height-sm);
   color: var(--muted-foreground);
   user-select: none;
+}
+
+/* ------------------------------------------------------- segmented control */
+
+/*
+ * The same track as pill tabs, so a segmented control beside a tab list looks
+ * like the same kind of control. Only the semantics differ: a radio group, not
+ * a tablist.
+ */
+.sui-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.1875rem;
+  border-radius: var(--radius-md);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sui-segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.sui-segmented__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  flex: none;
+  min-width: calc(var(--sui-control-height) - 0.375rem);
+  height: calc(var(--sui-control-height) - 0.375rem);
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.sui-segmented__item:hover:not(:disabled):not([data-state='checked']) {
+  color: var(--foreground);
+}
+
+.sui-segmented__item[data-state='checked'] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-sm);
+}
+
+.sui-segmented__item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* An icon-only segment is square. */
+.sui-segmented__item:not(:has(.sui-segmented__label)) {
+  padding: 0;
+}
+
+.sui-segmented__icon {
+  display: inline-flex;
+  font-size: 1rem;
+}
+
+.sui-segmented--sm .sui-segmented__item {
+  min-width: calc(var(--sui-control-height-sm) - 0.375rem);
+  height: calc(var(--sui-control-height-sm) - 0.375rem);
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+}
+
+.sui-segmented--fill {
+  display: flex;
+  width: 100%;
+}
+
+.sui-segmented--fill .sui-segmented__item {
+  flex: 1 1 0;
+}
+
+/* ------------------------------------------------------------------ stepper */
+
+/*
+ * Horizontal: equal columns, each an indicator with its text centred under it.
+ * The connector joins this step's indicator to the next one's. It is sized from
+ * the column width (100%), so the row needs no gap and every column the same
+ * flex basis.
+ */
+.sui-stepper {
+  --sui-stepper-size: 1.75rem;
+  --sui-stepper-connector-gap: 0.5rem;
+  container-type: inline-size;
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sui-stepper--sm {
+  --sui-stepper-size: 1.375rem;
+  --sui-stepper-connector-gap: 0.375rem;
+}
+
+.sui-stepper__step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.sui-stepper__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  padding: 0 0.25rem 0.25rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}
+
+button.sui-stepper__button {
+  cursor: pointer;
+}
+
+button.sui-stepper__button:hover .sui-stepper__label {
+  color: var(--primary);
+}
+
+button.sui-stepper__button:hover .sui-stepper__indicator {
+  border-color: var(--primary);
+}
+
+.sui-stepper__button[aria-disabled='true'] {
+  opacity: 0.5;
+}
+
+.sui-stepper__indicator {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--sui-stepper-size);
+  height: var(--sui-stepper-size);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.sui-stepper--sm .sui-stepper__indicator {
+  font-size: 0.6875rem;
+}
+
+.sui-stepper__indicator svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.sui-stepper__step[data-status='current'] .sui-stepper__indicator {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
+}
+
+.sui-stepper__step[data-status='complete'] .sui-stepper__indicator {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.sui-stepper__step[data-status='error'] .sui-stepper__indicator {
+  border-color: var(--destructive);
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+}
+
+.sui-stepper__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sui-stepper__label {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  /* A long word wraps inside its column instead of running into the next step. */
+  overflow-wrap: anywhere;
+  transition: color 120ms ease;
+}
+
+.sui-stepper__step[data-status='current'] .sui-stepper__label,
+.sui-stepper__step[data-status='complete'] .sui-stepper__label {
+  color: var(--foreground);
+}
+
+.sui-stepper__step[data-status='error'] .sui-stepper__label {
+  color: var(--destructive);
+}
+
+.sui-stepper__optional,
+.sui-stepper__description {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.sui-stepper__connector {
+  position: absolute;
+  top: calc(var(--sui-stepper-size) / 2 - 1px);
+  inset-inline-start: calc(50% + var(--sui-stepper-size) / 2 + var(--sui-stepper-connector-gap));
+  width: calc(100% - var(--sui-stepper-size) - 2 * var(--sui-stepper-connector-gap));
+  height: 2px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background-color 160ms ease;
+}
+
+.sui-stepper__step[data-status='complete'] > .sui-stepper__connector {
+  background: var(--primary);
+}
+
+/* Narrow rows (phones, side panels): smaller text and no descriptions, so every label still fits its column. */
+@container (max-width: 36rem) {
+  /* On the steps, not the list: an element cannot match its own container query. */
+  .sui-stepper:not(.sui-stepper--vertical) .sui-stepper__step {
+    --sui-stepper-size: 1.5rem;
+    --sui-stepper-connector-gap: 0.25rem;
+  }
+
+  .sui-stepper:not(.sui-stepper--vertical) .sui-stepper__button {
+    gap: 0.375rem;
+    padding-inline: 0;
+  }
+
+  /*
+   * Wrap only between words. A single word a little wider than its column
+   * spills a few pixels past it, which reads better than "Schedul-e".
+   */
+  .sui-stepper:not(.sui-stepper--vertical) .sui-stepper__label {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    overflow-wrap: normal;
+  }
+
+  /* Hidden visually, still read by screen readers. */
+  .sui-stepper:not(.sui-stepper--vertical) .sui-stepper__description,
+  .sui-stepper:not(.sui-stepper--vertical) .sui-stepper__optional {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
+/* Vertical: the indicator on the start side, the text beside it, the connector running down. */
+.sui-stepper--vertical {
+  flex-direction: column;
+}
+
+.sui-stepper--vertical .sui-stepper__step {
+  flex: none;
+  align-items: stretch;
+  width: 100%;
+  padding-bottom: 1.5rem;
+}
+
+.sui-stepper--vertical .sui-stepper__step:last-child {
+  padding-bottom: 0;
+}
+
+.sui-stepper--vertical .sui-stepper__button {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.625rem;
+  width: fit-content;
+  padding: 0.25rem;
+  margin: -0.25rem;
+  text-align: start;
+}
+
+.sui-stepper--vertical .sui-stepper__text {
+  align-items: flex-start;
+  gap: 0.0625rem;
+  /* Centres a one-line label on the indicator. */
+  padding-top: calc((var(--sui-stepper-size) - 1.25rem) / 2);
+}
+
+.sui-stepper--vertical .sui-stepper__connector {
+  top: calc(var(--sui-stepper-size) + 0.375rem);
+  bottom: 0.375rem;
+  inset-inline-start: calc(var(--sui-stepper-size) / 2 - 1px);
+  width: 2px;
+  height: auto;
+}
+
+/* ------------------------------------------------------------ vertical nav */
+
+.sui-vnav {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.sui-vnav__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.sui-vnav__title {
+  margin: 0;
+  padding-inline: 0.625rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sui-vnav__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sui-vnav__item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 2.125rem;
+  padding: 0.375rem 0.625rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.sui-vnav__item:hover:not([aria-disabled='true']):not(:disabled):not([aria-current='page']) {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.sui-vnav__item[aria-current='page'] {
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.sui-vnav__item:disabled,
+.sui-vnav__item[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sui-vnav__icon {
+  display: inline-flex;
+  flex: none;
+  font-size: 1rem;
+}
+
+.sui-vnav__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-vnav__badge {
+  display: inline-flex;
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* `line`: a rule runs down the start edge, and the current item's stretch of it is coloured. */
+.sui-vnav--line .sui-vnav__list {
+  gap: 0;
+  border-inline-start: var(--sui-border-width) solid var(--border);
+}
+
+.sui-vnav--line .sui-vnav__item {
+  margin-inline-start: calc(-1 * var(--sui-border-width));
+  border-inline-start: 2px solid transparent;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.sui-vnav--line .sui-vnav__item[aria-current='page'] {
+  border-inline-start-color: var(--primary);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.sui-vnav--line .sui-vnav__title {
+  padding-inline: 0.75rem;
+}
+
+/* --------------------------------------------------------- navigation rail */
+
+.sui-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: var(--sui-rail-width, 5rem);
+  height: 100%;
+  padding: 0.75rem 0;
+  border-inline-end: var(--sui-border-width) solid var(--border);
+  background: var(--card);
+}
+
+.sui-rail__header,
+.sui-rail__footer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sui-rail__footer {
+  margin-top: auto;
+}
+
+.sui-rail__list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  /* In a short container the items scroll; the header and footer stay put. */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 0.25rem;
+  list-style: none;
+}
+
+.sui-rail__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.25rem 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* The indicator is the pill behind the icon, not the whole item. */
+.sui-rail__icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-size: 1.125rem;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.sui-rail__item:hover:not(:disabled):not([aria-disabled='true']) .sui-rail__icon {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.sui-rail__item[aria-current='page'] {
+  color: var(--foreground);
+}
+
+.sui-rail__item[aria-current='page'] .sui-rail__icon,
+.sui-rail__item[aria-current='page']:hover .sui-rail__icon {
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+.sui-rail__item:disabled,
+.sui-rail__item[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sui-rail__label {
+  max-width: 100%;
+  padding-inline: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-rail__badge {
+  position: absolute;
+  top: 0;
+  inset-inline-start: calc(50% + 0.25rem);
+  min-width: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1rem;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ menubar */
+
+.sui-menubar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.1875rem;
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+}
+
+.sui-menubar__trigger {
+  display: inline-flex;
+  align-items: center;
+  height: calc(var(--sui-control-height-sm) - 0.25rem);
+  padding: 0 0.625rem;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sui-menubar__trigger[data-highlighted],
+.sui-menubar__trigger[data-state='open'] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.sui-menubar__trigger[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------ menus: extra parts */
+
+/* Radix publishes the space each kind of menu has under a different variable. */
+.sui-menu--context {
+  max-height: min(28rem, var(--radix-context-menu-content-available-height, 28rem));
+}
+
+.sui-menu--menubar {
+  max-height: min(28rem, var(--radix-menubar-content-available-height, 28rem));
+}
+
+.sui-menu__shortcut {
+  flex: none;
+  margin-inline-start: auto;
+  padding-inline-start: 1.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The area a context menu opens from has no styles, but a long-press there must not open the iOS callout. */
+.sui-context-menu__trigger {
+  -webkit-touch-callout: none;
+}
+
+/* ------------------------------------------------------------ command menu */
+
+.sui-command {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  font-size: 0.8125rem;
+}
+
+.sui-command__search {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 3rem;
+  padding: 0 0.875rem;
+  border-bottom: var(--sui-border-width) solid var(--border);
+}
+
+.sui-command__search-icon {
+  flex: none;
+  color: var(--muted-foreground);
+}
+
+.sui-command__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  outline: none;
+}
+
+/* The caret and the highlighted option show where focus is; the panel is already the box. */
+.sui-command__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.sui-command__input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.sui-command__list {
+  max-height: min(22rem, 60dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.375rem;
+  scroll-padding-block: 0.375rem;
+}
+
+.sui-command__list:empty {
+  display: none;
+}
+
+.sui-command__group + .sui-command__group {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: var(--sui-border-width) solid var(--border);
+}
+
+.sui-command__heading {
+  padding: 0.5rem 0.5rem 0.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sui-command__item {
+  gap: 0.625rem;
+  padding-block: 0.5rem;
+}
+
+.sui-command__item[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sui-command__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--muted-foreground);
+  font-size: 1rem;
+}
+
+.sui-command__item[data-highlighted] .sui-command__icon {
+  color: inherit;
+}
+
+.sui-command__text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sui-command__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sui-command__description {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.sui-command__empty {
+  padding: 2rem 1rem;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.sui-command__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0.875rem;
+  border-top: var(--sui-border-width) solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.sui-command__footer kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.25rem;
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: inherit;
+  font-size: 0.6875rem;
+}
+
+/*
+ * In the dialog, the dialog is the panel: no second border and no padding
+ * around it. Doubled class, because overlays.css (which sets the dialog's
+ * padding) loads after this file.
+ */
+.sui-dialog.sui-command-dialog {
+  gap: 0;
+  max-width: 36rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sui-command-dialog .sui-command {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }

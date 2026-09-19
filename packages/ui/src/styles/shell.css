@@ -29,7 +29,12 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: 3.5rem;
+  /*
+   * Border-box, so the bottom border is inside the height and lines up with the
+   * sidebar header's (sidebar.css), whatever box-sizing the application sets.
+   */
+  box-sizing: border-box;
+  min-height: var(--sui-shell-header-height, 4rem);
   padding: 0.5rem 1rem;
   border-bottom: var(--sui-border-width) solid var(--border);
   background: color-mix(in srgb, var(--card) 90%, transparent);
@@ -72,6 +77,11 @@
 
 /* The shell's one breakpoint, the same as the sidebar's default `mobileBreakpoint`. */
 @media (max-width: 48rem) {
+  .sui-shell__header {
+    gap: 0.5rem;
+    padding-inline: 0.75rem;
+  }
+
   .sui-shell__content {
     padding: 1rem;
   }
@@ -176,12 +186,12 @@
   height: auto;
   clip-path: none;
   padding: 0.5rem 0.875rem;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--primary);
   color: var(--primary-foreground);
   font-size: 0.875rem;
   text-decoration: none;
-  box-shadow: var(--sui-shadow-overlay);
+  box-shadow: var(--shadow-md);
 }
 
 .sui-scroll-top {
@@ -190,7 +200,7 @@
   bottom: 1.25rem;
   z-index: 45;
   border-radius: 999px;
-  box-shadow: var(--sui-shadow-overlay);
+  box-shadow: var(--shadow-md);
 }
 
 @media (prefers-reduced-motion: reduce) {

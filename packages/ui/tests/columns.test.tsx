@@ -113,11 +113,15 @@ describe('column pinning', () => {
     const pinnedCell = container.querySelector<HTMLElement>('td[data-column-id="name"]')!
     expect(pinnedCell).toHaveClass('sui-pinned', 'sui-pinned--left', 'sui-pinned--edge')
     expect(pinnedCell).toHaveAttribute('data-pinned', 'left')
-    expect(pinnedCell.style.left).toBe('0px')
+    // Offsets are read from variables on the table, like widths.
+    expect(pinnedCell.style.left).toBe('calc(var(--sui-pl-name, 0) * 1px)')
+    const table = container.querySelector<HTMLElement>('table')!
+    expect(table.style.getPropertyValue('--sui-pl-name')).toBe('0')
 
     const right = container.querySelector<HTMLElement>('td[data-column-id="score"]')!
     expect(right).toHaveClass('sui-pinned--right')
-    expect(right.style.right).toBe('0px')
+    expect(right.style.right).toBe('calc(var(--sui-pr-score, 0) * 1px)')
+    expect(table.style.getPropertyValue('--sui-pr-score')).toBe('0')
   })
 
   it('freezes the row-actions column to the right by default', () => {
@@ -127,7 +131,7 @@ describe('column pinning', () => {
 
     const actions = container.querySelector<HTMLElement>('td[data-column-id="sui-actions"]')!
     expect(actions).toHaveClass('sui-pinned', 'sui-pinned--right', 'sui-pinned--edge')
-    expect(actions.style.right).toBe('0px')
+    expect(actions.style.right).toBe('calc(var(--sui-pr-sui-actions, 0) * 1px)')
     // The header travels with it, or the column would shear on scroll.
     expect(container.querySelector('th[data-column-id="sui-actions"]')).toHaveClass('sui-pinned')
   })

@@ -389,10 +389,11 @@ CSS entry points: `styles.css` (everything), `theme.css` (default theme values o
 
 ```text
 application CSS  ─┐   :root { --primary: …; --radius: … }   .dark { --primary: … }
-theme.css        ─┤   the same names, zero specificity, cascade layer "base" — any app rule wins
+theme.css        ─┤   the same names, zero specificity, layers "theme" (fonts, spacing) and "base" (colours, radius, shadows) — any app rule wins
                   ▼
 tokens.css            derived tokens recomputed per theme scope:
-                      --sui-radius-control: calc(var(--radius) - 2px)
+                      --radius-md: calc(var(--radius) - 2px)
+                      --sui-control-height: calc(var(--spacing) * 9)
                       --sui-row-hover: color-mix(in oklab, var(--muted) 70%, transparent)
                   ▼
 component CSS         @layer components { .sui-btn--primary { background: var(--primary) } }
@@ -404,7 +405,10 @@ application utilities (Tailwind @layer utilities, or unlayered app CSS) — alwa
 - Global semantic tokens use **shadcn names** (`--background`, `--primary`, `--border`, `--ring`,
   `--radius`, `--chart-1..5`, `--sidebar-*`), plus `--success`, `--warning`, `--info`. An app's
   existing shadcn `globals.css` themes the kit with no changes.
-- Tokens shadcn does not define are prefixed `--sui-` (typography, density rhythm, component
+- Components also read shadcn's `--radius-sm..xl`, `--font-sans`, `--font-mono`, `--shadow-*`,
+  `--tracking-normal` and `--spacing`, so a tweakcn export themes them completely. The kit's defaults
+  for fonts and spacing sit in Tailwind's `theme` layer, below an app's Tailwind `@theme` values.
+- Tokens shadcn does not define are prefixed `--sui-` (density rhythm, table sizing, component
   tokens), so they never collide with Tailwind's own theme variables.
 - Dark mode is the `.dark` class only. OS-following is an opt-in snippet or `next-themes`.
 - Scoped themes: any element with `data-theme` or `.sui-theme` recomputes derived tokens, so

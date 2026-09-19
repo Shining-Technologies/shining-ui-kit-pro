@@ -1,5 +1,99 @@
 # @shining-technologies/ui
 
+## 2.1.0
+
+### Added
+
+- Theme: the complete shadcn/tweakcn token set. `theme.css` now also defines `--font-sans`,
+  `--font-serif`, `--font-mono`, `--tracking-normal`, `--spacing` and `--shadow-2xs` …
+  `--shadow-2xl`, and components read them, so a tweakcn export pasted into `globals.css` sets
+  the components' fonts, shadows, letter spacing and size as well as their colours and radius.
+  The font, tracking and spacing defaults sit in `@layer theme`, below Tailwind's own values, so
+  importing the kit never overrides an application's Tailwind `@theme`.
+- Theme: `--radius-sm`, `--radius-md`, `--radius-lg` and `--radius-xl` are defined by the kit
+  (`--radius` − 4px, − 2px, ± 0, + 4px, as in shadcn) and follow scoped themes.
+- Control heights, gaps, surface padding and table row and cell sizes are multiples of `--spacing`
+  (a control is `--spacing` × 9, like shadcn's `h-9`). At the default `0.25rem` nothing changes.
+- New preset `mint` (`data-theme="mint"`): electric mint on white and true black, 1.4rem corners.
+- `DateRangeField`: a start and an end date in one field. One month with Previous and Next
+  (`months={2}` for two side by side on wider screens), presets above it, the span previewed
+  under the pointer before the second click, and `onChange` called only with a complete
+  `{ from, to }`. `name` submits an ISO 8601 interval (`yyyy-mm-dd/yyyy-mm-dd`).
+- `Calendar` takes `range` (mark a span, with a hover preview while only `from` is set) and
+  `months` (`1` or `2` side by side; the arrow keys walk from one month into the next).
+- Helpers `formatDateRange` (`Sep 3 – 12, 2026`, via `Intl.DateTimeFormat#formatRange`) and
+  `countDays`, and the types `DateRange` and `CalendarRange`.
+- Navigation: `SegmentedControl`, one choice out of a few on the pill track of `Tabs`. It is a
+  Radix radio group, so one option is always selected and the arrow keys move it.
+- Navigation: `Stepper`, progress through a task done in order. Horizontal or vertical, with
+  `complete`, `current`, `upcoming` and `error` steps, optional steps, and `onStepClick` for going
+  back (or to any step with `linear={false}`). Each status is read after the step's label.
+- Navigation: `ContextMenu` (Radix Context Menu) and `Menubar` (Radix Menubar), with the same parts
+  and item row as `DropdownMenu`, and `MenuShortcut` for a key hint at the end of any menu item.
+- Navigation: `Command`, a search box over a grouped list of commands (a combobox and a listbox,
+  with `aria-activedescendant`), and `CommandMenu`, which puts it in a dialog opened with ⌘K /
+  Ctrl+K. `matchesShortcut` and `defaultCommandFilter` are exported.
+- Navigation: `VerticalNav` (with `VerticalNavSection` and `VerticalNavItem`) for links within an
+  area such as settings, in `pills` or `line` appearance, and `NavigationRail` (with
+  `NavigationRailItem`), a narrow column of icon-and-label destinations. Both are Server
+  Components and take `asChild` for a router's link.
+- DataTable: new export `DataTableColumnResizer`, the default resize grip, for custom `HeaderCell` components.
+- DataTable: the `persist` prop, and column pinning is remembered in the browser by default: a column pinned from the header
+  menu stays pinned on the next visit until the user changes it. The new `persist` prop turns it off
+  (`false`), names the stored table (`'orders'`), or also remembers widths and hidden columns
+  (`{ state: ['columnPinning', 'columnSizing', 'columnVisibility'] }`) in `localStorage` or
+  `sessionStorage`. Controlled slices are never stored.
+- DataTable: `features.resizing.mode: 'onEnd'` shows a guide line that follows the pointer during
+  the drag.
+- New dependencies: `@radix-ui/react-context-menu` and `@radix-ui/react-menubar`.
+
+### Changed
+
+- Components use `--radius-md` (controls), `--radius-lg` (surfaces), `--radius-xl` (dialogs),
+  `--shadow-sm` / `--shadow-md` / `--shadow-lg`, `--font-sans` and `--font-mono` instead of the kit's
+  own names. Default values are unchanged.
+- `createTheme({ fontFamily })` writes `--font-sans` instead of `--sui-font-family`.
+- `MultiCombobox` keeps its chips on one line, so the field is always a text input's height: it
+  shows as many chips as fit the trigger's width, then a `+n` summary, and re-measures as the
+  field resizes. `maxChips` no longer defaults to `3`; set it to cap the count as before. Chips
+  fill the trigger's height with an even inset and corners concentric with the field's.
+- DataTable column resizing no longer re-renders the table while dragging. The grip captures the
+  pointer (mouse, pen or touch) and rewrites the width variables on the `<table>` once per animation
+  frame; `columnSizing` and `onColumnSizingChange` receive the width once, on release, instead of on
+  every pointer move. Escape during a drag puts the column back, and a click without movement no
+  longer counts as a resize. Pinned offsets are CSS variables too (`--sui-pl-<id>`,
+  `--sui-pr-<id>`), so columns pinned beside a resized one move with it; a pinned cell's inline
+  `left`/`right` is now `calc(var(…) * 1px)` rather than a pixel value.
+- The calendar rings today in `--primary` instead of `--border`, which barely showed against the
+  popover in dark themes.
+- Autofilled fields keep the field's own background and text colour instead of the browser's
+  blue or yellow tint.
+- `tailwind.css` is the tweakcn `@theme inline` block plus the status colours, and now maps
+  `--shadow-2xs` … `--shadow-2xl`, so `shadow-md` and the other utilities follow the theme. The
+  shadow lines sit in an `@theme inline reference` block: plain `@theme inline` would also write
+  `--shadow-sm: var(--shadow-sm)` onto `:root`, a cycle that erases the shadow.
+- `AppShellHeader` and the `Sidebar` header share one height, the new token
+  `--sui-shell-header-height` (`--spacing` × 16, so `4rem`; `3.5rem` compact, `4.5rem` spacious),
+  measured border-box, so their bottom borders form one line. The app bar was `3.5rem` plus its
+  padding and the sidebar header `3.75rem` plus its padding, so they missed by a few pixels. Below
+  `48rem` the app bar's side padding drops to `0.75rem`.
+
+### Fixed
+
+- DataTable: resizing a column in a table narrower than its frame now keeps the edge under the
+  pointer. The browser used to share every width change among all the stretched columns; the resize
+  now starts from the widths on screen and gives spare width to the last unpinned data column.
+- DataTable: "Pin to right" puts the column before the pinned actions column instead of after it,
+  and "Pin to left" after a pinned selection column.
+- DataTable: the header menu button no longer overlaps the resize grip.
+
+### Deprecated
+
+- `--sui-radius-sm`, `--sui-radius-control`, `--sui-radius-surface`, `--sui-radius-lg`,
+  `--sui-font-family`, `--sui-font-family-mono`, `--sui-shadow-surface`, `--sui-shadow-overlay` and
+  `--sui-shadow-modal`. They are no longer defined, but a value set on `:root` is
+  still used. Removed in 3.0; see [Theming](./docs/theming.md#deprecated-names).
+
 ## 2.0.1
 
 First stable release of `@shining-technologies/ui`. It includes everything in `2.0.0-rc.0` below,

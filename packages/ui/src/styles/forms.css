@@ -104,7 +104,7 @@
   min-height: 4.5rem;
   padding: 0.5rem 0.75rem;
   border: var(--sui-border-width) solid var(--input);
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--card);
   color: var(--foreground);
   font-family: inherit;
@@ -135,7 +135,7 @@
   height: var(--sui-control-height);
   padding-inline: 0.75rem;
   border: var(--sui-border-width) solid var(--input);
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--card);
   color: var(--foreground);
   transition: border-color 120ms ease;
@@ -319,7 +319,7 @@
   border: 2px solid var(--primary);
   border-radius: 999px;
   background: var(--card);
-  box-shadow: var(--sui-shadow-surface);
+  box-shadow: var(--shadow-sm);
   cursor: grab;
 }
 
@@ -346,7 +346,7 @@
   min-width: var(--sui-control-height);
   padding: 0 0.625rem;
   border: var(--sui-border-width) solid transparent;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--foreground);
   font-family: inherit;
@@ -388,7 +388,7 @@
   align-items: center;
   gap: 0.125rem;
   padding: 0.1875rem;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--muted);
 }
 
@@ -400,7 +400,7 @@
 .sui-toggle-group .sui-toggle[data-state='on'] {
   background: var(--card);
   color: var(--foreground);
-  box-shadow: var(--sui-shadow-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ---------------------------------------------------------------- calendar */
@@ -414,10 +414,21 @@
  */
 .sui-calendar {
   display: flex;
+  gap: 1.25rem;
+  user-select: none;
+}
+
+.sui-calendar__month {
+  display: flex;
   flex-direction: column;
   gap: 0.5rem;
   width: 15.5rem;
-  user-select: none;
+}
+
+/* Keeps a month's caption centred when it has only one arrow. */
+.sui-calendar__nav-space {
+  flex: none;
+  width: 1.75rem;
 }
 
 .sui-calendar__head {
@@ -439,7 +450,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--muted-foreground);
   cursor: pointer;
@@ -474,7 +485,7 @@
   width: 100%;
   height: 1.875rem;
   border: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--foreground);
   font: inherit;
@@ -493,8 +504,13 @@
   opacity: 0.55;
 }
 
+/*
+ * Today is ringed in the primary colour: `--border` sits too close to the
+ * popover surface to read, in dark themes above all. The selected day fills
+ * with the same colour, so the two read as one family without being confused.
+ */
 .sui-calendar__day[data-today]:not([data-selected]) {
-  box-shadow: inset 0 0 0 var(--sui-border-width) var(--border);
+  box-shadow: inset 0 0 0 max(var(--sui-border-width), 1.5px) var(--primary);
   font-weight: 600;
 }
 
@@ -508,6 +524,108 @@
 .sui-calendar__day[aria-disabled='true'] {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/*
+ * A range is one band: the days between its ends are tinted edge to edge, the
+ * ends are filled, and the band runs from the middle of each end's cell so the
+ * fill sits on it rather than beside it. A week's first and last cells round
+ * the band off where it wraps to the next row. The tint is a token,
+ * `--sui-calendar-range`.
+ */
+.sui-calendar[data-range] {
+  --sui-calendar-range: color-mix(in oklab, var(--primary) 16%, transparent);
+}
+
+.sui-calendar[data-range] .sui-calendar__week {
+  column-gap: 0;
+}
+
+.sui-calendar__cell[data-in-range] {
+  background: var(--sui-calendar-range);
+}
+
+.sui-calendar__cell[data-in-range]:first-child,
+.sui-calendar__cell[data-range-end]:first-child {
+  border-start-start-radius: var(--radius-md);
+  border-end-start-radius: var(--radius-md);
+}
+
+.sui-calendar__cell[data-in-range]:last-child,
+.sui-calendar__cell[data-range-start]:last-child {
+  border-start-end-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
+}
+
+.sui-calendar__cell[data-range-start] {
+  background: linear-gradient(to right, transparent 50%, var(--sui-calendar-range) 50%);
+}
+
+.sui-calendar__cell[data-range-end] {
+  background: linear-gradient(to left, transparent 50%, var(--sui-calendar-range) 50%);
+}
+
+.sui-calendar__cell[data-range-start]:dir(rtl) {
+  background: linear-gradient(to left, transparent 50%, var(--sui-calendar-range) 50%);
+}
+
+.sui-calendar__cell[data-range-end]:dir(rtl) {
+  background: linear-gradient(to right, transparent 50%, var(--sui-calendar-range) 50%);
+}
+
+/* The end the pointer is on, before it is picked: ringed, not filled. */
+.sui-calendar__day[data-preview-end] {
+  box-shadow: inset 0 0 0 max(var(--sui-border-width), 1.5px) var(--primary);
+}
+
+/* ------------------------------------------------------------- date range */
+
+/*
+ * Presets on top, the month under them. The presets are the table date
+ * filter's own buttons (`.sui-range-panel__preset`): two to a row over one
+ * month, four over two. The field shows one month below 40rem (see
+ * `DateRangeField`), so the panel always fits the screen.
+ */
+.sui-date-range__popover {
+  width: auto;
+  max-width: calc(100vw - 1rem);
+  padding: 0.75rem;
+}
+
+.sui-date-range__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sui-date-range__presets {
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+}
+
+.sui-date-range__presets .sui-range-panel__preset:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sui-date-range__presets .sui-range-panel__preset:disabled:hover {
+  background: var(--card);
+  border-color: var(--border);
+}
+
+.sui-date-range__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: var(--sui-border-width) solid var(--border);
+}
+
+.sui-date-range__status {
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
 }
 
 /* -------------------------------------------------------------- date field */
@@ -527,7 +645,7 @@
   height: var(--sui-control-height-sm);
   padding: 0 1.75rem 0 0.625rem;
   border: var(--sui-border-width) solid var(--input);
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--card);
   color: var(--foreground);
   font: inherit;
@@ -593,7 +711,7 @@
 /* It takes focus when it opens; the panel is already its own outline. */
 .sui-range-panel:focus-visible {
   outline: none;
-  box-shadow: var(--sui-shadow-overlay);
+  box-shadow: var(--shadow-md);
 }
 
 .sui-range-panel__title {
@@ -616,7 +734,7 @@
   height: var(--sui-control-height-sm);
   padding: 0 0.5rem;
   border: var(--sui-border-width) solid var(--border);
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--card);
   color: var(--foreground);
   font: inherit;

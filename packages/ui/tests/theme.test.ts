@@ -111,7 +111,7 @@ describe('createTheme', () => {
     expect(createTheme({ primary: '#e11d48' }).light['--radius']).toBeUndefined()
     const theme = createTheme({ primary: '#e11d48', radius: '0.5rem', fontFamily: 'Inter, sans-serif' })
     expect(theme.light['--radius']).toBe('0.5rem')
-    expect(theme.light['--sui-font-family']).toBe('Inter, sans-serif')
+    expect(theme.light['--font-sans']).toBe('Inter, sans-serif')
     expect(theme.dark['--radius']).toBeUndefined()
   })
 
@@ -171,8 +171,9 @@ describe('createTheme', () => {
   it('generates the colours theme.css ships as the default (the palette is not written twice)', () => {
     const css = readFileSync(resolve(__dirname, '../src/theme/theme.css'), 'utf8')
     const parsed = blocks(css.replace(/\/\*[\s\S]*?\*\//g, ''))
-    const root = parsed.find((b) => b.selector === ':where(:root)')!.tokens
-    const dark = parsed.find((b) => b.selector === ':where(.dark)')!.tokens
+    // The palette is in the last rules; the first (@layer theme) holds fonts and spacing.
+    const root = parsed.filter((b) => b.selector === ':where(:root)').at(-1)!.tokens
+    const dark = parsed.filter((b) => b.selector === ':where(.dark)').at(-1)!.tokens
     const theme = createTheme(presetOptions(THEME_PRESETS.find((p) => p.id === 'shining')!))
     const pick = (tokens: Record<string, string>) =>
       Object.fromEntries(SEMANTIC_TOKENS.map((t) => [`--${t}`, tokens[`--${t}`]?.toLowerCase()]))

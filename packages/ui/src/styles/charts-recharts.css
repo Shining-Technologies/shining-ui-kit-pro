@@ -98,7 +98,7 @@
    the kit's ring is the one that should show. */
 .sui-viz__canvas .recharts-wrapper:focus-visible {
   outline: none;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
 }
 
@@ -118,7 +118,7 @@
 
 .sui-viz__loading {
   height: 100%;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: linear-gradient(
     90deg,
     var(--muted) 25%,
@@ -209,7 +209,7 @@
   align-items: center;
   gap: 0.375rem;
   border: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   padding: 0;
   background: none;
   color: inherit;
@@ -243,10 +243,10 @@
   min-width: 9rem;
   padding: 0.5rem 0.625rem;
   border: var(--sui-border-width) solid var(--sui-popover-border);
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--popover);
   color: var(--popover-foreground);
-  box-shadow: var(--sui-shadow-overlay);
+  box-shadow: var(--shadow-md);
   font-size: 0.75rem;
   line-height: 1.35;
 }
@@ -293,7 +293,7 @@
 .sui-viz__table-toggle {
   align-self: flex-start;
   border: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   padding: 0;
   background: none;
   color: var(--muted-foreground);

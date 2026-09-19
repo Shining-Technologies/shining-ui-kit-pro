@@ -226,7 +226,7 @@ describe('class and theme overrides', () => {
           {
             '--sui-header-background': '#111827',
             '--sui-row-hover': '#1f2937',
-            '--sui-radius-surface': '12px',
+            '--radius-lg': '12px',
           } as CSSProperties
         }
         density="spacious"
@@ -235,7 +235,7 @@ describe('class and theme overrides', () => {
     const root = container.querySelector<HTMLElement>('.sui-root')!
     expect(root.style.getPropertyValue('--sui-header-background')).toBe('#111827')
     expect(root.style.getPropertyValue('--sui-row-hover')).toBe('#1f2937')
-    expect(root.style.getPropertyValue('--sui-radius-surface')).toBe('12px')
+    expect(root.style.getPropertyValue('--radius-lg')).toBe('12px')
     expect(root).toHaveAttribute('data-density', 'spacious')
   })
 })

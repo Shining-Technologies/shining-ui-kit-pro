@@ -1,20 +1,64 @@
 /*
  * Shining UI — default theme.
  *
- * The global semantic tokens, using shadcn/ui's names, so an application that
- * already has a shadcn `globals.css` themes these components with no changes.
+ * The shadcn/ui token set, in the shape tweakcn exports: colours, `--radius`,
+ * fonts, shadows, letter spacing and `--spacing`. An application's shadcn or
+ * tweakcn `globals.css` therefore themes every component with no changes.
  *
- * Every rule here has zero specificity (`:where`) and sits in the `base`
- * cascade layer, so any definition in the application wins — whatever the
- * import order, and whether or not the app uses Tailwind:
+ * Every rule here has zero specificity (`:where`) and sits in a cascade layer,
+ * so any definition in the application wins — whatever the import order, and
+ * whether or not the app uses Tailwind:
  *
  *   :root  { --primary: oklch(0.55 0.2 260); --radius: 0.5rem; }
  *   .dark  { --primary: oklch(0.7 0.15 260); }
+ *
+ * Two layers, on purpose:
+ *
+ * - `theme` holds the fonts, `--tracking-normal` and `--spacing`: names an
+ *   app configures in Tailwind's `@theme`. Tailwind writes its values in the
+ *   same layer with higher specificity, so the kit never overrides that
+ *   configuration; without Tailwind these defaults apply.
+ * - `base` holds the colours, `--radius` and the shadows. Tailwind also writes
+ *   default `--shadow-*` values onto `:root` whenever a stylesheet reads them,
+ *   but its shadow utilities never read the variables; keeping the kit's
+ *   shadows above Tailwind's keeps the stronger dark-mode shadows.
  *
  * Dark mode is the `.dark` class on any ancestor, usually <html>. The library
  * never follows the OS by itself; see the theming guide for an opt-in.
  */
 @layer theme, base, components, utilities;
+
+@layer theme {
+  :where(:root) {
+    /* fonts — `--sui-font-family(-mono)` are the deprecated 2.0 names, still honoured */
+    --font-sans: var(
+      --sui-font-family,
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      Helvetica,
+      Arial,
+      sans-serif
+    );
+    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: var(
+      --sui-font-family-mono,
+      ui-monospace,
+      SFMono-Regular,
+      'SF Mono',
+      Menlo,
+      Consolas,
+      'Liberation Mono',
+      monospace
+    );
+    --tracking-normal: 0em;
+
+    /* the spacing unit — component rhythm is a multiple of it, as in shadcn */
+    --spacing: 0.25rem;
+  }
+}
 
 @layer base {
   :where(:root) {
@@ -72,6 +116,28 @@
 
     /* shape */
     --radius: 0.65rem;
+
+    /*
+     * shadows — black at an alpha: light is not a palette colour.
+     * Cards use `sm`, menus and popovers `md`, dialogs `lg`.
+     * `--sui-shadow-*` are the deprecated 2.0 names, still honoured.
+     */
+    --shadow-2xs: 0 1px 1px 0 rgb(0 0 0 / 0.04);
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: var(--sui-shadow-surface, 0 1px 2px 0 rgb(0 0 0 / 0.05));
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: var(
+      --sui-shadow-overlay,
+      0 4px 6px -1px rgb(0 0 0 / 0.06),
+      0 10px 22px -6px rgb(0 0 0 / 0.12)
+    );
+    --shadow-lg: var(
+      --sui-shadow-modal,
+      0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 24px 48px -12px rgb(0 0 0 / 0.25)
+    );
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   }
 
   :where(.dark) {
@@ -120,5 +186,22 @@
     --sidebar-accent-foreground: #f4f4fe;
     --sidebar-border: #2d2d34;
     --sidebar-ring: #498676;
+
+    --shadow-2xs: 0 1px 1px 0 rgb(0 0 0 / 0.3);
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+    --shadow-sm: var(--sui-shadow-surface, 0 1px 2px 0 rgb(0 0 0 / 0.4));
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.45), 0 1px 2px -1px rgb(0 0 0 / 0.45);
+    --shadow-md: var(
+      --sui-shadow-overlay,
+      0 4px 6px -1px rgb(0 0 0 / 0.4),
+      0 10px 24px -6px rgb(0 0 0 / 0.55)
+    );
+    --shadow-lg: var(
+      --sui-shadow-modal,
+      0 16px 32px -8px rgb(0 0 0 / 0.6),
+      0 40px 72px -20px rgb(0 0 0 / 0.7)
+    );
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.55), 0 8px 10px -6px rgb(0 0 0 / 0.55);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.7);
   }
 }

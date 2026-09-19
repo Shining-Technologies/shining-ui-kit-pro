@@ -11,8 +11,21 @@
  *   <div class="bg-card text-muted-foreground border-border rounded-lg" />
  *
  * `inline` makes each utility reference the variable itself, so utilities
- * follow `.dark` and scoped themes exactly as the components do. If your
- * project already has a shadcn `@theme inline` block, you do not need this file.
+ * follow `.dark` and scoped themes exactly as the components do.
+ *
+ * This is the `@theme inline` block a tweakcn export contains, plus the kit's
+ * status colours. If your `globals.css` already has that block, you only need
+ * the three `--color-success/warning/info` pairs from here.
+ *
+ * Shadows are mapped as tweakcn maps them (`--shadow-sm:
+ * var(--shadow-sm)`), in a second block marked `reference`. Without it,
+ * Tailwind also writes each self-reference onto `:root`, where it is a cycle
+ * that erases the kit's default; a tweakcn file survives that only because it
+ * defines every value itself. `reference` keeps the utilities (`shadow-sm`
+ * reads `var(--shadow-sm)`) and writes no variable.
+ *
+ * Fonts need no mapping: Tailwind's `font-sans` already reads `--font-sans`,
+ * and leaving the name alone keeps an app's own `@theme { --font-sans }` working.
  */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -60,4 +73,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+}
+
+@theme inline reference {
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
 }

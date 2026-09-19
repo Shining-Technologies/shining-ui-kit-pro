@@ -20,7 +20,7 @@ props are serialisable: strings, numbers, arrays, plain objects and JSX. Props t
 Server Components and Server Actions can call them, for example to score a submitted password with the
 rules the form showed.
 
-Date and time fields (`DateField`, `TimeField`, `DateTimeField`) join a `Field` in the same way. They are
+Date and time fields (`DateField`, `DateRangeField`, `TimeField`, `DateTimeField`) join a `Field` in the same way. They are
 documented in [date-time.md](date-time.md).
 
 ## Contents
@@ -530,7 +530,7 @@ export function CustomerPicker({ saved }: { saved: ComboboxOption | null }) {
 | `defaultValue` | `string[]` | `[]` | Initial selection while uncontrolled. |
 | `onValueChange` | `(value: string[]) => void` | — | Called on every change. Values are kept in the order they were picked. |
 | `selectedOptions` | `ComboboxOption[]` | `[]` | Labels for current values that `options` may not contain. |
-| `maxChips` | `number` | `3` | Chips shown before a `+n` summary chip. |
+| `maxChips` | `number` | — | At most this many chips before the `+n` summary. Without it, as many as fit on the one line. |
 
 **ComboboxOption**
 
@@ -1548,7 +1548,7 @@ See [accessibility.md](../accessibility.md) for the kit-wide approach.
 - [Getting started](../getting-started.md): installing the package and importing `styles.css`.
 - [Next.js](../nextjs.md): Server Components, client components and Server Actions.
 - [Theming](../theming.md): colour, radius and the `--sui-field-*` focus tokens.
-- [Date and time](date-time.md): `DateField`, `TimeField`, `DateTimeField` and `Calendar`, which join a
+- [Date and time](date-time.md): `DateField`, `DateRangeField`, `TimeField`, `DateTimeField` and `Calendar`, which join a
   `Field` the same way.
 - [Button](button.md): the button used by `FloatingFormActions` and for submit buttons.
 - [Overlay](overlay.md): `Popover` (used by the comboboxes and the phone picker) and

@@ -11,6 +11,7 @@ import {
   ColorInput,
   Combobox,
   DateField,
+  DateRangeField,
   DateTimeField,
   Field,
   Fieldset,
@@ -40,6 +41,8 @@ import {
   Textarea,
   TimeField,
   TimeInput,
+  countDays,
+  type DateRange,
   type ImageItem,
   type UploadItem,
 } from '@shining-technologies/ui'
@@ -78,6 +81,8 @@ export function FormInputs() {
   const [slot, setSlot] = useState<string | undefined>('2026-09-18T14:00')
   const [pickup, setPickup] = useState<string | undefined>('14:30')
   const [shift, setShift] = useState<string | undefined>('06:45')
+  const [stay, setStay] = useState<DateRange | undefined>({ from: '2026-09-21', to: '2026-09-27' })
+  const [period, setPeriod] = useState<DateRange | undefined>()
   const [inlineDate, setInlineDate] = useState<string | undefined>('2026-09-18')
   const [inlineTime, setInlineTime] = useState('10:15')
   const [files, setFiles] = useState<UploadItem[]>([])
@@ -345,7 +350,7 @@ export function FormInputs() {
         inline={false}
       >
         <div className="grid-2">
-          <Field label="Coverage" description="Picks several; shows +n past three.">
+          <Field label="Coverage" description="Picks several; one line, as many chips as fit, then +n.">
             <MultiCombobox options={REGIONS} value={regions} onValueChange={setRegions} />
           </Field>
           <Field label="Skills" description="Searchable and grouped; one option is disabled.">
@@ -380,6 +385,27 @@ export function FormInputs() {
           </Field>
           <Field label="Appointment" description="Both at once, so the field is never half-set.">
             <DateTimeField value={slot} onChange={setSlot} />
+          </Field>
+        </div>
+      </Demo>
+
+      <Demo
+        title="Date range"
+        note="A start and an end in one field: the presets on top, one month under them with previous and next (months={2} shows two). Click the first day, then the last, in either order; the span follows the pointer before the second click. Closing the panel half-way leaves the value as it was."
+        inline={false}
+      >
+        <div className="grid-3">
+          <Field
+            label="Stay"
+            description={stay ? `${countDays(stay)} days · ${stay.from}/${stay.to}` : 'Nothing picked'}
+          >
+            <DateRangeField value={stay} onChange={setStay} />
+          </Field>
+          <Field label="Report period" description="No presets; nothing before 1 September.">
+            <DateRangeField value={period} onChange={setPeriod} presets={[]} min="2026-09-01" />
+          </Field>
+          <Field label="Disabled" disabled>
+            <DateRangeField value={{ from: '2026-09-01', to: '2026-09-30' }} onChange={() => {}} />
           </Field>
         </div>
       </Demo>

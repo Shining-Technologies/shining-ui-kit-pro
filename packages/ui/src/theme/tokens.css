@@ -33,36 +33,34 @@
     /* geometry */
     --sui-border-width: 1px;
 
-    /* typography — prefixed so they never collide with Tailwind's --font-* theme variables */
-    --sui-font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
-      sans-serif;
-    --sui-font-family-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-      'Liberation Mono', monospace;
+    /* typography — the font families are shadcn's --font-sans / --font-mono (theme.css) */
     --sui-font-size: 0.875rem;
     --sui-font-weight: 400;
     --sui-line-height: 1.45;
     --sui-title-font-size: 1rem;
     --sui-title-font-weight: 600;
 
-    /* rhythm (comfortable density) */
-    --sui-gap: 0.5rem;
-    --sui-stack: 1rem;
-    --sui-surface-padding: 1rem;
-    --sui-control-height: 2.25rem;
-    --sui-control-height-sm: 2rem;
-    --sui-control-height-lg: 2.5rem;
+    /* rhythm (comfortable density) — multiples of --spacing, like shadcn's h-9 or gap-2 */
+    --sui-gap: calc(var(--spacing) * 2);
+    --sui-stack: calc(var(--spacing) * 4);
+    --sui-surface-padding: calc(var(--spacing) * 4);
+    --sui-control-height: calc(var(--spacing) * 9);
+    --sui-control-height-sm: calc(var(--spacing) * 8);
+    --sui-control-height-lg: calc(var(--spacing) * 10);
+    /* the app bar and the sidebar header share it, so their bottom borders line up */
+    --sui-shell-header-height: calc(var(--spacing) * 16);
 
     /* data table sizing */
     --sui-header-font-size: 0.75rem;
     --sui-header-font-weight: 500;
     --sui-header-letter-spacing: 0.02em;
     --sui-header-text-transform: uppercase;
-    --sui-header-padding-x: 0.875rem;
-    --sui-header-padding-y: 0.5rem;
-    --sui-header-height: 2.75rem;
-    --sui-row-height: 3rem;
-    --sui-cell-padding-x: 0.875rem;
-    --sui-cell-padding-y: 0.625rem;
+    --sui-header-padding-x: calc(var(--spacing) * 3.5);
+    --sui-header-padding-y: calc(var(--spacing) * 2);
+    --sui-header-height: calc(var(--spacing) * 11);
+    --sui-row-height: calc(var(--spacing) * 12);
+    --sui-cell-padding-x: calc(var(--spacing) * 3.5);
+    --sui-cell-padding-y: calc(var(--spacing) * 2.5);
     --sui-min-column-width: 3.5rem;
 
     /* mode-specific mix ratios, read by the computed row colours below */
@@ -70,10 +68,7 @@
     --sui-row-selected-hover-mix: 16%;
     --sui-row-striped-mix: 40%;
 
-    /* elevation — black at an alpha: light is not a palette colour */
-    --sui-shadow-surface: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --sui-shadow-overlay: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 10px 22px -6px rgb(0 0 0 / 0.12);
-    --sui-shadow-modal: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 24px 48px -12px rgb(0 0 0 / 0.25);
+    /* the edge shadow of pinned table columns; elevation is shadcn's --shadow-* (theme.css) */
     --sui-shadow-pinned-left: 6px 0 8px -6px rgb(0 0 0 / 0.14);
     --sui-shadow-pinned-right: -6px 0 8px -6px rgb(0 0 0 / 0.14);
   }
@@ -82,19 +77,21 @@
     --sui-row-selected-mix: 18%;
     --sui-row-selected-hover-mix: 26%;
     --sui-row-striped-mix: 35%;
-    --sui-shadow-surface: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-    --sui-shadow-overlay: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 10px 24px -6px rgb(0 0 0 / 0.55);
-    --sui-shadow-modal: 0 16px 32px -8px rgb(0 0 0 / 0.6), 0 40px 72px -20px rgb(0 0 0 / 0.7);
   }
 
   /* ------------------------------------------------------- computed values */
 
   :where(:root, .dark, [data-theme], .sui-theme) {
-    --sui-radius-sm: calc(var(--radius) - 4px);
-    --sui-radius-control: calc(var(--radius) - 2px);
-    --sui-radius-surface: var(--radius);
-    --sui-radius-lg: calc(var(--radius) + 4px);
-    --sui-font-mono: var(--sui-font-family-mono);
+    /*
+     * shadcn's radius scale: controls use md, surfaces lg, dialogs xl. Declared
+     * here, not only in Tailwind's @theme, so it exists without Tailwind and
+     * follows a scoped --radius. `--sui-radius-*` are the deprecated 2.0
+     * names, still honoured.
+     */
+    --radius-sm: var(--sui-radius-sm, calc(var(--radius) - 4px));
+    --radius-md: var(--sui-radius-control, calc(var(--radius) - 2px));
+    --radius-lg: var(--sui-radius-surface, var(--radius));
+    --radius-xl: var(--sui-radius-lg, calc(var(--radius) + 4px));
 
     --sui-popover-border: var(--border);
 
@@ -124,52 +121,55 @@
   /* Density only ever changes rhythm, never colour or behaviour. */
 
   :where([data-sui-density='compact'], .sui-root[data-density='compact']) {
-    --sui-cell-padding-x: 0.625rem;
-    --sui-cell-padding-y: 0.3125rem;
-    --sui-header-padding-x: 0.625rem;
-    --sui-header-padding-y: 0.375rem;
-    --sui-header-height: 2.25rem;
-    --sui-row-height: 2.25rem;
+    --sui-cell-padding-x: calc(var(--spacing) * 2.5);
+    --sui-cell-padding-y: calc(var(--spacing) * 1.25);
+    --sui-header-padding-x: calc(var(--spacing) * 2.5);
+    --sui-header-padding-y: calc(var(--spacing) * 1.5);
+    --sui-header-height: calc(var(--spacing) * 9);
+    --sui-row-height: calc(var(--spacing) * 9);
     --sui-font-size: 0.8125rem;
     --sui-header-font-size: 0.6875rem;
-    --sui-gap: 0.375rem;
-    --sui-stack: 0.75rem;
-    --sui-surface-padding: 0.75rem;
-    --sui-control-height: 2rem;
-    --sui-control-height-sm: 1.75rem;
-    --sui-control-height-lg: 2.25rem;
+    --sui-gap: calc(var(--spacing) * 1.5);
+    --sui-stack: calc(var(--spacing) * 3);
+    --sui-surface-padding: calc(var(--spacing) * 3);
+    --sui-control-height: calc(var(--spacing) * 8);
+    --sui-control-height-sm: calc(var(--spacing) * 7);
+    --sui-control-height-lg: calc(var(--spacing) * 9);
+    --sui-shell-header-height: calc(var(--spacing) * 14);
   }
 
   :where([data-sui-density='comfortable'], .sui-root[data-density='comfortable']) {
-    --sui-cell-padding-x: 0.875rem;
-    --sui-cell-padding-y: 0.625rem;
-    --sui-header-padding-x: 0.875rem;
-    --sui-header-padding-y: 0.5rem;
-    --sui-header-height: 2.75rem;
-    --sui-row-height: 3rem;
+    --sui-cell-padding-x: calc(var(--spacing) * 3.5);
+    --sui-cell-padding-y: calc(var(--spacing) * 2.5);
+    --sui-header-padding-x: calc(var(--spacing) * 3.5);
+    --sui-header-padding-y: calc(var(--spacing) * 2);
+    --sui-header-height: calc(var(--spacing) * 11);
+    --sui-row-height: calc(var(--spacing) * 12);
     --sui-font-size: 0.875rem;
     --sui-header-font-size: 0.75rem;
-    --sui-gap: 0.5rem;
-    --sui-stack: 1rem;
-    --sui-surface-padding: 1rem;
-    --sui-control-height: 2.25rem;
-    --sui-control-height-sm: 2rem;
-    --sui-control-height-lg: 2.5rem;
+    --sui-gap: calc(var(--spacing) * 2);
+    --sui-stack: calc(var(--spacing) * 4);
+    --sui-surface-padding: calc(var(--spacing) * 4);
+    --sui-control-height: calc(var(--spacing) * 9);
+    --sui-control-height-sm: calc(var(--spacing) * 8);
+    --sui-control-height-lg: calc(var(--spacing) * 10);
+    --sui-shell-header-height: calc(var(--spacing) * 16);
   }
 
   :where([data-sui-density='spacious'], .sui-root[data-density='spacious']) {
-    --sui-cell-padding-x: 1.125rem;
-    --sui-cell-padding-y: 1rem;
-    --sui-header-padding-x: 1.125rem;
-    --sui-header-padding-y: 0.75rem;
-    --sui-header-height: 3.25rem;
-    --sui-row-height: 3.75rem;
-    --sui-gap: 0.75rem;
-    --sui-stack: 1.5rem;
-    --sui-surface-padding: 1.5rem;
-    --sui-control-height: 2.5rem;
-    --sui-control-height-sm: 2.25rem;
-    --sui-control-height-lg: 2.75rem;
+    --sui-cell-padding-x: calc(var(--spacing) * 4.5);
+    --sui-cell-padding-y: calc(var(--spacing) * 4);
+    --sui-header-padding-x: calc(var(--spacing) * 4.5);
+    --sui-header-padding-y: calc(var(--spacing) * 3);
+    --sui-header-height: calc(var(--spacing) * 13);
+    --sui-row-height: calc(var(--spacing) * 15);
+    --sui-gap: calc(var(--spacing) * 3);
+    --sui-stack: calc(var(--spacing) * 6);
+    --sui-surface-padding: calc(var(--spacing) * 6);
+    --sui-control-height: calc(var(--spacing) * 10);
+    --sui-control-height-sm: calc(var(--spacing) * 9);
+    --sui-control-height-lg: calc(var(--spacing) * 11);
+    --sui-shell-header-height: calc(var(--spacing) * 18);
   }
 
   /* --------------------------------------------------------- table variants */
@@ -178,18 +178,18 @@
   :where(.sui-root[data-variant='minimal']) {
     --sui-header-background: transparent;
     --sui-row-border: transparent;
-    --sui-radius-surface: 0px;
+    --radius-lg: 0px;
     --sui-header-divider: transparent;
     --sui-header-text-transform: none;
   }
 
   :where(.sui-root[data-variant='compact']) {
-    --sui-cell-padding-x: 0.625rem;
-    --sui-cell-padding-y: 0.3125rem;
-    --sui-header-padding-x: 0.625rem;
-    --sui-header-padding-y: 0.375rem;
-    --sui-header-height: 2.25rem;
-    --sui-row-height: 2.25rem;
+    --sui-cell-padding-x: calc(var(--spacing) * 2.5);
+    --sui-cell-padding-y: calc(var(--spacing) * 1.25);
+    --sui-header-padding-x: calc(var(--spacing) * 2.5);
+    --sui-header-padding-y: calc(var(--spacing) * 1.5);
+    --sui-header-height: calc(var(--spacing) * 9);
+    --sui-row-height: calc(var(--spacing) * 9);
     --sui-font-size: 0.8125rem;
     --sui-header-font-size: 0.75rem;
   }
@@ -203,6 +203,6 @@
 
   :where(.sui-root[data-variant='dashboard']) {
     --sui-header-background: var(--muted);
-    --sui-radius-surface: calc(var(--radius) + 4px);
+    --radius-lg: calc(var(--radius) + 4px);
   }
 }

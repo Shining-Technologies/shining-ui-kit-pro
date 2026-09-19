@@ -1,0 +1,95 @@
+/* Frames and filler for the navigation pages. Nothing here styles a component. */
+
+.nav-demo__target {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  cursor: context-menu;
+  user-select: none;
+}
+
+.nav-demo__target[data-state='open'] {
+  border-color: var(--primary);
+}
+
+.nav-demo__target-title,
+.nav-demo__step-title {
+  margin: 0 0 0.25rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.nav-demo__search {
+  min-width: 18rem;
+  justify-content: flex-start;
+  color: var(--muted-foreground);
+}
+
+.nav-demo__kbd {
+  margin-inline-start: auto;
+  padding: 0 0.375rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  line-height: 1.25rem;
+}
+
+.nav-demo__step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nav-demo__step p {
+  margin: 0;
+}
+
+.nav-demo__step-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-demo__settings {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.nav-demo__rail-frame {
+  display: flex;
+  height: 34rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background);
+}
+
+.nav-demo__rail-content {
+  flex: 1 1 auto;
+  padding: 1.5rem;
+}
+
+.nav-demo__rail-content p {
+  margin: 0 0 0.25rem;
+}
+
+@media (max-width: 40rem) {
+  .nav-demo__settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nav-demo__search {
+    min-width: 0;
+    width: 100%;
+  }
+}

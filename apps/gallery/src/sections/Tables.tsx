@@ -265,6 +265,48 @@ function FullDataTable() {
   )
 }
 
+/* ---------------------------------------------------------- column layout */
+
+const LAYOUT_KEY = 'gallery-column-layout'
+const LAYOUT_SLICES = ['columnPinning', 'columnSizing', 'columnVisibility'] as const
+
+/**
+ * Pin, resize or hide a column, then reload the page: the table comes back as
+ * it was left. Reset clears what the browser stored.
+ */
+function ColumnLayoutDemo() {
+  const [generation, setGeneration] = useState(0)
+  const reset = () => {
+    for (const slice of LAYOUT_SLICES) {
+      window.localStorage.removeItem(`sui-data-table:${LAYOUT_KEY}:${slice}`)
+    }
+    setGeneration((value) => value + 1)
+  }
+
+  return (
+    <div className="stack-sm">
+      <DataTable
+        key={generation}
+        title="Work orders"
+        description="Drag a header's right edge to resize. Pin or hide from the ⋮ menu."
+        data={WORK_ORDERS}
+        columns={leanColumns}
+        getRowId={(row) => row.id}
+        locale={LOCALE}
+        timeZone={TIME_ZONE}
+        pageSize={5}
+        features={{ resizing: { enabled: true }, pinning: { enabled: true } }}
+        persist={{ key: LAYOUT_KEY, state: LAYOUT_SLICES }}
+        headingActions={
+          <Button size="sm" variant="outline" onClick={reset}>
+            Reset layout
+          </Button>
+        }
+      />
+    </div>
+  )
+}
+
 /* --------------------------------------------------------- inline filters */
 
 type FrameWidth = 'full' | 'tablet' | 'phone'
@@ -651,6 +693,14 @@ export function Tables() {
             />
           )}
         />
+      </Demo>
+
+      <Demo
+        title="Column layout"
+        note="Resizing never re-renders the table: the drag rewrites the column widths on the table element each frame and commits once on release, so the edge stays under the pointer even while the table is stretched to fill its frame. Every table remembers pinned columns in the browser by default; this one also remembers widths and hidden columns. Pin, resize or hide, then reload."
+        inline={false}
+      >
+        <ColumnLayoutDemo />
       </Demo>
 
       <Demo

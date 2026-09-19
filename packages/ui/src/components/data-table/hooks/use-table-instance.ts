@@ -45,6 +45,13 @@ import { applyUpdater, useControllableState, type Updater } from '../../../hooks
 import { useEventCallback } from '../../../hooks/use-event-callback'
 import type { DataTableProps } from '../types/props'
 import { resolveFeatures, type ResolvedFeatures } from './resolve-features'
+import {
+  parsePinning,
+  parseSizing,
+  parseVisibility,
+  resolvePersistence,
+  usePersistedSlice,
+} from './use-persisted-state'
 import { useResponsiveHidden } from './use-responsive-hidden'
 
 const EMPTY_SORTING: SortingState = []
@@ -52,6 +59,11 @@ const EMPTY_FILTERS: ColumnFiltersState = []
 const EMPTY_SELECTION: RowSelectionState = {}
 const EMPTY_SIZING: ColumnSizingState = {}
 const EMPTY_EXPANDED: ExpandedState = {}
+const STRUCTURAL_COLUMNS: ReadonlySet<string> = new Set([
+  SELECTION_COLUMN_ID,
+  EXPANDER_COLUMN_ID,
+  ACTIONS_COLUMN_ID,
+])
 
 /** Hide `hidden` columns unless the state already says something about them. */
 function withResponsiveDefaults(state: VisibilityState, hidden: string[]): VisibilityState {
@@ -195,6 +207,30 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
     defaultValue: props.defaultColumnPinning ?? initialPinning,
     onChange: props.onColumnPinningChange,
   })
+  // The engine appends a newly pinned column to its side, which on the right
+  // lands it after the actions column — outside the column that ends every
+  // row. The injected columns keep their places: leading on the left,
+  // trailing on the right.
+  const handlePinningChange = useCallback(
+    (updater: Updater<ColumnPinningState>) => {
+      setColumnPinning((previous) => {
+        const next = applyUpdater(updater, previous)
+        const order = (ids: string[] | undefined, structuralFirst: boolean) => {
+          const list = ids ?? []
+          const structural = list.filter((id) => STRUCTURAL_COLUMNS.has(id))
+          if (structural.length === 0) return list
+          const rest = list.filter((id) => !STRUCTURAL_COLUMNS.has(id))
+          return structuralFirst ? [...structural, ...rest] : [...rest, ...structural]
+        }
+        const left = order(next.left, true)
+        const right = order(next.right, false)
+        const same = (a: string[], b: string[] | undefined) =>
+          a.length === (b?.length ?? 0) && a.every((id, index) => id === b?.[index])
+        return same(left, next.left) && same(right, next.right) ? next : { left, right }
+      })
+    },
+    [setColumnPinning],
+  )
   const [expanded, setExpandedState] = useControllableState<ExpandedState>({
     value: props.expanded,
     defaultValue: props.defaultExpanded ?? EMPTY_EXPANDED,
@@ -448,7 +484,7 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
     onRowSelectionChange: setRowSelection as OnChangeFn<RowSelectionState>,
     onColumnVisibilityChange: handleVisibilityChange as OnChangeFn<VisibilityState>,
     onColumnSizingChange: setColumnSizing as OnChangeFn<ColumnSizingState>,
-    onColumnPinningChange: setColumnPinning as OnChangeFn<ColumnPinningState>,
+    onColumnPinningChange: handlePinningChange as OnChangeFn<ColumnPinningState>,
     onExpandedChange: setExpanded as OnChangeFn<ExpandedState>,
 
     enableSorting: features.sorting.enabled,
@@ -490,6 +526,56 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
     getExpandedRowModel: expandedRowModel,
 
     defaultColumn: { size: 160, minSize: 56, maxSize: 900 },
+  })
+
+  // ------------------------------------------------------------- persistence
+  // The user's column layout, remembered in the browser (`persist`). Keyed by
+  // the columns as a string, so a new `columns` array with the same ids is the
+  // same table.
+  const leafIds = table
+    .getAllLeafColumns()
+    .map((column) => column.id)
+    .join('|')
+  const columnSets = useMemo(() => {
+    const all = leafIds ? leafIds.split('|') : []
+    const data = all.filter((id) => !STRUCTURAL_COLUMNS.has(id))
+    return { all: new Set(all), data: new Set(data), key: data.join(',') }
+  }, [leafIds])
+  const persistence = useMemo(
+    () => resolvePersistence(props.persist, props.id, columnSets.key),
+    [columnSets.key, props.id, props.persist],
+  )
+  const initialVisibility = adapted.initialVisibility
+  usePersistedSlice<ColumnPinningState>({
+    persistence,
+    slice: 'columnPinning',
+    controlled: props.columnPinning !== undefined,
+    available: features.pinning.enabled,
+    value: columnPinning,
+    setValue: setColumnPinning,
+    parse: (stored) => parsePinning(stored, columnSets.data, STRUCTURAL_COLUMNS, initialPinning),
+  })
+  usePersistedSlice<ColumnSizingState>({
+    persistence,
+    slice: 'columnSizing',
+    controlled: props.columnSizing !== undefined,
+    available: features.resizing.enabled,
+    value: columnSizing,
+    setValue: setColumnSizing,
+    parse: (stored) => parseSizing(stored, columnSets.all),
+  })
+  usePersistedSlice<VisibilityState>({
+    persistence,
+    slice: 'columnVisibility',
+    controlled: props.columnVisibility !== undefined,
+    available: features.columnVisibility.enabled,
+    value: columnVisibility,
+    setValue: setColumnVisibility,
+    parse: (stored) => {
+      const visibility = parseVisibility(stored, columnSets.data)
+      // A column added since the visit keeps its own default.
+      return visibility && { ...initialVisibility, ...visibility }
+    },
   })
 
   // ------------------------------------------------------------------ server

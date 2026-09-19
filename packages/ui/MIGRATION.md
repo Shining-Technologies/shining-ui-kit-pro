@@ -114,10 +114,20 @@ shadcn `globals.css` themes the components as-is.
 | `--sui-sidebar*`                                            | `--sidebar*`                     |
 | `--sui-radius`                                              | `--radius`                       |
 
+Radius, fonts and shadows use shadcn's names too (since 2.1):
+
+| V1                                                          | V2                               |
+| ----------------------------------------------------------- | -------------------------------- |
+| `--sui-radius-sm`, `--sui-radius-control`, `--sui-radius-surface`, `--sui-radius-lg` | `--radius-sm`, `--radius-md`, `--radius-lg`, `--radius-xl` |
+| `--sui-font-family`, `--sui-font-family-mono`                | `--font-sans`, `--font-mono`     |
+| `--sui-shadow-surface`, `--sui-shadow-overlay`, `--sui-shadow-modal` | `--shadow-sm`, `--shadow-md`, `--shadow-lg` |
+
+The old names still work in 2.x when set on `:root`, and are removed in 3.0.
+
 Everything else keeps its `--sui-` name (`--sui-header-background`, `--sui-row-hover`,
-`--sui-control-height`, `--sui-radius-control`, `--sui-font-family`, …). Those are now
-**derived** from the semantic tokens by `tokens.css`, so setting `--primary` also retints
-selected rows, and setting `--radius` also resizes control corners.
+`--sui-control-height`, …). Those are now **derived** from the semantic tokens by `tokens.css`,
+so setting `--primary` also retints selected rows, setting `--radius` also resizes control
+corners, and setting `--spacing` also resizes controls and rows.
 
 Removed: `--sui-popover-border` as a separately generated colour (it is `var(--border)`), and
 the `CSS_VAR_MAP` / `CSS_VAR_NAMES` exports (use `SEMANTIC_TOKENS` from `/theme`).

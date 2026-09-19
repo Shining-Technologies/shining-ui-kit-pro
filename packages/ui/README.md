@@ -7,7 +7,8 @@ React setup.
 - **Server Components work.** Pure components (`Button`, `Badge`, `Card`, `Table`, icons) render on
   the server with no client JavaScript, and every function can be called from server code.
   Interactive components mark their own `'use client'` boundary.
-- **The theme is CSS.** Semantic tokens with shadcn/ui names, light and dark, no provider.
+- **The theme is CSS.** shadcn/ui tokens, light and dark, no provider. Paste a tweakcn theme and
+  colours, radius, fonts, shadows and spacing all reach the components.
 - **The data table's logic is framework-independent.** Filtering, sorting, pagination and URL state
   live in `@shining-technologies/ui/core` and give the same result in the browser and on a server.
 - **Tree-shakeable.** One ES module per source file, `sideEffects` limited to CSS.
@@ -93,7 +94,7 @@ createRoot(document.getElementById('root')!).render(<App />)
 | `@shining-technologies/ui/csv`           | CSV and TSV export                                                   | no    |
 | `@shining-technologies/ui/styles.css`    | Theme, tokens and all component styles                               |       |
 | `@shining-technologies/ui/theme.css`     | The default theme tokens only                                         |       |
-| `@shining-technologies/ui/presets.css`   | Ten named themes, applied with `data-theme`                          |       |
+| `@shining-technologies/ui/presets.css`   | Eleven named themes, applied with `data-theme`                          |       |
 | `@shining-technologies/ui/tailwind.css`  | Tailwind CSS v4 mapping of the tokens                                |       |
 
 Component families: `avatar`, `badge`, `button`, `card`, `color-mode`, `data-table`, `date-time`,
@@ -107,7 +108,7 @@ Nothing in this package is marked `'use client'` as a whole. Each module that ne
 
 | In a Server Component you can…                    | Examples                                                                 |
 | ------------------------------------------------- | ------------------------------------------------------------------------ |
-| render pure components with no client JavaScript  | `Button`, `Badge`, `Card`, `Alert`, `Skeleton`, `Empty`, `Spinner`, `StatusDot`, `Kbd`, `Separator`, `Table`, `Breadcrumb`, `AppShell` layout parts, icons |
+| render pure components with no client JavaScript  | `Button`, `Badge`, `Card`, `Alert`, `Skeleton`, `Empty`, `Spinner`, `StatusDot`, `Kbd`, `Separator`, `Table`, `Breadcrumb`, `VerticalNav`, `NavigationRail`, `AppShell` layout parts, icons |
 | render interactive components with serialisable props | `Tabs`, `Accordion`, `Dialog`, `Tooltip`, `Sidebar`                  |
 | call any function                                  | `applyQuery`, `parseQuerySearchParams`, `createColumnHelper`, `getPageNumbers`, `createThemeCss` |
 

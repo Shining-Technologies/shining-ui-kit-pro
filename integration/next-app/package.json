@@ -11,7 +11,7 @@
     "test": "playwright test"
   },
   "dependencies": {
-    "@shining-technologies/ui": "file:../shining-technologies-ui-2.0.0-rc.0.tgz",
+    "@shining-technologies/ui": "file:../shining-technologies-ui-2.1.0.tgz",
     "next": "^16.3.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

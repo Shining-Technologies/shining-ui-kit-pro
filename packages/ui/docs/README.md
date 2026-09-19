@@ -31,7 +31,7 @@ One page per component family. Each family is also an entry point:
 | [Form](./components/form.md)                        | Fields, inputs, selects, checkboxes, comboboxes and typed inputs        |
 | [Date and time](./components/date-time.md)          | Calendar, date, time and date-time fields                               |
 | [Overlay](./components/overlay.md)                  | Dialogs, sheets, popovers, tooltips, dropdown menus                     |
-| [Navigation](./components/navigation.md)            | Tabs, accordions, breadcrumbs, pagination                               |
+| [Navigation](./components/navigation.md)            | Tabs, segmented controls, breadcrumbs, pagination, steppers, context menus, menubars, the command menu, vertical navigation, the navigation rail |
 | [Layout](./components/layout.md)                    | The application shell and page headers                                  |
 | [Sidebar](./components/sidebar.md)                  | The dashboard sidebar and its data-driven navigation                    |
 | [Table](./components/table.md)                      | The plain table for a fixed set of rows                                 |
@@ -63,5 +63,5 @@ One page per component family. Each family is also an entry point:
 | `@shining-technologies/ui/csv`            | CSV and TSV export                                               |                |
 | `@shining-technologies/ui/styles.css`     | The complete stylesheet                                          |                |
 | `@shining-technologies/ui/theme.css`      | Default theme tokens only                                        |                |
-| `@shining-technologies/ui/presets.css`    | Ten named themes                                                 |                |
+| `@shining-technologies/ui/presets.css`    | Eleven named themes                                              |                |
 | `@shining-technologies/ui/tailwind.css`   | Tailwind CSS v4 token mapping                                    |                |

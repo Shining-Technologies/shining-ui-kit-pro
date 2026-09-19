@@ -602,6 +602,10 @@ export function RowMenu({ onDelete }: { onDelete: () => void }) {
 Each component accepts all props of the Radix part it wraps. Other classes: `sui-menu__item`,
 `sui-menu__item--check`, `sui-menu__indicator`, `sui-menu__dot`.
 
+For a key hint at the end of an item, put a `MenuShortcut` inside it:
+`<DropdownMenuItem>Save <MenuShortcut>⌘S</MenuShortcut></DropdownMenuItem>`. The same item row is
+used by `ContextMenu`, `Menubar` and the command menu; see [Navigation](./navigation.md#contextmenu).
+
 **Keyboard** (from Radix): Enter, Space or ArrowDown on the trigger opens the menu. Arrow keys,
 Home and End move between items, and typing a character jumps to a matching item. Enter or Space
 selects an item. ArrowRight opens a submenu and ArrowLeft closes it. Escape closes the menu and
@@ -691,6 +695,7 @@ export function Banner({ children }: { children: React.ReactNode }) {
 ## Related
 
 - [Button](./button.md): triggers, and `HoldButton`, which uses `ConfirmDialog`
+- [Navigation](./navigation.md): `ContextMenu`, `Menubar`, `MenuShortcut` and `CommandMenu`, which is built on `Dialog`
 - [Visually hidden](./visually-hidden.md): hiding a dialog title visually
 - [Theming](../theming.md#6-scoped-themes): scoped themes and portals
 - [Feedback](./feedback.md): toasts and spinners

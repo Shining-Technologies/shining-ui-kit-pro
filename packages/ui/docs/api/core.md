@@ -137,7 +137,7 @@ filtering and sorting in the browser and on the server.
 | `enableResizing` | `boolean` | |
 | `size`, `minSize`, `maxSize` | `number` | |
 | `enablePinning` | `boolean` | |
-| `defaultPinned` | `PinnedSide \| false` | Initial pinned side (uncontrolled). |
+| `defaultPinned` | `PinnedSide \| false` | Initial pinned side (uncontrolled). A pinning `DataTable` remembered in the browser takes precedence. |
 | `meta` | `ColumnMeta` | |
 
 ### `QueryColumn<TData>`
@@ -304,7 +304,7 @@ optional.
 | `pagination` | `PaginationFeature` | `enabled?: boolean`; `mode?: DataMode`; `pageSize?: number`; `pageSizeOptions?: number[]`; `rowCount?: number` (required in server mode); `showPageNumbers?: boolean` (default `true`); `siblingCount?: number` |
 | `selection` | `SelectionFeature<TData>` | `enabled?: boolean`; `mode?: 'single' \| 'multiple'`; `enableRow?: (row: TData) => boolean` |
 | `columnVisibility` | `ColumnVisibilityFeature` | `enabled?: boolean` |
-| `resizing` | `ResizingFeature` | `enabled?: boolean`; `mode?: 'onChange' \| 'onEnd'` |
+| `resizing` | `ResizingFeature` | `enabled?: boolean`; `mode?: 'onChange' \| 'onEnd'` (`'onEnd'` moves only a guide line during the drag and reflows on release) |
 | `pinning` | `PinningFeature` | `enabled?: boolean`; `actions?: PinnedSide \| false` (default `'right'`); `selection?: PinnedSide \| false` (default `false`) |
 | `expanding` | `ExpandingFeature` | `enabled?: boolean`; `mode?: 'single' \| 'multiple'` (`'single'` collapses the previously expanded row) |
 | `virtualization` | `VirtualizationFeature` | `enabled?: boolean`; `estimateRowHeight?: number` (pixels, a hint); `overscan?: number` |

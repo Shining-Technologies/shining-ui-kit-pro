@@ -241,8 +241,10 @@ Utilities passed through `className` override component styles, whatever the imp
 <Button className="rounded-full">Save</Button>
 ```
 
-Skip `tailwind.css` if your project already has shadcn/ui's `@theme inline` block. Its token
-names are the same.
+Skip `tailwind.css` if your project already has shadcn/ui's or tweakcn's `@theme inline` block. Its
+token names are the same; add the kit's `--color-success`, `--color-warning` and `--color-info`
+lines to your block. A tweakcn theme pasted into `globals.css` themes the components, fonts and
+shadows included; see [Theming](./theming.md#use-a-tweakcn-or-shadcn-theme).
 
 ## Importing
 
@@ -257,7 +259,7 @@ names are the same.
 | `@shining-technologies/ui/csv`            | CSV and TSV export                                                      |
 | `@shining-technologies/ui/styles.css`     | The complete stylesheet                                                 |
 | `@shining-technologies/ui/theme.css`      | The default theme tokens only                                           |
-| `@shining-technologies/ui/presets.css`    | Ten named themes, applied with `data-theme`                             |
+| `@shining-technologies/ui/presets.css`    | Eleven named themes, applied with `data-theme`                             |
 | `@shining-technologies/ui/tailwind.css`   | Tailwind CSS v4 token mapping                                           |
 
 Component families: `avatar`, `badge`, `button`, `card`, `color-mode`, `data-table`,

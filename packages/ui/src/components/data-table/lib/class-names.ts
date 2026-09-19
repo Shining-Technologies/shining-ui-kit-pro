@@ -28,6 +28,12 @@ export function columnSizeVar(columnId: string, kind: 'header' | 'cell' = 'cell'
   return `--sui-${kind === 'header' ? 'h' : 'c'}-${safe}-size`
 }
 
+/** The variable holding a pinned column's sticky offset, in pixels. */
+export function columnPinVar(columnId: string, side: 'left' | 'right'): string {
+  const safe = columnId.replace(/[^a-zA-Z0-9_-]/g, '_')
+  return `--sui-p${side === 'left' ? 'l' : 'r'}-${safe}`
+}
+
 /** `width: calc(var(--sui-c-name-size) * 1px)` — the value written on cells. */
 export function columnSizeValue(columnId: string, kind: 'header' | 'cell' = 'cell'): string {
   return `calc(var(${columnSizeVar(columnId, kind)}) * 1px)`

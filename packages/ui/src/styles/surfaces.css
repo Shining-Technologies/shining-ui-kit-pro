@@ -55,10 +55,10 @@
   gap: var(--sui-stack);
   padding-block: var(--sui-surface-padding);
   border: var(--sui-border-width) solid var(--border);
-  border-radius: var(--sui-radius-surface);
+  border-radius: var(--radius-lg);
   background: var(--card);
   color: var(--card-foreground);
-  box-shadow: var(--sui-shadow-surface);
+  box-shadow: var(--shadow-sm);
   min-width: 0;
 }
 
@@ -73,7 +73,7 @@
 
 .sui-card--interactive:hover {
   border-color: color-mix(in srgb, var(--ring) 45%, var(--border));
-  box-shadow: var(--sui-shadow-overlay);
+  box-shadow: var(--shadow-md);
 }
 
 .sui-card--flat {
@@ -156,7 +156,7 @@
   width: 2.25rem;
   height: 2.25rem;
   border: var(--sui-border-width) solid color-mix(in srgb, var(--sui-tone) 22%, transparent);
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--sui-tone) 10%, var(--card));
   color: var(--sui-tone);
   font-size: 1.0625rem;
@@ -249,7 +249,7 @@
   align-items: start;
   padding: 0.75rem 1rem;
   border: var(--sui-border-width) solid var(--border);
-  border-radius: var(--sui-radius-surface);
+  border-radius: var(--radius-lg);
   background: var(--card);
   color: var(--card-foreground);
   font-size: 0.875rem;
@@ -460,7 +460,7 @@
   width: 2.75rem;
   height: 2.75rem;
   margin-bottom: 0.25rem;
-  border-radius: var(--sui-radius-surface);
+  border-radius: var(--radius-lg);
   background: var(--muted);
   color: var(--muted-foreground);
 }
@@ -503,7 +503,7 @@
   width: 1.5rem;
   height: 1.5rem;
   margin: 0;
-  border-radius: var(--sui-radius-sm);
+  border-radius: var(--radius-sm);
   font-size: 0.8125rem;
 }
 
@@ -670,10 +670,10 @@
   padding: 0 0.3125rem;
   border: var(--sui-border-width) solid var(--border);
   border-bottom-width: 2px;
-  border-radius: var(--sui-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--muted);
   color: var(--muted-foreground);
-  font-family: var(--sui-font-family-mono);
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
   line-height: 1;
 }

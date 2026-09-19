@@ -2,7 +2,11 @@ import type { ComponentType } from 'react'
 import { Actions } from './Actions'
 import { Charts } from './Charts'
 import { FormInputs } from './FormInputs'
-import { Navigation } from './Navigation'
+import { AppNavigation } from './navigation/AppNavigation'
+import { LinksAndTabs } from './navigation/LinksAndTabs'
+import { Menus } from './navigation/Menus'
+import { StepsAndDisclosure } from './navigation/StepsAndDisclosure'
+import './navigation/Navigation.css'
 import { Overlays } from './Overlays'
 import { Overview } from './Overview'
 import { ShellSection } from './Shell'
@@ -14,9 +18,16 @@ export interface GallerySection {
   id: string
   label: string
   category: string
+  /**
+   * A sub-menu in the gallery nav. Sections with the same group are listed
+   * together under it, and `#<group id>` opens the first of them.
+   */
+  group?: { id: string; label: string }
   blurb: string
   render: ComponentType
 }
+
+const NAVIGATION = { id: 'navigation', label: 'Navigation' }
 
 export const SECTIONS: GallerySection[] = [
   {
@@ -58,11 +69,39 @@ export const SECTIONS: GallerySection[] = [
     render: Surfaces,
   },
   {
-    id: 'navigation',
-    label: 'Navigation',
+    id: 'navigation-links',
+    label: 'Tabs & links',
     category: 'Components',
-    blurb: 'Tabs, accordions, breadcrumbs, section tabs and pagination.',
-    render: Navigation,
+    group: NAVIGATION,
+    blurb:
+      'Breadcrumbs, tabs, segmented controls, section tabs and pagination: moving between views and pages.',
+    render: LinksAndTabs,
+  },
+  {
+    id: 'navigation-menus',
+    label: 'Menus & command',
+    category: 'Components',
+    group: NAVIGATION,
+    blurb:
+      'Dropdown, context and menubar menus on one item row, and a ⌘K command menu for keyboard users.',
+    render: Menus,
+  },
+  {
+    id: 'navigation-steps',
+    label: 'Steps & disclosure',
+    category: 'Components',
+    group: NAVIGATION,
+    blurb: 'Steppers for tasks done in order, accordions and collapsibles.',
+    render: StepsAndDisclosure,
+  },
+  {
+    id: 'navigation-app',
+    label: 'App navigation',
+    category: 'Components',
+    group: NAVIGATION,
+    blurb:
+      'Vertical navigation and the navigation rail, next to the sidebar and bottom navigation in the app shell.',
+    render: AppNavigation,
   },
   {
     id: 'overlays',
@@ -96,5 +135,13 @@ export const SECTIONS: GallerySection[] = [
 
 /** Sidebar groups, in the order the sections declare them. */
 export const CATEGORIES = [...new Set(SECTIONS.map((section) => section.category))]
+
+/** The section a hash names: a section id, or a group id for the group's first section. */
+export function findSection(id: string): GallerySection | undefined {
+  return (
+    SECTIONS.find((section) => section.id === id) ??
+    SECTIONS.find((section) => section.group?.id === id)
+  )
+}
 
 export { Demo, DemoGrid } from './Demo'

@@ -5,7 +5,15 @@ import * as matchers from 'vitest-axe/matchers'
 
 expect.extend(matchers)
 
-afterEach(() => cleanup())
+afterEach(() => {
+  cleanup()
+  // Tables remember pinning in browser storage by default; one test's pins
+  // must not carry into the next.
+  if (typeof window !== 'undefined') {
+    window.localStorage?.clear()
+    window.sessionStorage?.clear()
+  }
+})
 
 // Absent in `// @vitest-environment node` files, which render with react-dom/server.
 const dom = typeof window !== 'undefined'

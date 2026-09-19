@@ -18,7 +18,7 @@ body {
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--sui-font-family);
+  font-family: var(--font-sans);
   font-size: var(--sui-font-size);
   line-height: var(--sui-line-height);
   -webkit-font-smoothing: antialiased;
@@ -30,7 +30,7 @@ html {
 }
 
 code {
-  font-family: var(--sui-font-family-mono);
+  font-family: var(--font-mono);
   font-size: 0.9em;
 }
 
@@ -61,7 +61,7 @@ code {
   height: auto;
   clip: auto;
   padding: 0.5rem 1rem;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: var(--primary);
   color: var(--primary-foreground);
 }
@@ -93,7 +93,7 @@ code {
   flex: none;
   width: 1.75rem;
   height: 1.75rem;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: linear-gradient(135deg, var(--primary), var(--chart-3));
 }
 
@@ -172,7 +172,7 @@ code {
   width: 100%;
   padding: 0.4375rem 0.75rem;
   border: 0;
-  border-radius: var(--sui-radius-control);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--foreground);
   font: inherit;
@@ -190,6 +190,47 @@ code {
   background: color-mix(in oklab, var(--primary) 12%, transparent);
   color: var(--primary);
   font-weight: 500;
+}
+
+/* A sub-menu: the toggle reads as an item, and its pages hang off a rule under it. */
+.gallery__nav-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gallery__nav-toggle[data-current] {
+  font-weight: 500;
+}
+
+.gallery__nav-chevron {
+  flex: none;
+  color: var(--muted-foreground);
+  transition: transform 160ms ease;
+}
+
+.gallery__nav-toggle[aria-expanded='false'] .gallery__nav-chevron {
+  transform: rotate(-90deg);
+}
+
+.gallery__nav .gallery__subnav {
+  margin: 0.125rem 0 0.25rem 0.875rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--border);
+}
+
+.gallery__subnav[hidden] {
+  display: none;
+}
+
+.gallery__heading .gallery__eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .gallery__main {
@@ -274,7 +315,7 @@ code {
 .demo {
   padding: 1.25rem;
   border: 1px solid var(--border);
-  border-radius: var(--sui-radius-surface);
+  border-radius: var(--radius-lg);
   background: var(--card);
   color: var(--card-foreground);
 }
@@ -369,10 +410,10 @@ code {
   margin: 0;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: var(--sui-radius-surface);
+  border-radius: var(--radius-lg);
   background: var(--muted);
   color: var(--foreground);
-  font-family: var(--sui-font-family-mono);
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   line-height: 1.6;
   overflow-x: auto;
@@ -388,7 +429,7 @@ code {
 .shell-preview {
   height: 26rem;
   border: 1px solid var(--border);
-  border-radius: var(--sui-radius-surface);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   container-type: inline-size;
 }

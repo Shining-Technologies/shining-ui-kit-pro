@@ -35,6 +35,7 @@ Two features live in their own entry points: `@shining-technologies/ui/virtualiz
 - [Expansion](#expansion)
 - [Row actions](#row-actions)
 - [Column visibility, resizing and pinning](#column-visibility-resizing-and-pinning)
+  - [Remembering the layout](#remembering-the-layout)
 - [Responsive layout](#responsive-layout)
 - [Loading, error and empty states](#loading-error-and-empty-states)
 - [Customisation](#customisation)
@@ -334,7 +335,7 @@ has no `accessorKey`") when the table builds its columns.
 | `defaultVisible`     | `boolean`                                         | `true`           | Initial visibility when `columnVisibility` is uncontrolled. |
 | `enableResizing`     | `boolean`                                         | —                | `true` on any column turns resizing on for the table. |
 | `enablePinning`      | `boolean`                                         | —                | `true` on any column turns pinning on for the table. |
-| `defaultPinned`      | `'left' \| 'right' \| false`                      | —                | Initial pinned side when `columnPinning` is uncontrolled. |
+| `defaultPinned`      | `'left' \| 'right' \| false`                      | —                | Initial pinned side when `columnPinning` is uncontrolled. A pinning the user chose and the table [remembered](#remembering-the-layout) takes precedence. |
 | `meta`               | `ColumnMeta`                                      | —                | See [`meta`](#meta). |
 
 The `filter` object (`ColumnFilterConfig`):
@@ -542,6 +543,7 @@ Row action helpers (`RowAction`, `RowActionGroup`, `RowActions`) are described u
 | `locale`               | `string`                    | `'en-US'`  | See [Time zones and locale](#time-zones-and-locale). |
 | `timeZone`             | `string`                    | the runtime's zone | See [Time zones and locale](#time-zones-and-locale). |
 | `onQueryChange`        | `(query: DataTableQuery) => void` | —    | Fires when the server-relevant state changes. |
+| `persist`              | `boolean \| string \| DataTablePersistOptions` | on, for pinning | Remember the user's column layout in the browser. See [Remembering the layout](#remembering-the-layout). |
 
 ### State
 
@@ -563,7 +565,9 @@ Each slice is independently controllable.
 array, a config always a plain object — so `sorting={{ mode: 'server' }}` is the same as
 `features.sorting.mode`. Values given this way override `features.sorting` / `features.filtering`.
 
-Handlers receive the next value, not an updater function.
+Handlers receive the next value, not an updater function. Pinning, and with `persist` also sizes
+and visibility, can be restored from browser storage when the table mounts; the matching handler
+fires with the restored value. A controlled slice is never restored.
 
 ### Rows
 
@@ -1017,10 +1021,22 @@ persist a user's choice.
 
 **Resizing.** Turn it on with `features.resizing.enabled` or `enableResizing: true` on any column.
 Once on, every column can be resized except those with `enableResizing: false`, within
-`minSize`/`maxSize`. Each resizable header gets a grip (`role="separator"`) that can be dragged,
-double-clicked to reset, or focused and moved with ArrowLeft/ArrowRight (8 px, 32 px with Shift);
-Enter or Backspace resets. `features.resizing.mode: 'onEnd'` applies the width when the drag ends.
-Widths are `columnSizing` state.
+`minSize`/`maxSize`. Each resizable header gets a grip (`role="separator"`) that can be dragged
+with a mouse, pen or finger, double-clicked to reset, or focused and moved with
+ArrowLeft/ArrowRight (8 px, 32 px with Shift); Enter or Backspace resets. Escape during a drag puts
+the column back. Widths are `columnSizing` state.
+
+A drag does not re-render the table. The grip captures the pointer and, once per animation frame,
+rewrites the width and pinned-offset variables on the `<table>`; the result reaches `columnSizing`
+(and `onColumnSizingChange`) once, when the grip is let go. A click on the grip without movement
+changes nothing. With `features.resizing.mode: 'onEnd'` only the grip's guide line follows the
+pointer, and the columns reflow on release — for tables so wide that even a CSS-only reflow on
+every frame is too much.
+
+A table narrower than its frame is stretched by the browser, which shares the spare width among all
+columns. The first resize in that state takes the widths on screen as the starting point, so the
+edge stays under the pointer, and hands any spare width to the last unpinned data column rather than
+back to every column. Those widths are then `columnSizing` state.
 
 **Pinning.** Pinned columns stick to the left or right edge while the table scrolls sideways, and
 cast a shadow only while content is scrolled beneath them. Pinning turns on when a column sets
@@ -1029,8 +1045,47 @@ cast a shadow only while content is scrolled beneath them. Pinning turns on when
 menu offers "Pin to left" and "Pin to right" (except the side it is already pinned to) and, while
 pinned, "Unpin", for every column that does not set
 `enablePinning: false`. The actions column is pinned to `features.pinning.actions` (default
-`'right'`); the selection column to `features.pinning.selection` (default not pinned). Positions
-are `columnPinning` state.
+`'right'`); the selection column to `features.pinning.selection` (default not pinned). A column
+pinned from the menu joins its side next to the columns already there: the selection column stays
+first on the left and the actions column last on the right. Positions are `columnPinning` state,
+and the table remembers them in the browser — see below.
+
+### Remembering the layout
+
+A column the user pins stays pinned on the next visit, until they change it. Every table does this
+by default; nothing needs to be set up. The pinning is saved to `localStorage` after each change and
+read back before the first paint.
+
+`persist` controls it:
+
+| Value                  | Effect |
+| ---------------------- | ------ |
+| omitted or `true`      | Remember pinning, under the table's `id`, or its column ids when it has none. |
+| `false`                | Remember nothing. |
+| `'customers'`          | Remember pinning under the key `customers`. |
+| `{ key, state, storage }` | `key` as above; `state` lists what to remember — any of `'columnPinning'`, `'columnSizing'`, `'columnVisibility'` (default `['columnPinning']`); `storage` is `'local'` (default) or `'session'`. |
+
+```tsx
+// Pinning, widths and hidden columns, kept for this browser tab only.
+<DataTable
+  data={orders}
+  columns={columns}
+  persist={{ key: 'orders', state: ['columnPinning', 'columnSizing', 'columnVisibility'], storage: 'session' }}
+/>
+```
+
+- Values are stored as JSON under `sui-data-table:<key>:<slice>`. Columns that no longer exist are
+  dropped on load, and a value that cannot be read is ignored.
+- Tables with the same key share what they remember. Tables named by their columns share it when
+  their column ids are the same; give a table an `id` or a `persist` key to keep it apart.
+- The injected selection and actions columns always follow the current `features.pinning`
+  configuration, whatever was stored.
+- A slice the application controls (`columnPinning`, `columnSizing`, `columnVisibility`) is never
+  read from or written to storage, and a slice whose feature is switched off is not restored.
+- A server-rendered table cannot know what the browser saved: it renders its defaults and switches
+  to the stored layout right after hydration. Store the layout yourself (for example in a cookie)
+  and control the slice if that one-frame change matters.
+- Storage that is full, blocked or unavailable is ignored; the table simply forgets.
 
 ## Responsive layout
 
@@ -1150,7 +1205,9 @@ Spreading `rowProps` is what keeps selection, keyboard navigation (`data-sui-row
 `containerProps` including its `ref` and `data-sui-scroll`, or pinned-column shadows and
 virtualization stop working. `HeaderCellProps` also carries `sortDirection`, `sortIndex`,
 `canSort`, `canResize` and `isPinned`; `RowProps` carries `rowIndex`, `isSelected`, `isExpanded`
-and `isDisabled`.
+and `isDisabled`. A custom `HeaderCell` gets the default drag, keyboard and double-click resizing
+by rendering `<DataTableColumnResizer header={header} table={table} label="Name" />` inside its
+`<th>` when `canResize` is true.
 
 A custom `Cell` receives the rendered content as `children`. To render it yourself, call
 `renderCellContent(cell)`:
@@ -1435,8 +1492,8 @@ in Sydney return different rows for "on 6 March".
   re-rendered when another row is selected.
 - **Only the current page renders.** For long unpaginated lists use
   [Virtualization](#virtualization).
-- Column widths are published as CSS variables on the `<table>`, so resizing updates one style
-  object instead of every cell.
+- Column widths and pinned offsets are published as CSS variables on the `<table>`. A resize drag
+  rewrites those variables directly and renders nothing until the grip is let go.
 - The table instance stays the same across parent re-renders.
 
 ## Other exports
@@ -1447,7 +1504,7 @@ For custom layouts and engine-level work, the package also exports:
 | ------ | ------- |
 | `DataTableProvider`, `useOptionalDataTable`, `useTableComponents` | Context for hand-built layouts. |
 | `DEFAULT_COMPONENTS`, `resolveComponents(overrides)` | The default part map, and the merge the table applies. |
-| `FilterPanel`, `InlineFilters`, `ActiveFilters`, `SortIndicator`, `ColumnMenu` | Individual toolbar and header pieces. |
+| `FilterPanel`, `InlineFilters`, `ActiveFilters`, `SortIndicator`, `ColumnMenu`, `DataTableColumnResizer` | Individual toolbar and header pieces. |
 | `useColumnFilter(column, config)` | Read and write one column's filter (`filter`, `operators`, `arity`, `isActive`, `setOperator`, `setValue`, `setRangeValue`, `clear`). |
 | `filterableColumns(table, configs)` | The columns a filter UI should offer. |
 | `isRowActionSpecs`, `renderRowActions` | The logic behind the `rowActions` array form. |
@@ -1460,6 +1517,7 @@ For custom layouts and engine-level work, the package also exports:
 | `RowClassName<TData>`, `CellClassName<TData>` | `string`, or a function of the `Row` / `Cell` returning a class name: the types of `rowClassName` and `cellClassName`. |
 | `SlotContent<TData>` | `ReactNode`, or `({ table }) => ReactNode`: the type of every slot. |
 | `RowActivationEvent` | The mouse or keyboard event passed to `onRowClick`. |
+| `DataTablePersistOptions`, `PersistedTableState` | The object form of `persist`, and the slices it can remember. |
 | `DataTableProps<TData>`, `DataTableEmptyStateProps`, `DataTableLoadingStateProps`, `DataTableErrorStateProps` | Props of the table and of its state components. |
 
 ## Related pages

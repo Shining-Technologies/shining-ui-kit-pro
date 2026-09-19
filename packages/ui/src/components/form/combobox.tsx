@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -553,11 +554,76 @@ export interface MultiComboboxProps extends ComboboxBaseProps {
    * as `selectedOption` on `Combobox`. Used for the chips' labels only.
    */
   selectedOptions?: ComboboxOption[]
-  /** Show at most this many chips, then a `+n` summary. */
+  /**
+   * Show at most this many chips, then a `+n` summary. Without it the trigger
+   * shows as many as fit on its one line.
+   */
   maxChips?: number
 }
 
 const NONE: string[] = []
+
+// React 18 warns for every `useLayoutEffect` rendered on the server; the
+// measuring only matters in a browser.
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
+
+/**
+ * How many chips fit on the trigger's one line, leaving room for the `+n`
+ * summary when some are left over.
+ *
+ * Every chip, and the summary, is laid out once more in a hidden row that is
+ * never squeezed, so each keeps its natural width whatever the trigger shows.
+ * At least one chip is always shown; a label too long for the line on its own
+ * is cut with an ellipsis. With no layout to read (a test environment, a
+ * hidden field) nothing is dropped beyond `limit`.
+ */
+function useChipsThatFit(
+  chipsRef: { current: HTMLElement | null },
+  measureRef: { current: HTMLElement | null },
+  count: number,
+  limit: number,
+  labels: string,
+): number {
+  const [fit, setFit] = useState(limit)
+
+  const measure = useEventCallback(() => {
+    const chips = chipsRef.current
+    const row = measureRef.current
+    const available = chips?.clientWidth ?? 0
+    if (!chips || !row || available === 0) {
+      setFit(limit)
+      return
+    }
+    const widths = Array.from(row.children, (child) => child.getBoundingClientRect().width)
+    const summary = widths[count] ?? 0
+    const gap = Number.parseFloat(getComputedStyle(chips).columnGap) || 0
+
+    let used = 0
+    let next = 0
+    while (next < limit) {
+      const width = used + (next > 0 ? gap : 0) + widths[next]!
+      const leftOver = next + 1 < count ? gap + summary : 0
+      if (width + leftOver > available) break
+      used = width
+      next += 1
+    }
+    setFit(Math.max(1, next))
+  })
+
+  useIsomorphicLayoutEffect(() => measure(), [measure, count, limit, labels])
+
+  // The chips row mounts with the first selection, so the observer follows it.
+  const hasChips = count > 0
+  useEffect(() => {
+    const chips = chipsRef.current
+    if (!hasChips || !chips || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => measure())
+    observer.observe(chips)
+    return () => observer.disconnect()
+  }, [chipsRef, measure, hasChips])
+
+  return Math.min(fit, limit)
+}
 
 /**
  * The same list, for picking several.
@@ -586,7 +652,7 @@ export const MultiCombobox = forwardRef<HTMLButtonElement, MultiComboboxProps>(
       onSearch,
       searchDebounce = 250,
       footer,
-      maxChips = 3,
+      maxChips,
       name,
       ...props
     },
@@ -599,6 +665,8 @@ export const MultiCombobox = forwardRef<HTMLButtonElement, MultiComboboxProps>(
     const listId = `${props.id ?? field.aria.id ?? generatedId}-list`
     const listName = useListName(props, placeholder)
     const triggerRef = useRef<HTMLButtonElement | null>(null)
+    const chipsRef = useRef<HTMLSpanElement | null>(null)
+    const measureRef = useRef<HTMLSpanElement | null>(null)
     // Controlled exactly when `value` is defined; `[]` is the empty selection.
     const [selected, setSelected] = useControllableState<string[]>({
       value,
@@ -611,7 +679,14 @@ export const MultiCombobox = forwardRef<HTMLButtonElement, MultiComboboxProps>(
 
     const visible = useFiltered(options, query, !onSearch)
     const chosen = selected.map((entry) => lookup(options, selectedOptions, entry))
-    const shown = chosen.slice(0, maxChips)
+    const fit = useChipsThatFit(
+      chipsRef,
+      measureRef,
+      chosen.length,
+      Math.min(chosen.length, maxChips ?? Number.POSITIVE_INFINITY),
+      chosen.map((option) => option.label).join('\n'),
+    )
+    const shown = chosen.slice(0, fit)
     const more = chosen.length - shown.length
     const isDisabled = disabled ?? field.disabled
 
@@ -660,10 +735,10 @@ export const MultiCombobox = forwardRef<HTMLButtonElement, MultiComboboxProps>(
                     {placeholder}
                   </span>
                 ) : (
-                  <span className="sui-combobox__chips">
+                  <span ref={chipsRef} className="sui-combobox__chips">
                     {shown.map((option) => (
                       <span key={option.value} className="sui-combobox__chip">
-                        {option.label}
+                        <span className="sui-combobox__chip-label">{option.label}</span>
                         {/* Room for the remove button in the layer above. */}
                         {isDisabled ? null : (
                           <span
@@ -712,7 +787,10 @@ export const MultiCombobox = forwardRef<HTMLButtonElement, MultiComboboxProps>(
               <span className="sui-combobox__chips">
                 {shown.map((option) => (
                   <span key={option.value} className="sui-combobox__chip">
-                    <span className="sui-combobox__ghost" aria-hidden="true">
+                    <span
+                      className="sui-combobox__chip-label sui-combobox__ghost"
+                      aria-hidden="true"
+                    >
                       {option.label}
                     </span>
                     <button
@@ -740,6 +818,27 @@ export const MultiCombobox = forwardRef<HTMLButtonElement, MultiComboboxProps>(
                 ) : null}
               </span>
               <ChevronDownIcon className="sui-combobox__chevron sui-combobox__ghost" />
+            </span>
+          ) : null}
+
+          {/* Every chip at its natural width, for `useChipsThatFit` to read. */}
+          {chosen.length > 0 ? (
+            <span
+              ref={measureRef}
+              className="sui-combobox__chips sui-combobox__measure"
+              aria-hidden="true"
+            >
+              {chosen.map((option) => (
+                <span key={option.value} className="sui-combobox__chip">
+                  <span className="sui-combobox__chip-label">{option.label}</span>
+                  {isDisabled ? null : (
+                    <span className="sui-combobox__chip-remove">
+                      <CloseIcon />
+                    </span>
+                  )}
+                </span>
+              ))}
+              <span className="sui-combobox__chip sui-combobox__chip--more">+{chosen.length}</span>
             </span>
           ) : null}
         </div>

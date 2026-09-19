@@ -47,6 +47,39 @@ export function fromIso(value: string | undefined | null): Date | null {
   return date
 }
 
+/** A span of calendar days, both ends included. */
+export interface DateRange {
+  from: IsoDate
+  to: IsoDate
+}
+
+/**
+ * `{ from: '2026-09-03', to: '2026-09-12' }` → `'Sep 3 – 12, 2026'`, the way
+ * the locale writes a span: what the two ends share is written once. `null`
+ * when either end is not a date. `locale` defaults to `'en-US'`, never the
+ * runtime's default, so server and browser render the same text.
+ */
+export function formatDateRange(
+  range: DateRange | undefined,
+  locale: string = DEFAULT_LOCALE,
+): string | null {
+  const from = fromIso(range?.from)
+  const to = fromIso(range?.to)
+  if (!from || !to) return null
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).formatRange(from, to)
+}
+
+/** How many calendar days a range covers, both ends included: a single day is 1. */
+export function countDays(range: DateRange): number {
+  const from = fromIso(range.from)
+  const to = fromIso(range.to)
+  if (!from || !to) return 0
+  // `Date.UTC` counts calendar days; local midnights are 23 or 25 hours apart
+  // across a daylight-saving change.
+  const day = (date: Date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  return Math.round((day(to) - day(from)) / 86_400_000) + 1
+}
+
 /** Presets offered above a date range, because most ranges are one of these. */
 export interface DateRangePreset {
   label: string

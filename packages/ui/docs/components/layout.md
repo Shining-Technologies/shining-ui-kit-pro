@@ -198,7 +198,7 @@ The sticky top bar, rendered as `<header>`. It lays out `start`, `center` and `e
 | `end` | `ReactNode` | — | Pushed to the end: notifications, the user menu. |
 | `children` | `ReactNode` | — | Rendered between `center` and `end`. |
 
-Also accepts all `<header>` props. The header is `position: sticky; top: 0` with `z-index: 30`, at least `3.5rem` tall, with a translucent card background and a bottom border. Hooks: `[data-slot="app-shell-header"]`, `.sui-shell__header`, `.sui-shell__header-start`, `.sui-shell__header-center`, `.sui-shell__header-end`.
+Also accepts all `<header>` props. The header is `position: sticky; top: 0` with `z-index: 30`, at least `--sui-shell-header-height` tall (`4rem`; `3.5rem` compact, `4.5rem` spacious) including its border, the same height as the `Sidebar` header so their bottom borders line up, with a translucent card background and a bottom border. Hooks: `[data-slot="app-shell-header"]`, `.sui-shell__header`, `.sui-shell__header-start`, `.sui-shell__header-center`, `.sui-shell__header-end`.
 
 ## AppShellContent
 

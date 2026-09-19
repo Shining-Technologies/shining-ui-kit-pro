@@ -1,6 +1,7 @@
-import type { Column, Table } from '@tanstack/react-table'
+import type { ColumnSizingState } from '../../../core'
+import type { Column, Header, Table } from '@tanstack/react-table'
 import type { CSSProperties } from 'react'
-import { columnSizeValue, columnSizeVar, responsiveClass } from './class-names'
+import { columnPinVar, columnSizeValue, columnSizeVar, responsiveClass } from './class-names'
 
 /**
  * The `sui-hide-below-*` classes for a column, unless the user has explicitly
@@ -17,20 +18,90 @@ export function responsiveColumnClass<TData>(
   return responsiveClass(column.columnDef.meta?.responsive)
 }
 
+/** The engine's own fallbacks, for a column definition that sets none. */
+const ENGINE_SIZE = 150
+const ENGINE_MIN_SIZE = 20
+
 /**
- * Column widths are published as CSS custom properties on the table element and
- * read back by every cell.
+ * A column's width under `sizing`, clamped exactly as the engine clamps it.
  *
- * During a resize drag only this one style object changes; the thousands of
- * cells that reference the variables are untouched, so dragging stays smooth on
- * wide tables (§20, §40).
+ * The engine only answers for its current state; a resize in progress needs
+ * the same answer for a state that has not been committed yet.
  */
-export function buildColumnSizeVars<TData>(table: Table<TData>): CSSProperties {
-  const headers = table.getFlatHeaders()
+export function columnSizeFor<TData>(
+  column: Column<TData, unknown>,
+  sizing: ColumnSizingState,
+): number {
+  const def = column.columnDef
+  const size = sizing[column.id] ?? def.size ?? ENGINE_SIZE
+  return Math.min(
+    Math.max(def.minSize ?? ENGINE_MIN_SIZE, size),
+    def.maxSize ?? Number.MAX_SAFE_INTEGER,
+  )
+}
+
+function headerSizeFor<TData>(header: Header<TData, unknown>, sizing: ColumnSizingState): number {
+  if (header.subHeaders.length === 0) return columnSizeFor(header.column, sizing)
+  let sum = 0
+  for (const sub of header.subHeaders) sum += headerSizeFor(sub, sizing)
+  return sum
+}
+
+/**
+ * Column widths and pinned offsets are published as CSS custom properties on
+ * the table element and read back by every cell.
+ *
+ * During a resize drag the table rewrites these properties directly on the
+ * element, without rendering at all, and commits the result to state once, when
+ * the drag ends. The thousands of cells that reference the variables are never
+ * touched, so dragging stays smooth on wide tables (§20, §40).
+ *
+ * `sizing` defaults to the table's state; a resize in progress passes the
+ * widths it is previewing.
+ */
+export function buildColumnSizeVars<TData>(
+  table: Table<TData>,
+  sizing: ColumnSizingState = table.getState().columnSizing,
+): CSSProperties {
   const vars: Record<string, string> = {}
-  for (const header of headers) {
-    vars[columnSizeVar(header.id, 'header')] = String(header.getSize())
-    vars[columnSizeVar(header.column.id, 'cell')] = String(header.column.getSize())
+  for (const header of table.getFlatHeaders()) {
+    vars[columnSizeVar(header.id, 'header')] = String(headerSizeFor(header, sizing))
+    vars[columnSizeVar(header.column.id, 'cell')] = String(columnSizeFor(header.column, sizing))
+  }
+
+  // Sticky offsets: a left-pinned column sits after the pinned columns before
+  // it, a right-pinned one before those after it. A group head takes the
+  // offset of its outermost leaf on that side.
+  const left = table.getLeftVisibleLeafColumns()
+  const right = table.getRightVisibleLeafColumns()
+  if (left.length === 0 && right.length === 0) return vars as CSSProperties
+
+  const start = new Map<string, number>()
+  let offset = 0
+  for (const column of left) {
+    start.set(column.id, offset)
+    offset += columnSizeFor(column, sizing)
+  }
+  const after = new Map<string, number>()
+  offset = 0
+  for (let index = right.length - 1; index >= 0; index -= 1) {
+    const column = right[index]!
+    after.set(column.id, offset)
+    offset += columnSizeFor(column, sizing)
+  }
+
+  for (const header of table.getFlatHeaders()) {
+    const column = header.column
+    const pinned = column.getIsPinned()
+    if (!pinned) continue
+    const leaves = column.getLeafColumns()
+    if (pinned === 'left') {
+      const first = leaves.find((leaf) => start.has(leaf.id))
+      if (first) vars[columnPinVar(column.id, 'left')] = String(start.get(first.id))
+    } else {
+      const last = [...leaves].reverse().find((leaf) => after.has(leaf.id))
+      if (last) vars[columnPinVar(column.id, 'right')] = String(after.get(last.id))
+    }
   }
   return vars as CSSProperties
 }
@@ -58,13 +129,18 @@ export function cardOrderStyle(priority: number | undefined): CSSProperties {
   return priority === undefined ? {} : ({ '--sui-card-order': priority } as CSSProperties)
 }
 
-/** Sticky offsets for a pinned column, measured from the pinned group's edge. */
+/**
+ * Sticky offsets for a pinned column, measured from the pinned group's edge.
+ *
+ * Like widths, they are read from variables on the table, so resizing a pinned
+ * column moves the columns pinned beside it without rendering them.
+ */
 export function pinningStyle<TData>(column: Column<TData, unknown>): CSSProperties {
   const pinned = column.getIsPinned()
   if (!pinned) return {}
   return pinned === 'left'
-    ? { left: `${column.getStart('left')}px` }
-    : { right: `${column.getAfter('right')}px` }
+    ? { left: `calc(var(${columnPinVar(column.id, 'left')}, 0) * 1px)` }
+    : { right: `calc(var(${columnPinVar(column.id, 'right')}, 0) * 1px)` }
 }
 
 /** Classes that make a pinned column stick, plus the edge that casts the shadow. */

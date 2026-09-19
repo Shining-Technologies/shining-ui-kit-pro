@@ -112,7 +112,11 @@ export interface ColumnVisibilityFeature {
 
 export interface ResizingFeature {
   enabled?: boolean
-  /** `'onEnd'` avoids re-layout during the drag on very wide tables. */
+  /**
+   * `'onChange'` (default) reflows the columns as the grip moves; `'onEnd'`
+   * moves only a guide line and reflows once, on release, for tables too wide
+   * to lay out on every frame. Either way, state changes once per drag.
+   */
   mode?: 'onChange' | 'onEnd'
 }
 

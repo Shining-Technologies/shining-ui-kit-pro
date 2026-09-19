@@ -42,9 +42,9 @@ The package ships four stylesheets. They are CSS, not part of the JavaScript ent
 | Import | Contents |
 | --- | --- |
 | `@shining-technologies/ui/styles.css` | Everything a component needs: the default theme, derived tokens and every component rule, minified. Theme and tokens are in the `base` cascade layer and components in `components`, declared as `@layer theme, base, components, utilities;` to match Tailwind v4, so application styles win. Import this once. |
-| `@shining-technologies/ui/theme.css` | The default theme values only (the semantic tokens on `:where(:root)` and `:where(.dark)`, zero specificity, in `@layer base`). Already included in `styles.css`. |
-| `@shining-technologies/ui/presets.css` | The named themes, generated at build time from [`THEME_PRESETS`](#theme_presets) with `createThemeCss`. Apply one with `data-theme="<id>"` on any element; dark values apply under `.dark`. Ids: `shining`, `slate`, `midnight`, `violet`, `ember`, `forest`, `rose`, `mono`, `darwind`, `unn`. Selectors use `:where()` (zero specificity) inside `@layer base`, the same as the default theme, so source order decides: **import it after `styles.css`**, or the default theme wins. |
-| `@shining-technologies/ui/tailwind.css` | Tailwind CSS v4 integration: an `@theme inline` block mapping the semantic tokens to Tailwind colours (`bg-card`, `text-muted-foreground`, …) and `--radius-sm` to `--radius-xl`, plus a `dark` custom variant on `.dark`. Import after `tailwindcss` and `styles.css`. |
+| `@shining-technologies/ui/theme.css` | The default theme values only, in the shape of a tweakcn export: the colours, `--radius` and `--shadow-2xs` … `--shadow-2xl` on `:where(:root)` and `:where(.dark)` in `@layer base`, and the names an app configures in Tailwind's `@theme` (`--font-sans`, `--font-serif`, `--font-mono`, `--tracking-normal`, `--spacing`) on `:where(:root)` in `@layer theme`, below Tailwind's own values. Zero specificity throughout. Already included in `styles.css`. |
+| `@shining-technologies/ui/presets.css` | The named themes, generated at build time from [`THEME_PRESETS`](#theme_presets) with `createThemeCss`. Apply one with `data-theme="<id>"` on any element; dark values apply under `.dark`. Ids: `shining`, `slate`, `midnight`, `violet`, `ember`, `forest`, `rose`, `mono`, `darwind`, `unn`, `mint`. Selectors use `:where()` (zero specificity) inside `@layer base`, the same as the default theme, so source order decides: **import it after `styles.css`**, or the default theme wins. |
+| `@shining-technologies/ui/tailwind.css` | Tailwind CSS v4 integration: an `@theme inline` block mapping the semantic tokens to Tailwind colours (`bg-card`, `text-muted-foreground`, …) and `--radius-sm` to `--radius-xl` (the `@theme inline` block of a tweakcn export, plus `--color-success`, `--color-warning` and `--color-info`), and a `dark` custom variant on `.dark` and its descendants. Shadows are mapped in a separate `@theme inline reference` block, so Tailwind writes no self-referencing variable onto `:root`; fonts and spacing need no mapping. See [Theming: Tailwind CSS v4](../theming.md#7-tailwind-css-v4). Import after `tailwindcss` and `styles.css`. |
 
 ```css
 @import 'tailwindcss';
@@ -96,7 +96,7 @@ Named colours such as `red` are not accepted.
 | --- | --- | --- | --- |
 | `neutralTint` | `NeutralTint` | `'subtle'` | |
 | `radius` | `string` | not written | Base corner radius, written as `--radius`, e.g. `'0.5rem'`. |
-| `fontFamily` | `string` | not written | Body font stack, written as `--sui-font-family`. |
+| `fontFamily` | `string` | not written | Body font stack, written as `--font-sans`. |
 
 ### `ThemeTokens` and `ThemeDefinition`
 
@@ -122,7 +122,7 @@ function createTheme(options: CreateThemeOptions): ThemeDefinition
 Generates a complete light and dark theme from seed colours.
 
 **Returns** `{ light, dark }`. Each contains one `--<token>` entry for every name in
-`SEMANTIC_TOKENS` (38 entries). `--radius` and `--sui-font-family` are added to `light` only, when
+`SEMANTIC_TOKENS` (38 entries). `--radius` and `--font-sans` are added to `light` only, when
 given; because the dark selector normally matches the same element or a descendant, the values
 still apply in dark mode.
 
@@ -292,7 +292,7 @@ The names follow shadcn/ui, so an existing shadcn `globals.css` themes these com
 | Charts | `chart-1`, `chart-2`, `chart-3`, `chart-4`, `chart-5` |
 | Sidebar | `sidebar`, `sidebar-foreground`, `sidebar-primary`, `sidebar-primary-foreground`, `sidebar-accent`, `sidebar-accent-foreground`, `sidebar-border`, `sidebar-ring` |
 
-`--radius` and `--sui-font-family` are not in this list; `createTheme` writes them separately.
+`--radius` and `--font-sans` are not in this list; `createTheme` writes them separately.
 
 ### `generateColors`
 
@@ -349,6 +349,7 @@ The shipped named themes, as a readonly tuple. `presets.css` is generated from t
 | `mono` | Mono | `#18181b` | `#71717a` | `pure` | `0.125rem` |
 | `darwind` | Darwind | `#3730a3` | `#f59e0b` | `subtle` | `0.25rem` |
 | `unn` | Unn | `#0f766e` | `#f97362` | `tinted` | `1.25rem` |
+| `mint` | Mint | `#51f0a8` | `#2ebdf6` | `pure` | `1.4rem` |
 
 Several presets also set `neutral`, `surface` and status seeds; read `preset.seed` for the full
 values.
