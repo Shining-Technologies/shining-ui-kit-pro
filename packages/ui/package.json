@@ -1,6 +1,6 @@
 {
   "name": "@shining-technologies/ui",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Shining UI V2: React components, a framework-independent data-table core and shadcn-style CSS-variable theming in one Next.js-ready package.",
   "keywords": [
     "react",

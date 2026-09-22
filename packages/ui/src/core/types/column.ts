@@ -88,6 +88,7 @@ export interface ColumnBehavior<TData, TValue = unknown> {
   minSize?: number
   maxSize?: number
 
+  /** `false` keeps this column out of the header menu's pinning items. Columns can be pinned by default. */
   enablePinning?: boolean
   /** Initial pinned side. Use `columnPinning` for controlled pinning. */
   defaultPinned?: PinnedSide | false

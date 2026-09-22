@@ -121,6 +121,7 @@ export interface ResizingFeature {
 }
 
 export interface PinningFeature {
+  /** On by default: every header menu offers pinning. `false` removes it from the table. */
   enabled?: boolean
   /** Where the injected row-actions column is frozen. Defaults to `'right'`. */
   actions?: PinnedSide | false

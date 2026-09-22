@@ -334,7 +334,7 @@ has no `accessorKey`") when the table builds its columns.
 | `enableHiding`       | `boolean`                                         | `true`           | `false` keeps the column out of the column picker and its header menu. |
 | `defaultVisible`     | `boolean`                                         | `true`           | Initial visibility when `columnVisibility` is uncontrolled. |
 | `enableResizing`     | `boolean`                                         | —                | `true` on any column turns resizing on for the table. |
-| `enablePinning`      | `boolean`                                         | —                | `true` on any column turns pinning on for the table. |
+| `enablePinning`      | `boolean`                                         | `true`           | `false` keeps the column out of the header menu's pinning items. |
 | `defaultPinned`      | `'left' \| 'right' \| false`                      | —                | Initial pinned side when `columnPinning` is uncontrolled. A pinning the user chose and the table [remembered](#remembering-the-layout) takes precedence. |
 | `meta`               | `ColumnMeta`                                      | —                | See [`meta`](#meta). |
 
@@ -543,7 +543,7 @@ Row action helpers (`RowAction`, `RowActionGroup`, `RowActions`) are described u
 | `locale`               | `string`                    | `'en-US'`  | See [Time zones and locale](#time-zones-and-locale). |
 | `timeZone`             | `string`                    | the runtime's zone | See [Time zones and locale](#time-zones-and-locale). |
 | `onQueryChange`        | `(query: DataTableQuery) => void` | —    | Fires when the server-relevant state changes. |
-| `persist`              | `boolean \| string \| DataTablePersistOptions` | on, for pinning | Remember the user's column layout in the browser. See [Remembering the layout](#remembering-the-layout). |
+| `persist`              | `boolean \| string \| DataTablePersistOptions` | on | Remember the user's pinned and hidden columns in the browser. See [Remembering the layout](#remembering-the-layout). |
 
 ### State
 
@@ -565,9 +565,9 @@ Each slice is independently controllable.
 array, a config always a plain object — so `sorting={{ mode: 'server' }}` is the same as
 `features.sorting.mode`. Values given this way override `features.sorting` / `features.filtering`.
 
-Handlers receive the next value, not an updater function. Pinning, and with `persist` also sizes
-and visibility, can be restored from browser storage when the table mounts; the matching handler
-fires with the restored value. A controlled slice is never restored.
+Handlers receive the next value, not an updater function. Pinning and visibility, and with
+`persist` also sizes, can be restored from browser storage when the table mounts; the matching
+handler fires with the restored value. A controlled slice is never restored.
 
 ### Rows
 
@@ -672,7 +672,7 @@ and the state slots. To translate the rest, replace the parts through `component
 | `columnVisibility` | `enabled`           | `boolean`                   | `true` |
 | `resizing`         | `enabled`           | `boolean`                   | `true` if any column sets `enableResizing` |
 |                    | `mode`              | `'onChange' \| 'onEnd'`     | `'onChange'` |
-| `pinning`          | `enabled`           | `boolean`                   | `true` if any column sets `enablePinning` or `defaultPinned`, row actions are given, or `selection` is pinned |
+| `pinning`          | `enabled`           | `boolean`                   | `true` |
 |                    | `actions`           | `'left' \| 'right' \| false` | `'right'` |
 |                    | `selection`         | `'left' \| 'right' \| false` | `false` |
 | `expanding`        | `enabled`           | `boolean`                   | `true` when `renderExpandedRow` is given |
@@ -1013,11 +1013,18 @@ rowActions={(row) => (
 
 ## Column visibility, resizing and pinning
 
+Every table lets the user hide columns and pin them to either edge, and remembers both in the
+browser. Nothing needs to be set up:
+
+```tsx
+<DataTable columns={columns} data={data} />
+```
+
 **Visibility.** `features.columnVisibility.enabled` (default `true`) adds a "Columns" picker to the
 toolbar and "Hide column" to each header menu. The picker lists every column that can be hidden,
 shows how many are hidden, and offers "Show all columns". Keep a column out of both with
-`enableHiding: false`; start it hidden with `defaultVisible: false`. Lift `columnVisibility` to
-persist a user's choice.
+`enableHiding: false`; start it hidden with `defaultVisible: false`. Hidden columns are
+`columnVisibility` state, and the table remembers them — see [below](#remembering-the-layout).
 
 **Resizing.** Turn it on with `features.resizing.enabled` or `enableResizing: true` on any column.
 Once on, every column can be resized except those with `enableResizing: false`, within
@@ -1039,53 +1046,66 @@ edge stays under the pointer, and hands any spare width to the last unpinned dat
 back to every column. Those widths are then `columnSizing` state.
 
 **Pinning.** Pinned columns stick to the left or right edge while the table scrolls sideways, and
-cast a shadow only while content is scrolled beneath them. Pinning turns on when a column sets
-`enablePinning` or `defaultPinned`, when `rowActions` is given, when
-`features.pinning.selection` is set, or with `features.pinning.enabled`. Once on, each header
-menu offers "Pin to left" and "Pin to right" (except the side it is already pinned to) and, while
-pinned, "Unpin", for every column that does not set
-`enablePinning: false`. The actions column is pinned to `features.pinning.actions` (default
-`'right'`); the selection column to `features.pinning.selection` (default not pinned). A column
-pinned from the menu joins its side next to the columns already there: the selection column stays
-first on the left and the actions column last on the right. Positions are `columnPinning` state,
-and the table remembers them in the browser — see below.
+cast a shadow only while content is scrolled beneath them. Pinning is on by default
+(`features.pinning.enabled`): each header menu offers "Pin to left" and "Pin to right" (except the
+side it is already pinned to) and, while pinned, "Unpin". Keep a column out of the menu with
+`enablePinning: false`; start it pinned with `defaultPinned`. The actions column is pinned to
+`features.pinning.actions` (default `'right'`); the selection column to
+`features.pinning.selection` (default not pinned). A column pinned from the menu joins its side
+next to the columns already there: the selection column stays first on the left and the actions
+column last on the right, and a column is only ever on one side. Positions are `columnPinning`
+state, and the table remembers them — see below.
 
 ### Remembering the layout
 
-A column the user pins stays pinned on the next visit, until they change it. Every table does this
-by default; nothing needs to be set up. The pinning is saved to `localStorage` after each change and
-read back before the first paint.
+A column the user pins or hides stays that way on the next visit, until they change it. Every
+table does this by default, with nothing to set up: the layout is saved to `localStorage` after
+each change and read back before the first paint.
 
-`persist` controls it:
+Each table keeps one record. It is named by the table's `id` when it has one, and otherwise by a
+fingerprint of its column ids — never by its title, headers or data, so renaming or translating a
+header leaves the user's layout where it was. `id` is therefore optional; give one when two tables
+have the same columns but should remember different layouts:
+
+```tsx
+<DataTable id="orders" columns={columns} data={orders} />
+<DataTable id="archived-orders" columns={columns} data={archived} />
+```
+
+`persist` controls the rest:
 
 | Value                  | Effect |
 | ---------------------- | ------ |
-| omitted or `true`      | Remember pinning, under the table's `id`, or its column ids when it has none. |
+| omitted or `true`      | Remember pinning and hidden columns. |
 | `false`                | Remember nothing. |
-| `'customers'`          | Remember pinning under the key `customers`. |
-| `{ key, state, storage }` | `key` as above; `state` lists what to remember — any of `'columnPinning'`, `'columnSizing'`, `'columnVisibility'` (default `['columnPinning']`); `storage` is `'local'` (default) or `'session'`. |
+| `'customers'`          | Remember under the key `customers` instead of the `id` or the fingerprint. |
+| `{ key, state, storage }` | `key` as above; `state` lists what to remember — any of `'columnPinning'`, `'columnVisibility'`, `'columnSizing'` (default `['columnPinning', 'columnVisibility']`); `storage` is `'local'` (default) or `'session'`. |
 
 ```tsx
-// Pinning, widths and hidden columns, kept for this browser tab only.
+// Pinning, hidden columns and widths, kept for this browser tab only.
 <DataTable
   data={orders}
   columns={columns}
-  persist={{ key: 'orders', state: ['columnPinning', 'columnSizing', 'columnVisibility'], storage: 'session' }}
+  persist={{ state: ['columnPinning', 'columnVisibility', 'columnSizing'], storage: 'session' }}
 />
 ```
 
-- Values are stored as JSON under `sui-data-table:<key>:<slice>`. Columns that no longer exist are
-  dropped on load, and a value that cannot be read is ignored.
-- Tables with the same key share what they remember. Tables named by their columns share it when
-  their column ids are the same; give a table an `id` or a `persist` key to keep it apart.
+- The record is stored as JSON under `sui-data-table:<name>`, with a `version` for future
+  migrations (the type is exported as `PersistedLayout`). Columns that no longer exist are dropped
+  on load, a column added since keeps its own default, a column is never pinned to both sides, and
+  a record that cannot be read — not JSON, an unknown version, the wrong shape — is ignored and
+  overwritten by the next change.
+- A slice the application controls (`columnPinning`, `columnVisibility`, `columnSizing`) is never
+  read from or written to storage, and a slice whose feature is switched off is not restored.
 - The injected selection and actions columns always follow the current `features.pinning`
   configuration, whatever was stored.
-- A slice the application controls (`columnPinning`, `columnSizing`, `columnVisibility`) is never
-  read from or written to storage, and a slice whose feature is switched off is not restored.
 - A server-rendered table cannot know what the browser saved: it renders its defaults and switches
   to the stored layout right after hydration. Store the layout yourself (for example in a cookie)
   and control the slice if that one-frame change matters.
-- Storage that is full, blocked or unavailable is ignored; the table simply forgets.
+- Storage that is missing, full, blocked or unreadable is ignored; the table works from its
+  defaults and simply forgets. Persistence is an enhancement, never a dependency.
+- Layouts saved by 2.1 (one entry per slice, and tables without an `id` named by their column ids
+  in full) are imported into the record on first load and the old entries removed.
 
 ## Responsive layout
 

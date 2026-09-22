@@ -34,10 +34,11 @@ export type PersistedTableState = 'columnPinning' | 'columnSizing' | 'columnVisi
 export interface DataTablePersistOptions {
   /**
    * Names this table in storage. Tables with the same key share what they
-   * remember. Defaults to the table's `id`, or else to its column ids.
+   * remember. Defaults to the table's `id`, or else to a fingerprint of its
+   * column ids.
    */
   key?: string
-  /** What to remember. Defaults to `['columnPinning']`. */
+  /** What to remember. Defaults to `['columnPinning', 'columnVisibility']`. */
   state?: readonly PersistedTableState[]
   /** `'local'` survives the browser closing; `'session'` lasts for the tab. Defaults to `'local'`. */
   storage?: 'local' | 'session'
@@ -180,12 +181,14 @@ export interface DataTableProps<TData> {
   /**
    * Remember the user's column layout in the browser.
    *
-   * On by default for pinning: a column pinned from the header menu stays
-   * pinned on the next visit until the user changes it. `false` turns it off;
-   * a string is shorthand for `{ key }`; an options object also chooses what
-   * to remember (`columnPinning`, `columnSizing`, `columnVisibility`) and in
-   * which storage. A slice the application controls is never restored — it
-   * belongs to the application.
+   * On by default, with nothing to set up: a column pinned or hidden from the
+   * table's menus stays that way on the next visit until the user changes it.
+   * The table is named by `id` when it has one, else by its column ids, so
+   * `id` is only needed to keep apart two tables with the same columns.
+   * `false` turns it off; a string is shorthand for `{ key }`; an options
+   * object also chooses what to remember (`columnPinning`, `columnVisibility`,
+   * `columnSizing`) and in which storage. A slice the application controls is
+   * never restored — it belongs to the application.
    */
   persist?: boolean | string | DataTablePersistOptions
 

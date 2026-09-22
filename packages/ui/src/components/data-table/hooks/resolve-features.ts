@@ -46,7 +46,6 @@ export interface ResolvedFeatures<TData> {
  */
 export interface ColumnCapabilityHints {
   anyResizable: boolean
-  anyPinnable: boolean
   anyFooter: boolean
 }
 
@@ -112,11 +111,9 @@ export function resolveFeatures<TData>(
       mode: resizing.mode ?? 'onChange',
     },
     pinning: {
-      // A pinned actions column is the reason most tables need pinning at all,
-      // so asking for row actions — or for either injected column to be
-      // frozen — is enough to turn the feature on.
-      enabled:
-        pinning.enabled ?? (hints.anyPinnable || actionsSide !== false || selectionSide !== false),
+      // On by default: every header menu offers "Pin to left" and "Pin to
+      // right", and a column opts out with `enablePinning: false`.
+      enabled: pinning.enabled ?? true,
       actions: actionsSide,
       selection: selectionSide,
     },

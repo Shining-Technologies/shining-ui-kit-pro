@@ -50,7 +50,7 @@ import {
   parseSizing,
   parseVisibility,
   resolvePersistence,
-  usePersistedSlice,
+  usePersistedLayout,
 } from './use-persisted-state'
 import { useResponsiveHidden } from './use-responsive-hidden'
 
@@ -210,7 +210,7 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
   // The engine appends a newly pinned column to its side, which on the right
   // lands it after the actions column — outside the column that ends every
   // row. The injected columns keep their places: leading on the left,
-  // trailing on the right.
+  // trailing on the right. A column is on one side only: the left wins.
   const handlePinningChange = useCallback(
     (updater: Updater<ColumnPinningState>) => {
       setColumnPinning((previous) => {
@@ -223,7 +223,7 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
           return structuralFirst ? [...structural, ...rest] : [...rest, ...structural]
         }
         const left = order(next.left, true)
-        const right = order(next.right, false)
+        const right = order(next.right, false).filter((id) => !left.includes(id))
         const same = (a: string[], b: string[] | undefined) =>
           a.length === (b?.length ?? 0) && a.every((id, index) => id === b?.[index])
         return same(left, next.left) && same(right, next.right) ? next : { left, right }
@@ -546,35 +546,31 @@ export function useTableInstance<TData>(props: DataTableProps<TData>): TableInst
     [columnSets.key, props.id, props.persist],
   )
   const initialVisibility = adapted.initialVisibility
-  usePersistedSlice<ColumnPinningState>({
-    persistence,
-    slice: 'columnPinning',
-    controlled: props.columnPinning !== undefined,
-    available: features.pinning.enabled,
-    value: columnPinning,
-    setValue: setColumnPinning,
-    parse: (stored) => parsePinning(stored, columnSets.data, STRUCTURAL_COLUMNS, initialPinning),
-  })
-  usePersistedSlice<ColumnSizingState>({
-    persistence,
-    slice: 'columnSizing',
-    controlled: props.columnSizing !== undefined,
-    available: features.resizing.enabled,
-    value: columnSizing,
-    setValue: setColumnSizing,
-    parse: (stored) => parseSizing(stored, columnSets.all),
-  })
-  usePersistedSlice<VisibilityState>({
-    persistence,
-    slice: 'columnVisibility',
-    controlled: props.columnVisibility !== undefined,
-    available: features.columnVisibility.enabled,
-    value: columnVisibility,
-    setValue: setColumnVisibility,
-    parse: (stored) => {
-      const visibility = parseVisibility(stored, columnSets.data)
-      // A column added since the visit keeps its own default.
-      return visibility && { ...initialVisibility, ...visibility }
+  usePersistedLayout(persistence, {
+    columnPinning: {
+      controlled: props.columnPinning !== undefined,
+      available: features.pinning.enabled,
+      value: columnPinning,
+      setValue: setColumnPinning,
+      parse: (stored) => parsePinning(stored, columnSets.data, STRUCTURAL_COLUMNS, initialPinning),
+    },
+    columnSizing: {
+      controlled: props.columnSizing !== undefined,
+      available: features.resizing.enabled,
+      value: columnSizing,
+      setValue: setColumnSizing,
+      parse: (stored) => parseSizing(stored, columnSets.all),
+    },
+    columnVisibility: {
+      controlled: props.columnVisibility !== undefined,
+      available: features.columnVisibility.enabled,
+      value: columnVisibility,
+      setValue: setColumnVisibility,
+      parse: (stored) => {
+        const visibility = parseVisibility(stored, columnSets.data)
+        // A column added since the visit keeps its own default.
+        return visibility && { ...initialVisibility, ...visibility }
+      },
     },
   })
 

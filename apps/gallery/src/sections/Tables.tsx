@@ -267,19 +267,19 @@ function FullDataTable() {
 
 /* ---------------------------------------------------------- column layout */
 
-const LAYOUT_KEY = 'gallery-column-layout'
-const LAYOUT_SLICES = ['columnPinning', 'columnSizing', 'columnVisibility'] as const
+const LAYOUT_ID = 'gallery-column-layout'
+const LAYOUT_SLICES = ['columnPinning', 'columnVisibility', 'columnSizing'] as const
 
 /**
  * Pin, resize or hide a column, then reload the page: the table comes back as
- * it was left. Reset clears what the browser stored.
+ * it was left. Pinning and hidden columns are remembered by every table with
+ * nothing set up; this one also asks for widths. Reset clears what the
+ * browser stored.
  */
 function ColumnLayoutDemo() {
   const [generation, setGeneration] = useState(0)
   const reset = () => {
-    for (const slice of LAYOUT_SLICES) {
-      window.localStorage.removeItem(`sui-data-table:${LAYOUT_KEY}:${slice}`)
-    }
+    window.localStorage.removeItem(`sui-data-table:${LAYOUT_ID}`)
     setGeneration((value) => value + 1)
   }
 
@@ -295,8 +295,9 @@ function ColumnLayoutDemo() {
         locale={LOCALE}
         timeZone={TIME_ZONE}
         pageSize={5}
-        features={{ resizing: { enabled: true }, pinning: { enabled: true } }}
-        persist={{ key: LAYOUT_KEY, state: LAYOUT_SLICES }}
+        id={LAYOUT_ID}
+        features={{ resizing: { enabled: true } }}
+        persist={{ state: LAYOUT_SLICES }}
         headingActions={
           <Button size="sm" variant="outline" onClick={reset}>
             Reset layout

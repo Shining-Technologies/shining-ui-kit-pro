@@ -1,5 +1,24 @@
 # @shining-technologies/ui
 
+## 2.1.2
+
+### Changed
+
+- DataTable: column pinning is on for every table. Each header menu offers "Pin to left" and "Pin
+  to right" without `features.pinning.enabled`, `enablePinning`, `defaultPinned` or `rowActions`
+  having to ask for it; `enablePinning: false` keeps a column out of the menu, and
+  `features.pinning.enabled: false` removes pinning from a table.
+- DataTable: hidden columns are remembered in the browser by default, alongside pinning. `persist`
+  now defaults to `{ state: ['columnPinning', 'columnVisibility'] }`; widths are still opt-in.
+- DataTable: the layout is stored as one versioned record per table (`{ version: 1, columnPinning,
+  columnVisibility, columnSizing }` under `sui-data-table:<name>`, typed as `PersistedLayout`)
+  instead of one entry per slice, so the shape can be migrated in future. A table without an `id`
+  is named by a hash of its column ids rather than the ids in full. Records saved by 2.1 are
+  imported on first load and the old entries removed; nothing a user pinned is lost. A record with
+  a version the table does not know is ignored.
+- DataTable: a stored pinning that lists a column on both sides keeps it on the left only, and a
+  pinning change can no longer produce one.
+
 ## 2.1.1
 
 ### Added

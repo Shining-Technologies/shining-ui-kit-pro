@@ -37,7 +37,7 @@ export interface AdaptedColumns<TData> {
   responsive: Map<string, ColumnResponsive>
 
   /** Capabilities inferred from the definitions, so features can self-enable. */
-  hints: { anyResizable: boolean; anyPinnable: boolean; anyFooter: boolean }
+  hints: { anyResizable: boolean; anyFooter: boolean }
 }
 
 /** What the adapter needs to know about the table it is building columns for. */
@@ -157,7 +157,6 @@ function adaptOne<TData>(
 
   if (def.filter) out.filters.set(id, def.filter)
   if (behavior.enableResizing) out.hints.anyResizable = true
-  if (behavior.enablePinning || behavior.defaultPinned) out.hints.anyPinnable = true
   if (def.footer !== undefined) out.hints.anyFooter = true
   if (behavior.defaultVisible === false) out.initialVisibility[id] = false
   if (behavior.defaultPinned === 'left') out.initialPinning.left?.push(id)
@@ -229,7 +228,7 @@ export function adaptColumns<TData>(
     initialVisibility: {},
     initialPinning: { left: [], right: [] },
     responsive: new Map(),
-    hints: { anyResizable: false, anyPinnable: false, anyFooter: false },
+    hints: { anyResizable: false, anyFooter: false },
   }
   out.columns = defs.map((def) => adaptOne(def, out, options))
   return out
