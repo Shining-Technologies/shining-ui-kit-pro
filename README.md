@@ -17,6 +17,8 @@ and any other React setup.
 
 Install it from npm: [npmjs.com/package/@shining-technologies/ui](https://www.npmjs.com/package/@shining-technologies/ui)
 
+See every component live in the gallery: [shining-technologies.github.io/shining-ui-kit-pro](https://shining-technologies.github.io/shining-ui-kit-pro/)
+
 ```bash
 npm install @shining-technologies/ui
 ```
