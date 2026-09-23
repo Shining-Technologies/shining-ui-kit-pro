@@ -15,6 +15,8 @@ and any other React setup.
   state give the same result in the browser and on a server.
 - **Tree-shakeable and typed.** One ES module per source file; declarations for every entry point.
 
+Install it from npm: [npmjs.com/package/@shining-technologies/ui](https://www.npmjs.com/package/@shining-technologies/ui)
+
 ```bash
 npm install @shining-technologies/ui
 ```
