@@ -1,0 +1,199 @@
+/*
+ * Layout primitives: stack, grid, container and resizable panels.
+ *
+ * Gaps are steps of `--spacing`, so a project that changes its spacing unit
+ * changes these with it.
+ */
+
+/* ------------------------------------------------------------------- gaps */
+
+.sui-gap--none {
+  gap: 0;
+}
+.sui-gap--xs {
+  gap: calc(var(--spacing) * 1);
+}
+.sui-gap--sm {
+  gap: calc(var(--spacing) * 2);
+}
+.sui-gap--md {
+  gap: calc(var(--spacing) * 4);
+}
+.sui-gap--lg {
+  gap: calc(var(--spacing) * 6);
+}
+.sui-gap--xl {
+  gap: calc(var(--spacing) * 8);
+}
+
+/* ------------------------------------------------------------------ stack */
+
+.sui-layout-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sui-layout-stack--horizontal {
+  flex-direction: row;
+  align-items: center;
+}
+
+.sui-layout-stack--wrap {
+  flex-wrap: wrap;
+}
+
+.sui-align--start {
+  align-items: flex-start;
+}
+.sui-align--center {
+  align-items: center;
+}
+.sui-align--end {
+  align-items: flex-end;
+}
+.sui-align--stretch {
+  align-items: stretch;
+}
+.sui-align--baseline {
+  align-items: baseline;
+}
+
+.sui-justify--start {
+  justify-content: flex-start;
+}
+.sui-justify--center {
+  justify-content: center;
+}
+.sui-justify--end {
+  justify-content: flex-end;
+}
+.sui-justify--between {
+  justify-content: space-between;
+}
+
+/* ------------------------------------------------------------------- grid */
+
+.sui-layout-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--sui-grid-columns, 1), minmax(0, 1fr));
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* `min()` keeps a column from overflowing a container narrower than the minimum. */
+.sui-layout-grid[data-layout='fill'] {
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--sui-grid-min), 100%), 1fr));
+}
+
+@media (max-width: 40rem) {
+  .sui-layout-grid[data-layout='columns'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* -------------------------------------------------------------- container */
+
+.sui-layout-container {
+  width: 100%;
+  max-width: var(--sui-container-width, 64rem);
+  margin-inline: auto;
+  padding-inline: var(--sui-surface-padding);
+}
+
+.sui-layout-container--sm {
+  --sui-container-width: 40rem;
+}
+.sui-layout-container--md {
+  --sui-container-width: 48rem;
+}
+.sui-layout-container--lg {
+  --sui-container-width: 64rem;
+}
+.sui-layout-container--xl {
+  --sui-container-width: 80rem;
+}
+.sui-layout-container--full {
+  --sui-container-width: none;
+}
+
+/* ---------------------------------------------------------------- resizable */
+
+.sui-resizable {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sui-resizable--vertical {
+  flex-direction: column;
+}
+
+.sui-resizable__panel {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.sui-resizable__handle {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--border);
+  touch-action: none;
+  outline: none;
+}
+
+.sui-resizable--horizontal > .sui-resizable__handle {
+  width: 1px;
+  cursor: col-resize;
+}
+
+.sui-resizable--vertical > .sui-resizable__handle {
+  height: 1px;
+  cursor: row-resize;
+}
+
+/* A wider invisible hit area than the 1px line, so the handle is easy to grab. */
+.sui-resizable__handle::after {
+  content: '';
+  position: absolute;
+  inset: 0 -0.3125rem;
+}
+
+.sui-resizable--vertical > .sui-resizable__handle::after {
+  inset: -0.3125rem 0;
+}
+
+.sui-resizable__handle:hover,
+.sui-resizable__handle:focus-visible {
+  background: var(--ring);
+}
+
+.sui-resizable__handle:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 35%, transparent);
+}
+
+.sui-resizable__grip {
+  z-index: 1;
+  width: 0.75rem;
+  height: 1.5rem;
+  border: var(--sui-border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card)
+    radial-gradient(circle, var(--muted-foreground) 1px, transparent 1.5px) center / 0.375rem 0.375rem;
+}
+
+.sui-resizable--vertical .sui-resizable__grip {
+  width: 1.5rem;
+  height: 0.75rem;
+}

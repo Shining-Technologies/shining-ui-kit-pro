@@ -15,3 +15,14 @@ export type {
 export * from './page-header'
 export { ScrollToTop } from './scroll-to-top'
 export type { ScrollToTopProps } from './scroll-to-top'
+export * from './primitives'
+export {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from './resizable'
+export type {
+  ResizableHandleProps,
+  ResizablePanelGroupProps,
+  ResizablePanelProps,
+} from './resizable'

@@ -1,4 +1,6 @@
 export * from './alert'
+export * from './banner'
+export * from './circular-progress'
 export * from './feedback'
 // The recipe from the server-safe module; the component from the client one.
 export * from './progress-variants'

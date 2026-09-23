@@ -1,6 +1,6 @@
 # Layout
 
-The application frame and page-level parts. `AppShell` is a CSS grid with a sticky header and a content area, a sidebar column when it contains a `Sidebar`, and an optional bottom bar for phones. `PageHeader` is the top of a page, and `SkipToContent` and `ScrollToTop` handle keyboard and long-page navigation.
+The application frame and page-level parts. `AppShell` is a CSS grid with a sticky header and a content area, a sidebar column when it contains a `Sidebar`, and an optional bottom bar for phones. `PageHeader` is the top of a page, and `SkipToContent` and `ScrollToTop` handle keyboard and long-page navigation. Inside a page, `Stack`, `Grid` and `Container` lay content out on the spacing scale, and `ResizablePanelGroup` splits an area into panels the user can resize.
 
 ```tsx
 import {
@@ -9,13 +9,19 @@ import {
   AppShellContent,
   AppShellHeader,
   BottomNavItem,
+  Container,
+  Grid,
   PageHeader,
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
   ScrollToTop,
   SkipToContent,
+  Stack,
 } from '@shining-technologies/ui' // or '@shining-technologies/ui/layout'
 ```
 
-**Server and client.** `AppShell`, `AppShellHeader`, `AppShellContent`, `AppShellBottomNav`, `BottomNavItem` and `SkipToContent` come from a file with no `'use client'` directive. They are markup and CSS only, so they work as Server Components and can go straight into a `layout.tsx`. `BottomNavItem`'s `onClick` is a function, so a clickable bottom bar must be rendered from a client component. `PageHeader` and `ScrollToTop` are client components (`'use client'`). You can render `PageHeader` from a Server Component if you do not pass `onBack`.
+**Server and client.** `AppShell`, `AppShellHeader`, `AppShellContent`, `AppShellBottomNav`, `BottomNavItem` and `SkipToContent` come from a file with no `'use client'` directive. They are markup and CSS only, so they work as Server Components and can go straight into a `layout.tsx`. `BottomNavItem`'s `onClick` is a function, so a clickable bottom bar must be rendered from a client component. `PageHeader` and `ScrollToTop` are client components (`'use client'`). You can render `PageHeader` from a Server Component if you do not pass `onBack`. `Stack`, `Grid` and `Container` have no directive and render as Server Components; `ResizablePanelGroup`, `ResizablePanel` and `ResizableHandle` are client components.
 
 - [A complete Next.js layout](#a-complete-nextjs-layout)
 - [AppShell](#appshell)
@@ -26,6 +32,10 @@ import {
 - [SkipToContent](#skiptocontent)
 - [PageHeader](#pageheader)
 - [ScrollToTop](#scrolltotop)
+- [Stack](#stack)
+- [Grid](#grid)
+- [Container](#container)
+- [Resizable panels](#resizable-panels)
 
 ## A complete Next.js layout
 
@@ -376,6 +386,138 @@ export function Log({ children }: { children: React.ReactNode }) {
 }
 ```
 
+## Stack
+
+Children in a column, or a row with `direction="horizontal"`, one step of the spacing scale apart. A
+horizontal stack that wraps is the inline cluster of buttons, badges or chips. A plain class name
+would do as well; use `Stack` when you want the gap to follow the theme's `--spacing`.
+
+```tsx
+<Stack gap="lg">
+  <PageHeader title="Invoices" />
+  <DataTable … />
+</Stack>
+
+<Stack direction="horizontal" gap="sm" wrap>
+  <Badge>Draft</Badge>
+  <Badge tone="info">Sent</Badge>
+</Stack>
+```
+
+| Prop        | Type                                                   | Default      | Description |
+| ----------- | ------------------------------------------------------ | ------------ | ----------- |
+| `direction` | `'vertical' \| 'horizontal'`                           | `'vertical'` | A horizontal stack also centres its children vertically. |
+| `gap`       | `'none' \| 'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl'`         | `'md'`       | `--spacing` × 0, 1, 2, 4, 6 or 8 (`LayoutGap`). |
+| `align`     | `'start' \| 'center' \| 'end' \| 'stretch' \| 'baseline'` | —            | `align-items`. |
+| `justify`   | `'start' \| 'center' \| 'end' \| 'between'`             | —            | `justify-content`. |
+| `wrap`      | `boolean`                                              | `false`      | Let children flow onto more lines. |
+| `as`        | `'div' \| 'section' \| 'ul' \| 'ol' \| 'form' \| …`        | `'div'`      | The element to render. List styling is reset. |
+
+Also accepts all HTML attributes. The ref goes to the element. Classes: `.sui-layout-stack`,
+`--horizontal`, `--wrap`, `.sui-gap--{gap}`, `.sui-align--*`, `.sui-justify--*`; `stackVariants`
+returns them.
+
+## Grid
+
+Equal columns: a row of stats cards, a gallery of records, a form in two columns.
+
+```tsx
+<Grid columns={3}>
+  <StatsCard … />
+  <StatsCard … />
+  <StatsCard … />
+</Grid>
+
+<Grid minItemWidth="16rem" gap="sm" as="ul">
+  {records.map((record) => <li key={record.id}><RecordCard record={record} /></li>)}
+</Grid>
+```
+
+| Prop           | Type        | Default | Description |
+| -------------- | ----------- | ------- | ----------- |
+| `columns`      | `number`    | `1`     | A fixed number of equal columns. They fold to one column under 40rem. |
+| `minItemWidth` | `string`    | —       | As many columns as fit, each at least this wide (`'16rem'`), at every width. Takes precedence over `columns`. |
+| `gap`          | `LayoutGap` | `'md'`  | As for `Stack`. |
+| `as`           | as `Stack`  | `'div'` | |
+
+Also accepts all HTML attributes. It sets `--sui-grid-columns` or `--sui-grid-min` on the element and
+`data-layout="columns" | "fill"`. Classes: `.sui-layout-grid`, `.sui-gap--{gap}`; `gridVariants`.
+
+## Container
+
+Centres content at a readable width with the surface padding on either side.
+
+```tsx
+<Container size="sm" as="main">
+  <SettingsForm />
+</Container>
+```
+
+| Prop   | Type                                     | Default | Description |
+| ------ | ---------------------------------------- | ------- | ----------- |
+| `size` | `'sm' \| 'md' \| 'lg' \| 'xl' \| 'full'` | `'lg'`  | Maximum width: 40rem, 48rem, 64rem, 80rem, or none. |
+| `as`   | as `Stack`                               | `'div'` | |
+
+The props type is `LayoutContainerProps` (`ContainerProps` is the DataTable's container part).
+Classes: `.sui-layout-container`, `--{size}`; the width is `--sui-container-width`. `containerVariants`.
+
+## Resizable panels
+
+Panels whose sizes the user sets by dragging the handles between them: a list beside its detail, an
+editor over its preview, a file tree beside a file. Panels and handles are direct children of the
+group, a handle between each pair. Groups nest, for example a vertical group inside a horizontal one.
+
+```tsx
+'use client'
+
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@shining-technologies/ui'
+
+export function Inbox() {
+  return (
+    <ResizablePanelGroup direction="horizontal" onSizesChange={(sizes) => save('inbox', sizes)}>
+      <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+        <ConversationList />
+      </ResizablePanel>
+      <ResizableHandle withHandle aria-label="Resize the list" />
+      <ResizablePanel>
+        <Conversation />
+      </ResizablePanel>
+    </ResizablePanelGroup>
+  )
+}
+```
+
+`ResizablePanelGroup`:
+
+| Prop            | Type                          | Default        | Description |
+| --------------- | ----------------------------- | -------------- | ----------- |
+| `direction`     | `'horizontal' \| 'vertical'`  | `'horizontal'` | Side by side, or stacked. |
+| `sizes`         | `number[]`                    | —              | Every panel's size in percent, controlled. |
+| `onSizesChange` | `(sizes: number[]) => void`   | —              | Called as a handle moves. Store the sizes to restore a layout, and pass them back as `sizes` or as each panel's `defaultSize`. |
+
+`ResizablePanel`:
+
+| Prop          | Type     | Default | Description |
+| ------------- | -------- | ------- | ----------- |
+| `defaultSize` | `number` | a share of what is left | Starting size in percent. |
+| `minSize`     | `number` | `10`    | Smallest size in percent. |
+| `maxSize`     | `number` | `100`   | Largest size in percent. |
+
+`ResizableHandle`:
+
+| Prop         | Type      | Default           | Description |
+| ------------ | --------- | ----------------- | ----------- |
+| `withHandle` | `boolean` | `false`           | Draw a grip on the handle. |
+| `aria-label` | `string`  | `'Resize panels'` | The handle's accessible name. |
+
+The group needs a size in the resize direction: give a horizontal group's parent a height, or put
+the group in a flex column. Each handle is a focusable `role="separator"` whose `aria-valuenow` is
+the size of the panel before it, with `aria-valuemin`, `aria-valuemax` and `aria-controls`. The
+arrow keys move it by 5% (1% with Shift); Home and End take the panel before it to its smallest and
+largest. What one panel gains, its neighbour gives up, within both panels' limits. The pointer is
+captured while dragging, so a fast drag cannot lose the handle. Classes: `.sui-resizable`,
+`--horizontal` / `--vertical`, `__panel`, `__handle`, `__grip`.
+
 ## Accessibility
 
 - `AppShellHeader` renders `<header>`, `AppShellContent` renders `<main>` and `AppShellBottomNav` renders `<nav aria-label="Primary">`, so the page has banner, main and navigation landmarks without extra markup. If the page also has a `SidebarNav` ("Main"), keep the labels distinct.
@@ -384,6 +526,8 @@ export function Log({ children }: { children: React.ReactNode }) {
 - `BottomNavItem` and the current `SidebarMenuItem` expose `aria-current="page"`. The `BottomNavItem` badge text is part of the button's accessible name (see [BottomNavItem](#bottomnavitem)).
 - `ScrollToTop` has an accessible name, only appears when it is useful, and jumps instead of animating under reduced motion.
 - While the sidebar drawer is open, the header, content and skip link are `inert`. See [Sidebar](./sidebar.md#mobile-drawer).
+- `Stack`, `Grid` and `Container` add no roles; choose `as` for the semantics (`ul` for a list of cards, `main` for the page).
+- `ResizableHandle` is a keyboard-operable separator. Name it after what it resizes when a page has more than one.
 
 See [Accessibility](../accessibility.md).
 

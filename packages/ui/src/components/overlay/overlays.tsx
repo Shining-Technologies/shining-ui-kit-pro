@@ -46,7 +46,14 @@ export const DialogOverlay = forwardRef<
 
 export const dialogVariants = cva('sui-dialog', {
   variants: {
-    size: { sm: 'sui-dialog--sm', default: '', lg: 'sui-dialog--lg', xl: 'sui-dialog--xl' },
+    size: {
+      sm: 'sui-dialog--sm',
+      default: '',
+      lg: 'sui-dialog--lg',
+      xl: 'sui-dialog--xl',
+      /** The whole viewport, for an editor or a long form that needs the room. */
+      full: 'sui-dialog--full',
+    },
   },
   defaultVariants: { size: 'default' },
 })

@@ -26,7 +26,7 @@ documented in [date-time.md](date-time.md).
 ## Contents
 
 - Layout: [Field](#field), [Label](#label), [Fieldset](#fieldset), [useFieldControl](#usefieldcontrol)
-- Text: [Input](#input), [InputGroup](#inputgroup), [Textarea](#textarea), [PasswordInput](#passwordinput),
+- Text: [Input](#input), [InputGroup](#inputgroup), [SearchInput](#searchinput), [Textarea](#textarea), [PasswordInput](#passwordinput),
   [PasswordStrengthIndicator](#passwordstrengthindicator)
 - Choice: [Checkbox](#checkbox), [RadioGroup](#radiogroup), [Switch](#switch), [Select](#select),
   [Combobox and MultiCombobox](#combobox-and-multicombobox), [Toggle and ToggleGroup](#toggle-and-togglegroup)
@@ -191,6 +191,34 @@ wrapper draws the border and the focus state, so the whole box lights up when th
 Also accepts all `<input>` props except the HTML `prefix` attribute. The ref goes to the `<input>`.
 Styling hooks: `data-slot="input-group"`, `.sui-input-group`, `.sui-input-group__addon`,
 `.sui-input-group__input`.
+
+## SearchInput
+
+A search box: a magnifier, the text, and a clear button once there is text. It is the DataTable
+toolbar's search made standalone, for card grids, lists, boards and the `FilterBar`.
+
+```tsx
+'use client'
+
+import { SearchInput } from '@shining-technologies/ui'
+
+<SearchInput aria-label="Search projects" value={query} onValueChange={setQuery} />
+```
+
+| Prop             | Type                      | Default          | Description |
+| ---------------- | ------------------------- | ---------------- | ----------- |
+| `value`          | `string`                  | —                | The text, controlled. |
+| `defaultValue`   | `string`                  | `''`             | The starting text, uncontrolled. |
+| `onValueChange`  | `(value: string) => void` | —                | Called on every change, and with `''` when cleared. |
+| `clearLabel`     | `string`                  | `'Clear search'` | The clear button's accessible name. |
+| `placeholder`    | `string`                  | `'Search…'`      | |
+| `wrapperClassName` | `string`                | —                | Class for the wrapper that holds the icon, the input and the button. |
+
+Also accepts all `<input>` props except `type` (always `search`). The ref goes to the `<input>`.
+Escape clears the text, and the clear button returns focus to the input. It joins a surrounding
+`Field` like `Input`. It does not debounce; debounce the value where you use it (for example with
+`useDebouncedValue`). Styling hooks: `data-slot="search-input"`, `.sui-search`,
+`.sui-search__icon`, `.sui-search__input`, `.sui-search__clear`.
 
 ## Textarea
 

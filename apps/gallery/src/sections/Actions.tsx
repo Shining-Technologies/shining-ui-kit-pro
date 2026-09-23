@@ -2,6 +2,8 @@ import {
   Badge,
   Button,
   ButtonGroup,
+  ChevronDownIcon,
+  Chip,
   CopyButton,
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -24,6 +26,7 @@ import {
   Spinner,
   StatusBadge,
   StatusRegistryProvider,
+  TagIcon,
   Toggle,
   ToggleGroup,
   ToggleGroupItem,
@@ -45,6 +48,8 @@ export function Actions() {
   const [showArchived, setShowArchived] = useState(false)
   const [density, setDensity] = useState('comfortable')
   const [deleted, setDeleted] = useState(0)
+  const [openOnly, setOpenOnly] = useState(true)
+  const [cities, setCities] = useState(['Sydney', 'Melbourne', 'Perth'])
 
   return (
     <div className="stack">
@@ -105,6 +110,56 @@ export function Actions() {
           <Button variant="outline">Left</Button>
           <Button variant="outline">Centre</Button>
           <Button variant="outline">Right</Button>
+        </ButtonGroup>
+      </Demo>
+
+      <Demo
+        title="Split button"
+        note="Not a component of its own: a ButtonGroup of the main action and a DropdownMenu of the alternatives. The menu trigger is named, since it has no text."
+        code={`
+<ButtonGroup aria-label="Save">
+  <Button>Save</Button>
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button size="icon" aria-label="More save options">
+        <ChevronDownIcon />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+      <DropdownMenuItem>Save as draft</DropdownMenuItem>
+      <DropdownMenuItem>Save and close</DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+</ButtonGroup>`}
+      >
+        <ButtonGroup aria-label="Save">
+          <Button>Save</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" aria-label="More save options">
+                <ChevronDownIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>Save as draft</DropdownMenuItem>
+              <DropdownMenuItem>Save and close</DropdownMenuItem>
+              <DropdownMenuItem>Save and send</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </ButtonGroup>
+        <ButtonGroup aria-label="Export">
+          <Button variant="outline">Export CSV</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="More export formats">
+                <ChevronDownIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>Export Excel</DropdownMenuItem>
+              <DropdownMenuItem>Export PDF</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </ButtonGroup>
       </Demo>
 
@@ -179,6 +234,44 @@ export function Actions() {
             </div>
           ))}
         </div>
+      </Demo>
+
+      <Demo
+        title="Chip"
+        note="A token that can be operated: a toggle for a quick filter (aria-pressed), a remove button for an entered tag or an applied filter, or both — as separate buttons, never nested."
+        code={`
+<Chip>Design</Chip>
+<Chip tone="success" icon={<TagIcon />}>Paid</Chip>
+<Chip selected={open} onSelectedChange={setOpen}>Open</Chip>
+<Chip onRemove={remove} removeLabel="Remove Sydney">Sydney</Chip>`}
+      >
+        <Chip>Design</Chip>
+        <Chip tone="success" icon={<TagIcon />}>
+          Paid
+        </Chip>
+        <Chip tone="warning" size="sm">
+          Due soon
+        </Chip>
+        <Chip selected={openOnly} onSelectedChange={setOpenOnly}>
+          Open only
+        </Chip>
+        {cities.map((city) => (
+          <Chip
+            key={city}
+            onRemove={() => setCities((list) => list.filter((entry) => entry !== city))}
+            removeLabel={`Remove ${city}`}
+          >
+            {city}
+          </Chip>
+        ))}
+        <Chip disabled selected={false} onSelectedChange={() => {}}>
+          Disabled
+        </Chip>
+        {cities.length < 3 ? (
+          <Button size="sm" variant="ghost" onClick={() => setCities(['Sydney', 'Melbourne', 'Perth'])}>
+            Reset
+          </Button>
+        ) : null}
       </Demo>
 
       <StatusRegistryProvider registry={STATUS_REGISTRY}>

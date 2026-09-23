@@ -1,8 +1,8 @@
 # Date and time
 
 Pickers and fields for calendar days and times of day: a month grid (`Calendar`), a clock face
-(`Clock`), a typed time (`TimeInput`), and four form fields built from them (`DateField`,
-`DateRangeField`, `TimeField`, `DateTimeField`). The appearance comes from the theme tokens, not from the browser.
+(`Clock`), a typed time (`TimeInput`), four form fields built from them (`DateField`,
+`DateRangeField`, `TimeField`, `DateTimeField`), and a month of events (`EventCalendar`). The appearance comes from the theme tokens, not from the browser.
 Values are plain strings with no time zone.
 
 ```tsx
@@ -12,13 +12,14 @@ import {
   DateField,
   DateRangeField,
   DateTimeField,
+  EventCalendar,
   TimeField,
   TimeInput,
 } from '@shining-technologies/ui' // or '@shining-technologies/ui/date-time'
 ```
 
-**Server and client.** All seven components (`Calendar`, `Clock`, `TimeInput`, `DateField`,
-`DateRangeField`, `TimeField`, `DateTimeField`) are client components (`'use client'`). They take an `onChange`
+**Server and client.** All eight components (`Calendar`, `Clock`, `TimeInput`, `DateField`,
+`DateRangeField`, `TimeField`, `DateTimeField`, `EventCalendar`) are client components (`'use client'`). They take an `onChange`
 function, so you render them from a client component. The helper functions (`toIso`, `fromIso`,
 `fromTime`, `toTime`, `formatTime`, `splitDateTime`, `joinDateTime`, `formatDateRange`, `countDays`),
 `DATE_RANGE_PRESETS` and the
@@ -511,6 +512,58 @@ The ref goes to the trigger `<button>`.
 `.sui-date-range`. The panel uses `.sui-date-range__popover`, `__body`, `__presets` (with
 `.sui-range-panel__presets`; `role="group"`, named "Presets"), `.sui-range-panel__preset`
 (`aria-pressed`, `data-selected`), `__foot` and `__status`.
+
+## EventCalendar
+
+A month of events: bookings, shifts, deadlines, leave, releases. `Calendar` picks a date; this shows
+what is on each one.
+
+```tsx
+'use client'
+
+import { EventCalendar, type CalendarEvent } from '@shining-technologies/ui'
+
+const events: CalendarEvent[] = [
+  { id: '1', date: '2026-09-04', title: 'Payroll', tone: 'success' },
+  { id: '2', date: '2026-09-08', end: '2026-09-10', title: 'Site audit', tone: 'warning' },
+  { id: '3', date: '2026-09-09', time: '14:00', title: 'Supplier review' },
+]
+
+export function Schedule() {
+  return (
+    <EventCalendar
+      events={events}
+      onDateClick={(date) => openDay(date)}
+      onEventClick={(event) => openEvent(event.id)}
+    />
+  )
+}
+```
+
+| Prop              | Type                               | Default         | Description |
+| ----------------- | ---------------------------------- | --------------- | ----------- |
+| `events`          | `readonly CalendarEvent[]`         | —               | Required. |
+| `month`           | `IsoDate`                          | —               | Any day in the month shown, controlled. |
+| `defaultMonth`    | `IsoDate`                          | the current month | The month to open on, uncontrolled. |
+| `onMonthChange`   | `(month: IsoDate) => void`         | —               | Called with the first day of the month moved to. |
+| `onDateClick`     | `(date: IsoDate) => void`          | —               | A day's number was clicked, or Enter or Space pressed on it. Also makes "+n more" a button. |
+| `onEventClick`    | `(event: CalendarEvent) => void`   | —               | Makes each event a button. Without it, events are text. |
+| `maxEventsPerDay` | `number`                           | `3`             | Events listed in a day before "+n more". |
+| `actions`         | `ReactNode`                        | —               | Controls at the end of the header. |
+| `locale`          | `string`                           | `'en-US'`       | Formats the month, weekday and day names. |
+| `weekStartsOn`    | `0 \| 1`                           | `1`             | `1` Monday, `0` Sunday. |
+| `aria-label`      | `string`                           | the month shown | Names the grid. |
+
+`CalendarEvent` is `{ id, date, end?, title, textValue?, time?, tone? }`. `date` and `end` are
+`yyyy-mm-dd`; an event with `end` shows on every day it spans. `tone` is an `AccentTone`
+(`'primary'` by default). `textValue` names an event whose `title` is not a string.
+
+The grid follows the grid pattern: the days are one tab stop, the arrow keys move by day and week,
+Page Up and Page Down by month (the view follows), and Home and End to the ends of the week. Each
+day's accessible name is its full date and its event count. Today is marked (`aria-current="date"`)
+only after hydration, for the same reason as `Calendar`. Under 40rem each event becomes a coloured
+bar. Styling hooks: `data-slot="event-calendar"`, `.sui-event-calendar` and its `__header`,
+`__grid`, `__day` (`data-outside`, `data-today`), `__date`, `__event` and `__more` parts.
 
 ## DATE_RANGE_PRESETS
 

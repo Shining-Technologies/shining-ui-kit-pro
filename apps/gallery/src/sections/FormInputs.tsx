@@ -28,6 +28,7 @@ import {
   PasswordStrengthIndicator,
   PhoneInput,
   RadioGroup,
+  SearchInput,
   RadioGroupItem,
   RatingInput,
   Select,
@@ -197,8 +198,8 @@ export function FormInputs() {
           <Field label="Website" description="type=url.">
             <InputGroup type="url" placeholder="example.com" prefix="https://" />
           </Field>
-          <Field label="Search">
-            <InputGroup type="search" placeholder="Find a job…" prefix="⌕" />
+          <Field label="Search" description="SearchInput: a clear button once there is text; Escape clears.">
+            <SearchInput placeholder="Find a job…" />
           </Field>
           <Field label="Amount" description="An addon on each side.">
             <InputGroup defaultValue="1250.00" prefix="$" suffix="AUD" />

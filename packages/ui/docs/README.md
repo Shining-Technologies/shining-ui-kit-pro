@@ -24,17 +24,21 @@ One page per component family. Each family is also an entry point:
 | Family                                              | Components                                                              |
 | --------------------------------------------------- | ----------------------------------------------------------------------- |
 | [Button](./components/button.md)                    | Buttons, button groups, copy and hold-to-confirm buttons                |
-| [Badge](./components/badge.md)                      | Badges and status badges                                                |
+| [Badge](./components/badge.md)                      | Badges, status badges and chips                                         |
 | [Avatar](./components/avatar.md)                    | Avatars and avatar groups                                               |
 | [Card](./components/card.md)                        | Cards and their parts, stats cards, metric tiles, summaries             |
-| [Feedback](./components/feedback.md)                | Alerts, empty states, progress, spinners, skeletons, toasts             |
-| [Form](./components/form.md)                        | Fields, inputs, selects, checkboxes, comboboxes and typed inputs        |
-| [Date and time](./components/date-time.md)          | Calendar, date, time and date-time fields                               |
-| [Overlay](./components/overlay.md)                  | Dialogs, sheets, popovers, tooltips, dropdown menus                     |
+| [Feedback](./components/feedback.md)                | Alerts, banners, empty, error, success, loading and offline states, progress bars and rings, spinners, skeletons, toasts |
+| [Form](./components/form.md)                        | Fields, inputs, search, selects, checkboxes, comboboxes and typed inputs |
+| [Date and time](./components/date-time.md)          | Calendar, date, time and date-time fields, and the event calendar       |
+| [Overlay](./components/overlay.md)                  | Dialogs (including full screen), sheets, popovers, tooltips, dropdown menus |
 | [Navigation](./components/navigation.md)            | Tabs, segmented controls, breadcrumbs, pagination, steppers, context menus, menubars, the command menu, vertical navigation, the navigation rail |
-| [Layout](./components/layout.md)                    | The application shell and page headers                                  |
+| [Layout](./components/layout.md)                    | The application shell, page headers, stack, grid, container and resizable panels |
 | [Sidebar](./components/sidebar.md)                  | The dashboard sidebar and its data-driven navigation                    |
 | [Table](./components/table.md)                      | The plain table for a fixed set of rows                                 |
+| [Data view](./components/data-view.md)              | Filter bar, active-filter chips and bulk action bar for views that are not tables |
+| [Kanban](./components/kanban.md)                    | A board of cards moved between columns, by pointer or keyboard          |
+| [Timeline](./components/timeline.md)                | Record history, activity feeds and audit logs                           |
+| [Tree view](./components/tree-view.md)              | Hierarchies to browse and select from                                   |
 | [Color mode](./components/color-mode.md)            | `ColorModeScript`, `ColorModeToggle`, `useColorMode`                    |
 | [Icons](./components/icons.md)                      | The built-in icon set                                                   |
 | [Separator](./components/separator.md)              | Horizontal and vertical separators                                      |

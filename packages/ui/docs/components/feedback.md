@@ -1,14 +1,17 @@
 # Feedback
 
-Components that report state: messages about a page (`Alert`), empty states (`Empty`), loading
-indicators (`Spinner`, `Skeleton`, `Progress`), small status markers (`StatusDot`, `SegmentedBar`),
-keyboard keys (`Kbd`), and a toast stack (`ToastProvider`, `useToast`, `Toaster`).
+Components that report state: messages about a page (`Alert`) or the whole application
+(`Banner`), empty, loading, error, success and offline states (`Empty`), loading indicators
+(`Spinner`, `Skeleton`, `Progress`, `CircularProgress`), small status markers (`StatusDot`,
+`SegmentedBar`), keyboard keys (`Kbd`), and a toast stack (`ToastProvider`, `useToast`, `Toaster`).
 
 ```tsx
 import {
   Alert,
   AlertDescription,
   AlertTitle,
+  Banner,
+  CircularProgress,
   Empty,
   Kbd,
   Progress,
@@ -29,11 +32,13 @@ import {
 | `alert.tsx`     | `Alert`, `AlertTitle`, `AlertDescription`, `alertVariants`                                                | Server Component (no directive)          |
 | `feedback.tsx`  | `Spinner`, `Empty`, `StatusDot`, `SegmentedBar`, `Kbd`, and `spinnerVariants`, `emptyVariants`, `statusDotVariants`, `segmentedBarVariants` | Server Component (no directive) |
 | `skeleton.tsx`  | `Skeleton`                                                                                                | Server Component (no directive)          |
+| `circular-progress.tsx` | `CircularProgress`, `circularProgressVariants`                                                   | Server Component (no directive)          |
+| `banner.tsx`    | `Banner`                                                                                                  | Client (`'use client'`)                  |
 | `progress-variants.ts` | `progressVariants`                                                                                 | Server-safe function (no directive)      |
 | `progress.tsx`  | `Progress`                                                                                                | Client (`'use client'`, Radix Progress)  |
 | `toast.tsx`     | `ToastProvider`, `useToast`, `Toaster`                                                                    | Client (`'use client'`)                  |
 
-Server Components add no JavaScript to the page and also work inside client components. All six
+Server Components add no JavaScript to the page and also work inside client components. All seven
 `*Variants` functions can be called on the server.
 
 ## Alert
@@ -88,6 +93,50 @@ The body text of an alert. It renders a `<div>` (`data-slot="alert-description"`
 The `class-variance-authority` function behind `Alert`. `alertVariants({ tone: 'success' })`
 returns the class string, for giving another element the alert styling.
 
+## Banner
+
+A message about the whole application rather than one part of a page: a trial ending, maintenance
+tonight, a failed payment, a lost connection. It is a full-width strip, usually placed above the
+header or at the top of the content, with room for an action and a close button. For a message about
+one section of a page, use `Alert`.
+
+```tsx
+'use client'
+
+import { Banner, Button } from '@shining-technologies/ui'
+
+export function TrialBanner({ days }: { days: number }) {
+  return (
+    <Banner
+      tone="info"
+      title={`Your trial ends in ${days} days.`}
+      action={<Button size="sm">Upgrade</Button>}
+      dismissible
+    >
+      Choose a plan to keep your data.
+    </Banner>
+  )
+}
+```
+
+| Prop           | Type                                                                          | Default          | Description |
+| -------------- | ----------------------------------------------------------------------------- | ---------------- | ----------- |
+| `tone`         | `'neutral' \| 'primary' \| 'info' \| 'success' \| 'warning' \| 'destructive'` | `'info'`         | Colour, default icon and role. |
+| `title`        | `ReactNode`                                                                   | —                | A bold lead-in before the message. |
+| `icon`         | `ReactNode \| null`                                                           | the tone's icon  | Replaces the default icon. `null` for none. `neutral` has no default icon. |
+| `action`       | `ReactNode`                                                                   | —                | Buttons or links after the message. |
+| `dismissible`  | `boolean`                                                                     | `false`          | Shows a close button. Without `onDismiss`, the banner hides itself. |
+| `onDismiss`    | `() => void`                                                                  | —                | Called when the close button is pressed; implies `dismissible`. The banner stays until you stop rendering it, so you can remember the dismissal. |
+| `dismissLabel` | `string`                                                                      | `'Dismiss'`      | The close button's accessible name. |
+
+Also accepts all `<div>` props except `title`. The ref goes to the root `div`.
+
+- **Role.** `tone="destructive"` renders `role="alert"`; every other tone renders `role="status"`,
+  which is announced politely when the banner appears.
+- **Styling hooks.** `data-slot="banner"`, `data-tone`, `.sui-banner` and `.sui-tone--{tone}` (which
+  sets `--sui-tone`). Parts: `.sui-banner__icon`, `__message`, `__title`, `__action`, `__close`.
+  Position it yourself, for example with `position: sticky`.
+
 ## Empty
 
 The "nothing here yet" panel. It says what is missing and what to do about it.
@@ -106,18 +155,39 @@ export function NoJobs() {
 }
 ```
 
+It is also the panel for every other state a view can be in: pass `status` and the panel takes that
+state's glyph, tint and role.
+
+```tsx
+<Empty
+  status="error"
+  title="Could not load invoices"
+  description="The server did not answer. Your filters are kept."
+  actions={<Button onClick={retry}>Try again</Button>}
+/>
+<Empty status="loading" title="Loading invoices" />
+<Empty status="success" title="All caught up" />
+<Empty status="offline" title="You are offline" />
+```
+
 | Prop          | Type                     | Default   | Description                                                                                          |
 | ------------- | ------------------------ | --------- | ---------------------------------------------------------------------------------------------------- |
 | `title`       | `ReactNode`              | —         | Required. Rendered in a `<p class="sui-empty__title">`.                                             |
+| `status`      | `'empty' \| 'loading' \| 'error' \| 'success' \| 'offline'` | `'empty'` | What the panel reports. `error` is `role="alert"` with `AlertIcon` in the destructive tone; `loading` is `role="status"` with `aria-busy` and a `Spinner`; `success` (`CheckCircleIcon`) and `offline` (`WifiOffIcon`, warning tone) are `role="status"`. `empty` has no role and no default glyph, as before 2.2. |
 | `description` | `ReactNode`              | —         | Rendered in a `<p class="sui-empty__description">`.                                                 |
-| `icon`        | `ReactNode`              | —         | Rendered above the title in an `aria-hidden` `.sui-empty__media` wrapper.                           |
+| `icon`        | `ReactNode`              | the status's glyph | Rendered above the title in an `aria-hidden` `.sui-empty__media` wrapper. `null` removes a status's default glyph. |
 | `actions`     | `ReactNode`              | —         | Rendered last, in `.sui-empty__actions`.                                                            |
 | `variant`     | `'panel' \| 'inline'`    | `'panel'` | `panel` is a centred block for a page or card. `inline` is a single quiet line for an empty list inside a card with other content. |
 | `children`    | `ReactNode`              | —         | Rendered between the description and the actions.                                                   |
 
 Also accepts all `<div>` props except `title`, which is replaced by the prop above. The ref goes to
 the root `div`, which has `data-slot="empty"`, `.sui-empty` and `.sui-empty--inline` for the inline
-variant. The props type is `EmptyStateProps`. `emptyVariants({ variant })` returns the class string.
+variant; a status adds `data-status` and `.sui-tone--{tone}`, which tints the glyph. The props type is
+`EmptyStateProps` and the status type `EmptyStatus`. `emptyVariants({ variant })` returns the class
+string.
+
+A status panel is announced when it is inserted, so render it when the state begins: swap the
+loading panel for the error panel, rather than keeping every panel mounted and hiding the others.
 
 Because the title is a paragraph, add a heading inside `title` if it belongs in the page outline.
 
@@ -216,6 +286,36 @@ attributes. The ref goes to the root.
   `.sui-progress--sm` / `--lg`, `.sui-progress--{tone}` and `.sui-progress--indeterminate`. The
   indicator is `.sui-progress__indicator`, moved with `transform`. Tones set `--sui-progress-color`,
   which defaults to `--primary`. `progressVariants({ size, tone })` returns the class string.
+
+## CircularProgress
+
+Progress as a ring, for a tile, a card header or an avatar-sized slot where a bar has no room to be
+read. It is markup and an SVG, so it renders as a Server Component.
+
+```tsx
+import { CircularProgress } from '@shining-technologies/ui'
+
+<CircularProgress value={68} showValue size="lg" aria-label="Storage used" />
+<CircularProgress value={22} max={25} tone="warning" aria-label="Seats used" />
+<CircularProgress value={null} aria-label="Syncing" />
+```
+
+| Prop        | Type                                   | Default     | Description |
+| ----------- | -------------------------------------- | ----------- | ----------- |
+| `value`     | `number \| null`                       | `0`         | Clamped to `0`–`max`. `null` spins (indeterminate). |
+| `max`       | `number`                               | `100`       | A value that is not a positive finite number is treated as `100`. |
+| `size`      | `'sm' \| 'default' \| 'lg' \| 'xl'`    | `'default'` | 1.5rem, 2.5rem, 4rem or 6rem across. |
+| `tone`      | `AccentTone`                           | `'primary'` | The ring's colour: a status tone or `chart-1`…`chart-5`. |
+| `showValue` | `boolean`                              | `false`     | Prints the rounded percentage in the middle (not while indeterminate). |
+| `children`  | `ReactNode`                            | —           | Anything else in the middle — a count, an icon. Replaces `showValue`. |
+
+Also accepts all `<div>` props. The root is `role="progressbar"` with `aria-valuemin`,
+`aria-valuemax`, `aria-valuenow` (absent while indeterminate) and `aria-valuetext` (the rounded
+percentage); name it with `aria-label` or `aria-labelledby`. Styling hooks:
+`data-slot="circular-progress"`, `data-state="loading" | "complete" | "indeterminate"`,
+`.sui-circular-progress`, `.sui-circular-progress--{size}`, `__track`, `__indicator` and `__value`;
+`--sui-ring-size` and `--sui-ring-width` set the geometry. `circularProgressVariants({ size })`
+returns the class string.
 
 ## StatusDot
 
@@ -454,7 +554,11 @@ Exported types: `ToastTone`, `ToastAction`, `ToastOptions`, `Toast`, `ToastConte
   in an `Alert`.
 - **Decorative elements.** `Skeleton`, the icons in `Alert`, `Empty` and toasts, and an unnamed
   `StatusDot` are `aria-hidden`. The meaning must come from text.
-- **Progress and summaries.** `Progress` needs an `aria-label` or `aria-labelledby`. `SegmentedBar`
+- **Status panels.** `Empty status="error"` is `role="alert"`; `loading`, `success` and `offline`
+  are `role="status"`, and `loading` is `aria-busy`. `Banner` is `role="alert"` when destructive and
+  `role="status"` otherwise.
+- **Progress and summaries.** `Progress` and `CircularProgress` need an `aria-label` or
+  `aria-labelledby`. `SegmentedBar`
   is one named image whose name lists every count.
 - **Motion.** The spinner, skeleton, status-dot pulse and toast animation respect
   `prefers-reduced-motion: reduce`.

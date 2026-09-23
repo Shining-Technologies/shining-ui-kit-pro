@@ -92,7 +92,7 @@ export function RenameJob() {
 
 | Prop               | Type                                    | Default     | Description                                                                                  |
 | ------------------ | --------------------------------------- | ----------- | -------------------------------------------------------------------------------------------- |
-| `size`             | `'sm' \| 'default' \| 'lg' \| 'xl'`     | `'default'` | Panel width (`sui-dialog--sm`, `--lg`, `--xl`).                                              |
+| `size`             | `'sm' \| 'default' \| 'lg' \| 'xl' \| 'full'` | `'default'` | Panel width (`sui-dialog--sm`, `--lg`, `--xl`). `full` is a full-screen dialog: the viewport less a 1rem margin, edge to edge under 40rem, with `DialogBody` filling the height. |
 | `hideClose`        | `boolean`                               | `false`     | Hide the close button in the corner (`aria-label="Close"`, class `sui-dialog__close`).       |
 | `onCloseAutoFocus` | `(event: Event) => void`                |             | Runs before the built-in focus return. Call `event.preventDefault()` to move focus yourself. |
 

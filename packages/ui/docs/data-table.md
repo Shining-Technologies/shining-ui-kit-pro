@@ -893,7 +893,36 @@ Server Action.
 
 ### Bulk actions
 
-Put bulk actions in the toolbar, or replace the selection bar:
+Pass the actions as `slots.selectionActions`. They appear in the selection bar, between the count
+and "Clear selection", while rows are selected:
+
+```tsx
+<DataTable
+  data={orders}
+  columns={columns}
+  getRowId={(order) => order.id}
+  enableRowSelection
+  slots={{
+    selectionActions: ({ table }) => (
+      <>
+        <Button size="sm" variant="outline" onClick={() => exportOrders(table.getSelectedRowModel().rows)}>
+          Export
+        </Button>
+        <Button size="sm" variant="destructive" onClick={() => confirmArchive(getSelectedRowIds(table.getState().rowSelection))}>
+          Archive
+        </Button>
+      </>
+    ),
+  }}
+/>
+```
+
+`table.getSelectedRowModel()` holds the loaded rows that are selected; in server mode, or for rows on
+other pages, use the ids in `table.getState().rowSelection`. The bar is the package's
+`BulkActionBar` (see [Data view](./components/data-view.md)); with actions, only its count is a live
+region, so the buttons are not read out on every change.
+
+To change the bar itself, replace it:
 
 ```tsx
 'use client'
@@ -1188,7 +1217,7 @@ exported so an override can wrap it.
 | `Search`       | `SearchProps`                  | `DefaultSearch`         | Search box |
 | `Filters`      | `FiltersProps`                 | `DefaultFilters`        | Panel or inline filters |
 | `ClearFilters` | `ClearFiltersProps`            | `DefaultClearFilters`   | "Clear filters" button |
-| `SelectionBar` | `SelectionBarProps`            | `DefaultSelectionBar`   | "N selected" bar (`selectedCount`, `clearSelection`) |
+| `SelectionBar` | `SelectionBarProps`            | `DefaultSelectionBar`   | "N selected" bar (`selectedCount`, `clearSelection`, `actions` from `slots.selectionActions`) |
 | `ViewOptions`  | `ViewOptionsProps`             | `DefaultViewOptions`    | Column picker |
 | `Pagination`   | `DataTablePaginationProps`     | `DefaultPagination`     | Pagination bar |
 | `EmptyState`   | `DataTableEmptyStateProps`     | `DataTableEmptyState`   | Empty row |
@@ -1253,6 +1282,7 @@ function OrderCell({ cell, cellProps }: CellProps<Order>) {
 | `loadingState`   | Content shown instead of skeleton rows. |
 | `errorState`     | Content of the error state. |
 | `pagination`     | Replaces the pagination bar. |
+| `selectionActions` | Bulk actions in the selection bar, shown while rows are selected. See [Bulk actions](#bulk-actions). |
 | `rowActions`     | Same as the `rowActions` prop, which wins if both are set. |
 
 ```tsx

@@ -218,6 +218,7 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
             table={table}
             selectedCount={selectedCount}
             clearSelection={() => table.resetRowSelection()}
+            actions={renderSlot(props.slots?.selectionActions, table)}
           />
         ) : null}
 

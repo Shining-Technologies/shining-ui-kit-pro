@@ -324,7 +324,7 @@ code {
   margin-bottom: 1rem;
 }
 
-.demo__head h3 {
+.demo__head h2 {
   margin: 0;
   font-size: 0.9375rem;
   font-weight: var(--sui-title-font-weight);
@@ -432,4 +432,220 @@ code {
   border-radius: var(--radius-lg);
   overflow: hidden;
   container-type: inline-size;
+}
+
+/* ----------------------------------------------------------- search and nav */
+
+.gallery__nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gallery__count {
+  flex: none;
+  min-width: 1.375rem;
+  padding: 0 0.375rem;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.gallery__nav-item[aria-current='page'] .gallery__count {
+  background: color-mix(in oklab, var(--primary) 18%, transparent);
+  color: var(--primary);
+}
+
+.gallery__nav-total {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.gallery__search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.gallery__search .sui-search {
+  max-width: none;
+  width: 100%;
+}
+
+.gallery__search-hint {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.gallery__result-category {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.gallery__result-components {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.125rem 0 0.5rem 0.75rem !important;
+  padding: 0;
+  list-style: none;
+}
+
+.gallery__nav .gallery__result-components {
+  flex-direction: row;
+}
+
+.gallery__result-component {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  cursor: pointer;
+}
+
+.gallery__result-component:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.gallery__no-results {
+  margin: 0 0.625rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.gallery__exports {
+  margin-top: 0.5rem !important;
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.gallery__exports code {
+  padding: 0.0625rem 0.3125rem;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 0.6875rem;
+}
+
+/* Only a narrow screen folds the nav away. */
+.gallery__browse {
+  display: none;
+  align-items: center;
+  gap: 0.375rem;
+  height: var(--sui-control-height);
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+@media (max-width: 60rem) {
+  .gallery__browse {
+    display: inline-flex;
+  }
+
+  .gallery__nav {
+    flex-direction: column;
+  }
+
+  .gallery__nav:not([data-open]) {
+    display: none;
+  }
+
+  .gallery__nav ul {
+    flex-direction: column;
+  }
+}
+
+/* ---------------------------------------------------------- demo extras */
+
+.demo {
+  scroll-margin-top: 5rem;
+  transition: box-shadow 400ms ease;
+}
+
+.demo--linked {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.demo__head h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.demo__anchor {
+  color: var(--muted-foreground);
+  font-weight: 400;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.demo__head:hover .demo__anchor,
+.demo__anchor:focus-visible {
+  opacity: 1;
+}
+
+.demo__anchor:hover {
+  color: var(--primary);
+}
+
+.demo__code {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.demo__code > summary {
+  width: fit-content;
+  padding: 0.625rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.demo__code > summary:hover {
+  color: var(--foreground);
+}
+
+.demo__code-body {
+  position: relative;
+  margin-top: 0.625rem;
+}
+
+.demo__code-body pre {
+  margin: 0;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+.demo__copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: var(--card);
 }

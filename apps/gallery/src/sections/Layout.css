@@ -1,0 +1,47 @@
+/* Layout: boxes that make the spacing visible. */
+
+.layout-box {
+  display: grid;
+  place-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed color-mix(in oklab, var(--primary) 45%, var(--border));
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--primary) 7%, var(--card));
+  color: var(--foreground);
+  font-size: 0.8125rem;
+}
+
+.layout-viewport {
+  padding: 1rem 0;
+  border-radius: var(--radius-md);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--muted),
+    var(--muted) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+.layout-split {
+  height: 18rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.layout-split .sui-resizable {
+  height: 100%;
+}
+
+.layout-pane {
+  height: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--card);
+}
+
+.layout-pane p {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+}

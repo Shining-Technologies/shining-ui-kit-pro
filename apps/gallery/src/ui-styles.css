@@ -24,3 +24,5 @@
 @import '../../../packages/ui/src/styles/inputs.css' layer(components);
 @import '../../../packages/ui/src/styles/shell.css' layer(components);
 @import '../../../packages/ui/src/styles/sidebar.css' layer(components);
+@import '../../../packages/ui/src/styles/layout.css' layer(components);
+@import '../../../packages/ui/src/styles/data-display.css' layer(components);

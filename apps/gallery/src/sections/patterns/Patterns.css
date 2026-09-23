@@ -1,0 +1,273 @@
+/*
+ * Patterns: whole pages built from the package. These classes only arrange
+ * the demo inside the gallery; every visible part is a package component.
+ */
+
+.pattern-frame {
+  width: 100%;
+  min-width: 0;
+}
+
+.pattern-title {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.pattern-num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.pattern-person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pattern-person p {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.pattern-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sui-gap);
+}
+
+.pattern-save-state {
+  margin-inline-end: auto;
+  font-size: 0.8125rem;
+}
+
+.pattern-span {
+  grid-column: 1 / -1;
+}
+
+.pattern-errors {
+  margin: 0.25rem 0 0;
+  padding-inline-start: 1.125rem;
+}
+
+.pattern-errors a {
+  color: inherit;
+}
+
+.pattern-review {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+}
+
+.pattern-review dt {
+  color: var(--muted-foreground);
+}
+
+.pattern-review dd {
+  margin: 0;
+}
+
+.pattern-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.pattern-filter {
+  flex: 0 1 14rem;
+  min-width: 10rem;
+}
+
+.pattern-count {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.pattern-result-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Settings: the navigation beside the section, stacked on a narrow screen. */
+.pattern-settings {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 48rem) {
+  .pattern-settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pattern-members {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-members > li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pattern-member-name {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 0.875rem;
+}
+
+.pattern-member-name .muted {
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pattern-danger {
+  border-color: color-mix(in oklab, var(--destructive) 40%, var(--border));
+}
+
+/* Billing */
+.pattern-plan[data-current] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.pattern-price {
+  margin: 0;
+}
+
+.pattern-price strong {
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+.pattern-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  list-style: none;
+}
+
+.pattern-features li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pattern-features svg {
+  color: var(--success);
+}
+
+.pattern-wide {
+  width: 100%;
+}
+
+.pattern-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.pattern-meter__label {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.pattern-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-keys > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.pattern-key {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+
+.pattern-key code {
+  overflow-wrap: anywhere;
+}
+
+.pattern-key .muted {
+  font-size: 0.75rem;
+}
+
+.pattern-key-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Onboarding and sign-in: a single centred card. */
+.pattern-onboarding,
+.pattern-auth {
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+.pattern-welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-block: 1rem;
+}
+
+.pattern-auth-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.pattern-auth-row a {
+  color: var(--primary);
+}
+
+.pattern-divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  font-size: 0.75rem;
+}

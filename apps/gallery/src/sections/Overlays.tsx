@@ -65,7 +65,7 @@ const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(re
 function DialogSizes() {
   return (
     <>
-      {(['sm', 'default', 'lg', 'xl'] as const).map((size) => (
+      {(['sm', 'default', 'lg', 'xl', 'full'] as const).map((size) => (
         <Dialog key={size}>
           <DialogTrigger asChild>
             <Button variant="outline">Size {size}</Button>
@@ -74,7 +74,9 @@ function DialogSizes() {
             <DialogHeader>
               <DialogTitle>A {size} dialog</DialogTitle>
               <DialogDescription>
-                Only the width changes; header, body and footer keep the same rhythm.
+                {size === 'full'
+                  ? 'The whole viewport, for an editor or a long form. Edge to edge on a phone.'
+                  : 'Only the width changes; header, body and footer keep the same rhythm.'}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

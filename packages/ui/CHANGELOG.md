@@ -1,5 +1,67 @@
 # @shining-technologies/ui
 
+## 2.2.0
+
+Components for the views a business application builds around its records when a table is not
+the right shape, the states every view can be in, and layout primitives. Everything is additive;
+no existing prop, class or default changed. No new dependencies.
+
+### Added
+
+- Data view (`@shining-technologies/ui/data-view`): `FilterBar` and `FilterBarActions`, one wrapping
+  line of search, filters and actions for card grids, lists and boards; `FilterChips`, the filters in
+  force as removable chips with "Clear all" and a polite count; `BulkActionBar`, the "N of M
+  selected" band with the actions for a selection.
+- DataTable: `slots.selectionActions`, bulk actions in the selection bar while rows are selected.
+  The table's selection bar is now `BulkActionBar`; with no actions its markup is unchanged. With
+  actions, only the count is the live region. `SelectionBarProps` gains `actions`.
+- `Chip` (badge family): a token that can be operated — a quick-filter toggle (`selected`,
+  `onSelectedChange`, rendered as `<button aria-pressed>`), a removable tag or filter (`onRemove`,
+  `removeLabel`), or both as two sibling buttons. It shares `.sui-chip` with the DataTable's
+  active-filter chips.
+- `SearchInput` (form family): a search box with a clear button and Escape to clear, the DataTable
+  toolbar's search made standalone. Controlled or uncontrolled, and joins a surrounding `Field`.
+- `Timeline`, `TimelineItem` and `TimelineHeading` (`/timeline`): record history, activity feeds
+  (avatars as markers, day headings) and audit logs (`variant="compact"`, the time in its own
+  column). An ordered list with `<time dateTime>`; Server Components.
+- `TreeView` (`/tree-view`): the WAI-ARIA tree pattern with single, multiple or no selection,
+  controlled or uncontrolled `expanded` and `selected`, arrow-key navigation, type-ahead and
+  disabled nodes.
+- `KanbanBoard` (`/kanban`): generic over the item type, it reports each `KanbanMove` and holds no
+  copy of the data. Cards move by drag and drop or from the keyboard (Space to pick up, arrows to
+  move, Space to drop, Escape to cancel), and every step is announced. Column tones, work-in-progress
+  limits and header actions.
+- `EventCalendar` (date-time family): a month of events with spanning events, "+n more", `onDateClick`
+  and `onEventClick`, grid keyboard navigation, locale and week start, and coloured bars on a phone.
+- `Empty` takes `status`: `'loading'`, `'error'`, `'success'` or `'offline'` give the panel its
+  glyph, tint and role (`alert` for an error, `status` with `aria-busy` for loading). `'empty'`, the
+  default, renders exactly as before. New type `EmptyStatus`.
+- `CircularProgress` (feedback family): progress as a ring, four sizes, any `AccentTone`, the
+  percentage or custom content in the middle, and an indeterminate spin. A Server Component.
+- `Banner` (feedback family): an application-wide message strip with a tone, an action and a
+  close button that hides it or reports to `onDismiss`.
+- Layout: `Stack`, `Grid` (fixed `columns` that fold on a phone, or `minItemWidth` to fill) and
+  `Container` (five widths) on the `--spacing` scale, as Server Components; and
+  `ResizablePanelGroup`, `ResizablePanel` and `ResizableHandle`, keyboard-operable separators with
+  panel limits, nesting and controlled `sizes`. The `Container` props type is `LayoutContainerProps`,
+  as `ContainerProps` is the DataTable part's.
+- `DialogContent size="full"`: a full-screen dialog, edge to edge under 40rem.
+- Icons: `WifiOffIcon`, `RefreshIcon`, `FolderIcon`, `GripIcon`, `UserIcon`, `SettingsIcon`,
+  `LogOutIcon`, `BellIcon`, `KeyIcon`.
+- Stylesheets `layout.css` and `data-display.css`, bundled into `styles.css` after the existing ones.
+
+### Gallery
+
+- Search across every page and component name (press `/`), with results that open the component's
+  example; a count of components beside each page; `#page/example` links to every example; a
+  copyable code snippet under the new examples; and a folding nav on phones.
+- New pages: Boards & calendars and Timelines & trees (under a new Data group with the data table),
+  and Layout. New examples for chips, split buttons, search input, banners, progress rings, status
+  panels and the full-screen dialog.
+- Patterns: list and CRUD page, detail page, create and edit form, multi-step form, approval
+  workflow, search and filter, settings page, billing and API keys, onboarding, and sign-in screens,
+  each built only from package components.
+
 ## 2.1.2
 
 ### Changed

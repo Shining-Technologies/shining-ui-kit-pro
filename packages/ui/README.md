@@ -97,9 +97,9 @@ createRoot(document.getElementById('root')!).render(<App />)
 | `@shining-technologies/ui/presets.css`   | Eleven named themes, applied with `data-theme`                          |       |
 | `@shining-technologies/ui/tailwind.css`  | Tailwind CSS v4 mapping of the tokens                                |       |
 
-Component families: `avatar`, `badge`, `button`, `card`, `color-mode`, `data-table`, `date-time`,
-`feedback`, `form`, `icons`, `layout`, `navigation`, `overlay`, `separator`, `sidebar`, `table`,
-`visually-hidden`.
+Component families: `avatar`, `badge`, `button`, `card`, `color-mode`, `data-table`, `data-view`,
+`date-time`, `feedback`, `form`, `icons`, `kanban`, `layout`, `navigation`, `overlay`, `separator`,
+`sidebar`, `table`, `timeline`, `tree-view`, `visually-hidden`.
 
 ## Server and client
 
@@ -108,7 +108,7 @@ Nothing in this package is marked `'use client'` as a whole. Each module that ne
 
 | In a Server Component you can…                    | Examples                                                                 |
 | ------------------------------------------------- | ------------------------------------------------------------------------ |
-| render pure components with no client JavaScript  | `Button`, `Badge`, `Card`, `Alert`, `Skeleton`, `Empty`, `Spinner`, `StatusDot`, `Kbd`, `Separator`, `Table`, `Breadcrumb`, `VerticalNav`, `NavigationRail`, `AppShell` layout parts, icons |
+| render pure components with no client JavaScript  | `Button`, `Badge`, `Card`, `Alert`, `Skeleton`, `Empty`, `Spinner`, `CircularProgress`, `StatusDot`, `Kbd`, `Separator`, `Table`, `Timeline`, `Stack`, `Grid`, `Container`, `Breadcrumb`, `VerticalNav`, `NavigationRail`, `AppShell` layout parts, icons |
 | render interactive components with serialisable props | `Tabs`, `Accordion`, `Dialog`, `Tooltip`, `Sidebar`                  |
 | call any function                                  | `applyQuery`, `parseQuerySearchParams`, `createColumnHelper`, `getPageNumbers`, `createThemeCss` |
 

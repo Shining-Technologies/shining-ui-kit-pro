@@ -193,6 +193,8 @@ export interface SelectionBarProps<TData> {
   table: Table<TData>
   selectedCount: number
   clearSelection: () => void
+  /** Bulk actions from `slots.selectionActions`, shown between the count and Clear. */
+  actions?: ReactNode
 }
 
 export interface ViewOptionsProps<TData> {

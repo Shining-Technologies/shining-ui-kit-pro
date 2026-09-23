@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { toneClass, type AccentTone } from '../../lib/tone'
+import { AlertIcon, CheckCircleIcon, WifiOffIcon } from '../icons/icons'
 
 /*
  * Static feedback: markup only, so these render as Server Components with no
@@ -60,8 +61,40 @@ export const emptyVariants = cva('sui-empty', {
   defaultVariants: { variant: 'panel' },
 })
 
+/**
+ * What the panel is reporting. Each status brings its own glyph, tint and
+ * role, so an error panel is announced and a loading one is marked busy
+ * without the caller having to remember to.
+ */
+export type EmptyStatus = 'empty' | 'loading' | 'error' | 'success' | 'offline'
+
+const STATUS_TONE: Record<Exclude<EmptyStatus, 'empty'>, AccentTone> = {
+  loading: 'primary',
+  error: 'destructive',
+  success: 'success',
+  offline: 'warning',
+}
+
+const STATUS_ICON: Record<Exclude<EmptyStatus, 'empty'>, ReactNode> = {
+  loading: <Spinner label={null} />,
+  error: <AlertIcon />,
+  success: <CheckCircleIcon />,
+  offline: <WifiOffIcon />,
+}
+
 export interface EmptyStateProps
   extends Omit<HTMLAttributes<HTMLDivElement>, 'title'>, VariantProps<typeof emptyVariants> {
+  /**
+   * `'empty'` (the default), `'loading'`, `'error'`, `'success'` or
+   * `'offline'`. Sets the default glyph and its tint. An error panel is
+   * `role="alert"`, a loading one `role="status"` with `aria-busy`, and success
+   * and offline are `role="status"`.
+   */
+  status?: EmptyStatus
+  /**
+   * The glyph. Without one, a status other than `'empty'` shows its own;
+   * pass `null` for none at all.
+   */
   icon?: ReactNode
   title: ReactNode
   description?: ReactNode
@@ -71,24 +104,38 @@ export interface EmptyStateProps
 /**
  * The "nothing here yet" panel: what is missing, why, and what to do about it.
  *
- * `variant="inline"` is the same statement at the volume of a sentence — for a
- * breakdown or a feed that is empty *inside* a card whose figures are still
- * worth reading, where a centred panel would shout over them.
+ * `status` turns the same panel into the other states a view can be in —
+ * loading, failed, done, offline — so they all share one layout rather than
+ * each view drawing its own. `variant="inline"` is the same statement at the
+ * volume of a sentence — for a breakdown or a feed that is empty *inside* a
+ * card whose figures are still worth reading, where a centred panel would
+ * shout over them.
  */
 export const Empty = forwardRef<HTMLDivElement, EmptyStateProps>(function Empty(
-  { className, variant, icon, title, description, actions, children, ...props },
+  { className, variant, status = 'empty', icon, title, description, actions, children, ...props },
   ref,
 ) {
+  const reporting = status === 'empty' ? null : status
+  // A plain empty panel keeps its 2.1 behaviour: no glyph unless one is passed.
+  const glyph = icon === undefined && reporting ? STATUS_ICON[reporting] : icon
+
   return (
     <div
       ref={ref}
       data-slot="empty"
-      className={cn(emptyVariants({ variant }), className)}
+      data-status={reporting ?? undefined}
+      role={reporting === 'error' ? 'alert' : reporting ? 'status' : undefined}
+      aria-busy={reporting === 'loading' || undefined}
+      className={cn(
+        emptyVariants({ variant }),
+        reporting && toneClass(STATUS_TONE[reporting]),
+        className,
+      )}
       {...props}
     >
-      {icon ? (
+      {glyph ? (
         <span className="sui-empty__media" aria-hidden="true">
-          {icon}
+          {glyph}
         </span>
       ) : null}
       <p className="sui-empty__title">{title}</p>

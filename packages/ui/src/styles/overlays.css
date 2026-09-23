@@ -326,3 +326,24 @@
     transform: translateY(100%);
   }
 }
+
+/* A full-screen dialog: the viewport, less a small margin on wide screens. */
+.sui-dialog--full {
+  width: calc(100vw - 2rem);
+  max-width: none;
+  height: calc(100dvh - 2rem);
+  max-height: none;
+}
+
+@media (max-width: 40rem) {
+  .sui-dialog--full {
+    width: 100vw;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+.sui-dialog--full .sui-dialog__body {
+  flex: 1 1 auto;
+}

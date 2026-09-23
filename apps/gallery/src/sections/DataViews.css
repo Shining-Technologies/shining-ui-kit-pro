@@ -1,0 +1,42 @@
+/* Boards & calendars: the sample content inside the demos. */
+
+.bulk-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  list-style: none;
+}
+
+.bulk-list > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+}
+
+.bulk-list > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.deal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.deal__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.deal__title {
+  margin: 0;
+  font-weight: 500;
+}

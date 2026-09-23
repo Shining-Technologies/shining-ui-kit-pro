@@ -62,6 +62,11 @@ export interface DataTableSlots<TData> {
   loadingState?: SlotContent<TData>
   errorState?: SlotContent<TData>
   pagination?: SlotContent<TData>
+  /**
+   * Bulk actions shown in the selection bar while rows are selected — Export,
+   * Assign, Delete. Read the rows from `table.getSelectedRowModel()`.
+   */
+  selectionActions?: SlotContent<TData>
   /** Rendered in the auto-injected trailing actions column. */
   rowActions?: (row: Row<TData>) => ReactNode | RowActionSpec[]
 }

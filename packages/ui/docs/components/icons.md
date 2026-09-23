@@ -82,17 +82,17 @@ indicator, use `Spinner` from [Feedback](feedback.md).
 
 ## Available icons
 
-54 icons, grouped by typical use. Every name ends in `Icon`.
+63 icons, grouped by typical use. Every name ends in `Icon`.
 
 | Group            | Icons |
 | ---------------- | ----- |
 | Direction        | `ChevronUpIcon`, `ChevronDownIcon`, `ChevronLeftIcon`, `ChevronRightIcon`, `ChevronsLeftIcon`, `ChevronsRightIcon`, `ArrowLeftIcon`, `ArrowRightIcon`, `ArrowUpIcon` |
 | Tables and lists | `SortIcon`, `FilterIcon`, `ColumnsIcon`, `ListIcon`, `SlidersIcon`, `PinIcon`, `MoreIcon` (vertical dots), `SearchIcon` |
-| Actions          | `CheckIcon`, `MinusIcon`, `PlusIcon`, `CloseIcon`, `TrashIcon`, `PencilIcon`, `CopyIcon`, `UploadIcon`, `ExternalLinkIcon`, `LinkIcon` |
-| Status           | `AlertIcon` (circle with exclamation), `InfoIcon`, `CheckCircleIcon`, `TriangleAlertIcon`, `SpinnerIcon`, `InboxIcon` (empty state) |
+| Actions          | `CheckIcon`, `MinusIcon`, `PlusIcon`, `CloseIcon`, `TrashIcon`, `PencilIcon`, `CopyIcon`, `UploadIcon`, `ExternalLinkIcon`, `LinkIcon`, `RefreshIcon`, `LogOutIcon`, `GripIcon` (drag handle) |
+| Status           | `AlertIcon` (circle with exclamation), `InfoIcon`, `CheckCircleIcon`, `TriangleAlertIcon`, `SpinnerIcon`, `InboxIcon` (empty state), `WifiOffIcon` (offline), `BellIcon` |
 | Data             | `TrendUpIcon`, `TrendDownIcon`, `CalendarIcon`, `ClockIcon` |
 | Appearance       | `SunIcon`, `MoonIcon`, `MonitorIcon`, `PaletteIcon`, `LayoutIcon`, `PanelLeftIcon`, `MenuIcon`, `EyeIcon`, `EyeOffIcon` |
-| Objects          | `MailIcon`, `PhoneIcon`, `FileIcon`, `ImageIcon`, `TagIcon`, `GlobeIcon`, `CreditCardIcon`, `StarIcon` |
+| Objects          | `MailIcon`, `PhoneIcon`, `FileIcon`, `FolderIcon`, `ImageIcon`, `TagIcon`, `GlobeIcon`, `CreditCardIcon`, `StarIcon`, `UserIcon`, `SettingsIcon`, `KeyIcon` |
 
 ## Accessibility
 

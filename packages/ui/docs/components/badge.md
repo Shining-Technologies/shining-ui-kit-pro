@@ -2,12 +2,14 @@
 
 Small labels. `Badge` is a static label with a tone and variant you choose. `StatusBadge` takes a
 raw status value from your data, such as `'in_progress'` or `'PAID'`, and looks up its label and
-tone in a vocabulary that your application supplies.
+tone in a vocabulary that your application supplies. `Chip` is a label that can be operated: a
+quick-filter toggle, a removable tag or an applied filter.
 
 ```tsx
 import {
   Badge,
   badgeVariants,
+  Chip,
   StatusBadge,
   statusBadgeVariants,
   StatusRegistryProvider,
@@ -22,9 +24,9 @@ work in Server Components. `StatusBadge`, `StatusRegistryProvider`, `useStatusRe
 `statusBadgeVariants` and `resolveStatus` come from a `'use client'` module. You can render the
 components from a Server Component. Call the functions (`statusBadgeVariants`, `resolveStatus`)
 only from client code: Next.js does not let a Server Component call a function exported from a
-client module.
+client module. `Chip` is a client component (`'use client'`): it takes event handlers.
 
-Exported types: `BadgeProps`, `StatusBadgeProps`, `StatusRegistryProviderProps`, `StatusTone`,
+Exported types: `BadgeProps`, `ChipProps`, `StatusBadgeProps`, `StatusRegistryProviderProps`, `StatusTone`,
 `StatusDefinition`, `StatusVocabulary`, `StatusRegistry`.
 
 ## Badge
@@ -190,6 +192,43 @@ The class-variance-authority function behind `StatusBadge`:
 `statusBadgeVariants({ tone?, size?, dot? })`. The defaults are `tone: 'neutral'`, `size: 'md'` and
 `dot: true`.
 
+## Chip
+
+A compact token that can be operated. Use it for a quick filter that toggles ("Open", "Assigned to
+me"), a tag a user entered, or a filter that is in force. `Badge` states a fact and cannot be
+operated; a chip can be pressed, removed, or both.
+
+```tsx
+'use client'
+
+import { Chip, TagIcon } from '@shining-technologies/ui'
+
+<Chip>Design</Chip>
+<Chip tone="success" icon={<TagIcon />}>Paid</Chip>
+<Chip selected={openOnly} onSelectedChange={setOpenOnly}>Open only</Chip>
+<Chip onRemove={() => remove('Sydney')} removeLabel="Remove Sydney">Sydney</Chip>
+```
+
+| Prop               | Type                          | Default     | Description |
+| ------------------ | ----------------------------- | ----------- | ----------- |
+| `tone`             | `StatusTone`                  | `'neutral'` | A tint for the border, fill and icon. |
+| `size`             | `'sm' \| 'default'`           | `'default'` | |
+| `icon`             | `ReactNode`                   | —           | A glyph or avatar before the label. |
+| `selected`         | `boolean`                     | —           | Makes the chip a toggle: a `<button aria-pressed>`. |
+| `onSelectedChange` | `(selected: boolean) => void` | —           | Called with the new state when a toggle chip is pressed. |
+| `onRemove`         | `() => void`                  | —           | Adds a remove button after the label. |
+| `removeLabel`      | `string`                      | `'Remove'`  | The remove button's accessible name. Name what is removed: `"Remove Sydney"`. |
+| `disabled`         | `boolean`                     | `false`     | Disables the toggle and the remove button. |
+
+Also accepts `<span>` props (a `<button>`'s for a toggle chip without `onRemove`). A chip that is
+both a toggle and removable renders the toggle and the remove button as two sibling buttons inside a
+`<span>`, never one inside the other, so each has its own name and tab stop.
+
+Styling hooks: `data-slot="chip"`, `data-selected`, `.sui-chip`, `.sui-chip--toned`, `--sm`,
+`--removable`, `--toggle`, `.sui-chip__icon`, `__text`, `__toggle` and `__remove`. The DataTable's
+active-filter chips use the same `.sui-chip` element, so filters look alike inside and outside a table.
+`FilterChips` in [Data view](./data-view.md) lays out a row of them with "Clear all".
+
 ## Accessibility
 
 - Badges are plain `<span>`s with no role. The text is the content; colour, the dot and icons only
@@ -199,6 +238,8 @@ The class-variance-authority function behind `StatusBadge`:
   hear about it, announce the change some other way (see [Feedback](./feedback.md)).
 - With `asChild`, the rendered element (for example a link) provides the semantics and focus
   behaviour.
+- A toggle `Chip` is a `<button>` with `aria-pressed`, so its state is announced; give the remove
+  button a `removeLabel` that names the chip.
 
 ## Related
 

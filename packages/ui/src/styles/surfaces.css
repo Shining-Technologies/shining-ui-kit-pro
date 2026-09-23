@@ -727,3 +727,131 @@
     transform: translateX(340%);
   }
 }
+
+/* A reporting panel (loading, error, success, offline) tints its glyph with its status. */
+.sui-empty[data-status] .sui-empty__media {
+  background: color-mix(in srgb, var(--sui-tone) 12%, transparent);
+  color: var(--sui-tone);
+}
+
+.sui-empty[data-status] .sui-empty__media .sui-spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* --------------------------------------------------------- circular progress */
+
+.sui-circular-progress {
+  --sui-ring-size: 2.5rem;
+  --sui-ring-width: 3.5;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--sui-ring-size);
+  height: var(--sui-ring-size);
+  color: var(--sui-tone);
+}
+
+.sui-circular-progress--sm {
+  --sui-ring-size: 1.5rem;
+  --sui-ring-width: 4;
+}
+.sui-circular-progress--lg {
+  --sui-ring-size: 4rem;
+  --sui-ring-width: 3;
+}
+.sui-circular-progress--xl {
+  --sui-ring-size: 6rem;
+  --sui-ring-width: 2.5;
+}
+
+.sui-circular-progress > svg {
+  width: 100%;
+  height: 100%;
+  /* The arc starts at twelve o'clock and runs clockwise. */
+  transform: rotate(-90deg);
+}
+
+.sui-circular-progress__track,
+.sui-circular-progress__indicator {
+  fill: none;
+  stroke-width: var(--sui-ring-width);
+}
+
+.sui-circular-progress__track {
+  stroke: color-mix(in srgb, var(--sui-tone) 16%, transparent);
+}
+
+.sui-circular-progress__indicator {
+  stroke: currentColor;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 300ms ease;
+}
+
+.sui-circular-progress[data-state='indeterminate'] > svg {
+  animation: sui-spin 900ms linear infinite;
+}
+
+.sui-circular-progress__value {
+  position: absolute;
+  color: var(--foreground);
+  font-size: calc(var(--sui-ring-size) * 0.22);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* ------------------------------------------------------------------ banner */
+
+.sui-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.625rem var(--sui-surface-padding);
+  border-bottom: var(--sui-border-width) solid color-mix(in srgb, var(--sui-tone) 30%, var(--border));
+  background: color-mix(in srgb, var(--sui-tone) 10%, var(--background));
+  color: var(--foreground);
+  font-size: 0.875rem;
+}
+
+.sui-banner__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--sui-tone);
+}
+
+.sui-banner__message {
+  flex: 1 1 16rem;
+  min-width: 0;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.sui-banner__title {
+  font-weight: var(--sui-title-font-weight);
+}
+
+.sui-banner__action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sui-gap);
+}
+
+.sui-banner__close {
+  display: inline-flex;
+  flex: none;
+  margin-inline-start: auto;
+  padding: 0.25rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.sui-banner__close:hover {
+  background: color-mix(in srgb, var(--sui-tone) 14%, transparent);
+  color: var(--foreground);
+}

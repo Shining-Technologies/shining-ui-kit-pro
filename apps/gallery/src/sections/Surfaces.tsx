@@ -6,6 +6,7 @@ import {
   AvatarFallback,
   AvatarGroup,
   Badge,
+  Banner,
   BreakdownList,
   Button,
   Card,
@@ -17,6 +18,7 @@ import {
   CardIcon,
   CardTitle,
   CheckCircleIcon,
+  CircularProgress,
   ClockIcon,
   Empty,
   InboxIcon,
@@ -25,6 +27,7 @@ import {
   MetricGrid,
   MetricTile,
   Progress,
+  RefreshIcon,
   SegmentedBar,
   Separator,
   Skeleton,
@@ -564,6 +567,100 @@ export function Surfaces() {
           <p className="muted">
             The last one is indeterminate — no value to show, so it shows activity.
           </p>
+        </div>
+      </Demo>
+
+      <Demo
+        title="Circular progress"
+        note="Progress as a ring, for a tile or a header with no room for a bar. The arc is a percentage of the path, so it is exact at every size; a null value spins."
+        code={`
+<CircularProgress value={68} showValue size="lg" aria-label="Storage used" />
+<CircularProgress value={null} aria-label="Syncing" />`}
+      >
+        <CircularProgress value={24} size="sm" aria-label="Upload" />
+        <CircularProgress value={68} aria-label="Profile complete" />
+        <CircularProgress value={68} showValue size="lg" aria-label="Storage used" />
+        <CircularProgress value={92} tone="destructive" showValue size="xl" aria-label="Seats used" />
+        <CircularProgress value={100} tone="success" size="lg" aria-label="Checks passed">
+          <CheckCircleIcon />
+        </CircularProgress>
+        <CircularProgress value={null} aria-label="Syncing" />
+      </Demo>
+
+      <Demo
+        title="Banner"
+        note="A message about the whole app — a trial ending, maintenance, a lost connection — as a strip at the edge of the page. Alert is the in-page note; Banner has room for an action and a close button."
+        inline={false}
+        code={`
+<Banner tone="warning" title="Scheduled maintenance" dismissible
+  action={<Button size="sm" variant="outline">Details</Button>}>
+  The app is read-only on Sunday from 22:00 to 23:00 AEST.
+</Banner>`}
+      >
+        <div className="stack-sm">
+          <Banner tone="info" title="Your trial ends in 6 days." action={<Button size="sm">Upgrade</Button>}>
+            Choose a plan to keep your jobs, crews and invoices.
+          </Banner>
+          <Banner
+            tone="warning"
+            title="Scheduled maintenance"
+            dismissible
+            action={
+              <Button size="sm" variant="outline">
+                Details
+              </Button>
+            }
+          >
+            The app is read-only on Sunday from 22:00 to 23:00 AEST.
+          </Banner>
+          <Banner tone="destructive" title="Payment failed." action={<Button size="sm" variant="destructive">Update card</Button>}>
+            We could not charge the card ending 4242.
+          </Banner>
+          <Banner tone="success" dismissible>
+            Import finished: 1,240 customers added.
+          </Banner>
+        </div>
+      </Demo>
+
+      <Demo
+        title="Empty, error, success and offline states"
+        note="One component for every state a view can be in. status sets the glyph, its tint and the role: an error is announced as an alert, loading is marked busy."
+        inline={false}
+        code={`
+<Empty status="error" title="Could not load invoices"
+  description="The server did not answer."
+  actions={<Button size="sm" onClick={retry}>Try again</Button>} />
+<Empty status="loading" title="Loading invoices" />
+<Empty status="success" title="All caught up" />
+<Empty status="offline" title="You are offline" />`}
+      >
+        <div className="grid-2">
+          <Card>
+            <Empty
+              status="error"
+              title="Could not load invoices"
+              description="The server did not answer. Your filters are kept."
+              actions={
+                <Button size="sm" variant="outline">
+                  <RefreshIcon />
+                  Try again
+                </Button>
+              }
+            />
+          </Card>
+          <Card>
+            <Empty status="loading" title="Loading invoices" description="Fetching the last 90 days." />
+          </Card>
+          <Card>
+            <Empty status="success" title="All caught up" description="Every invoice this month is paid." />
+          </Card>
+          <Card>
+            <Empty
+              status="offline"
+              title="You are offline"
+              description="Changes are saved on this device and sent when you reconnect."
+            />
+          </Card>
         </div>
       </Demo>
 

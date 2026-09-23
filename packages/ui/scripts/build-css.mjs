@@ -34,6 +34,8 @@ const COMPONENTS = [
   'inputs',
   'shell',
   'sidebar',
+  'layout',
+  'data-display',
 ]
 
 const LAYER_ORDER = '@layer theme, base, components, utilities;'
