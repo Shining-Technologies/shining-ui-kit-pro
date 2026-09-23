@@ -1,0 +1,56 @@
+name: Gallery
+
+# Builds the component gallery and deploys it to GitHub Pages.
+#
+# Independent of release.yml: deploying the gallery never versions or
+# publishes anything to npm.
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # A project page is served from /<repo>/, not /. Passed here rather than
+      # in vite.config.ts so `pnpm dev` and local previews keep serving from /.
+      - name: Build gallery
+        run: pnpm --filter @shining-technologies/ui-gallery exec vite build --base=/${{ github.event.repository.name }}/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/gallery/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
