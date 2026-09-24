@@ -57,7 +57,8 @@ let checked = 0
 
 for await (const file of walk(root)) {
   const source = await readFile(file, 'utf8')
-  const body = source.replace(/^```[\s\S]*?^```/gm, '')
+  // Skip code: fenced blocks, and inline spans, where `[x](y)` is an example, not a link.
+  const body = source.replace(/^```[\s\S]*?^```/gm, '').replace(/`[^`\n]*`/g, '')
 
   for (const [, href] of body.matchAll(LINK)) {
     if (/^(https?:|mailto:|#)/.test(href)) continue
