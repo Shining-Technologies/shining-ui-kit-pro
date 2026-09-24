@@ -47,6 +47,8 @@ To publish from your own machine instead, run `npm login` once.
 
 ## Before every release
 
+Write the version's release notes page and index row as [docs/releases/README.md](../releases/README.md) describes; `pnpm test` fails without them, and once the tag is pushed the page becomes the GitHub Release.
+
 ```bash
 pnpm install --frozen-lockfile
 pnpm check                 # lint, type checks, all test suites, docs links
