@@ -1,6 +1,6 @@
 # @shining-technologies/ui v2.0.1
 
-Released 2026-09-15 · Major · [CHANGELOG entry](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/c4977fd52c217e39da2a6375a9edfa01e278019e/packages/ui/CHANGELOG.md#201)
+Released 2026-09-15 · Major · [CHANGELOG entry](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/%40shining-technologies%2Fui%402.0.1/packages/ui/CHANGELOG.md#201)
 
 The first stable release of `@shining-technologies/ui`: 2.0.0-rc.0 plus one field box for every
 input, inline filters on one toolbar line, and `NumberInput` without stepper buttons by default.
@@ -39,7 +39,7 @@ input, inline filters on one toolbar line, and `NumberInput` without stepper but
 - From 2.0.0-rc.0: bump the pin, then apply the class rename and add `steppers` where the buttons
   are wanted.
 - From the V1 packages: follow
-  [MIGRATION.md](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/c4977fd52c217e39da2a6375a9edfa01e278019e/packages/ui/MIGRATION.md)
+  [MIGRATION.md](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/%40shining-technologies%2Fui%402.0.1/packages/ui/MIGRATION.md)
   and the 2.0.0-rc.0 notes.
 
 ## Compatibility
@@ -47,5 +47,3 @@ input, inline filters on one toolbar line, and `NumberInput` without stepper but
 - 2.0.0 was never published to npm, so this is the first stable 2.x and the major bump from V1.
 - `NumberInput` without `steppers` renders no buttons, and fields, filter toolbars and option
   lists look different: review screenshots.
-- No git tag and no GitHub Release exist for this version; the links above are pinned to the
-  commit that set it, `c4977fd`.

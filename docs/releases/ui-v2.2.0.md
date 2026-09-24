@@ -1,6 +1,6 @@
 # @shining-technologies/ui v2.2.0
 
-Released 2026-09-24 · Minor · [CHANGELOG entry](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/ecb0f076518a7c43c055cef0fcb2c2770b970656/packages/ui/CHANGELOG.md#220)
+Released 2026-09-24 · Minor · [CHANGELOG entry](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/%40shining-technologies%2Fui%402.2.0/packages/ui/CHANGELOG.md#220)
 
 Components for record views that are not tables: filter bars and chips, bulk actions, timelines,
 trees, a kanban board, an event calendar, status panels and layout primitives. Additive.
@@ -42,5 +42,3 @@ None.
 
 - Additive: no existing prop, class or default changed. `Empty` without `status` renders as
   before, and the DataTable selection bar without actions has the same markup.
-- No git tag and no GitHub Release exist for this version; the links above are pinned to the
-  commit that set it, `ecb0f07`.
