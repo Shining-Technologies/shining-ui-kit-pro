@@ -62,7 +62,11 @@ export const MergeField = Node.create<MergeFieldOptions>({
     const attrs = { ...HTMLAttributes }
     delete attrs.path
     delete attrs.fallback
-    return ['span', mergeAttributes(attrs, { 'data-merge-field': path }), formatMergeTag(path, fallback)]
+    return [
+      'span',
+      mergeAttributes(attrs, { 'data-merge-field': path }),
+      formatMergeTag(path, fallback),
+    ]
   },
 
   renderText({ node }) {

@@ -91,37 +91,127 @@ export function Toolbar({ editor, mergeFields, brandColors, onUploadImage }: Too
     <div className="seb-toolbar-wrap">
       <div className="seb-toolbar" role="toolbar" aria-label="Formatting">
         <div className="seb-group">
-          <Tool label="Undo" disabled={!state.canUndo} onClick={() => chain().undo().run()}>↶</Tool>
-          <Tool label="Redo" disabled={!state.canRedo} onClick={() => chain().redo().run()}>↷</Tool>
+          <Tool label="Undo" disabled={!state.canUndo} onClick={() => chain().undo().run()}>
+            ↶
+          </Tool>
+          <Tool label="Redo" disabled={!state.canRedo} onClick={() => chain().redo().run()}>
+            ↷
+          </Tool>
         </div>
         <div className="seb-group">
-          <Tool label="Paragraph" active={!state.h1 && !state.h2 && !state.h3} onClick={() => chain().setParagraph().run()}>¶</Tool>
-          <Tool label="Heading 1" active={state.h1} onClick={() => chain().toggleHeading({ level: 1 }).run()}>H1</Tool>
-          <Tool label="Heading 2" active={state.h2} onClick={() => chain().toggleHeading({ level: 2 }).run()}>H2</Tool>
-          <Tool label="Heading 3" active={state.h3} onClick={() => chain().toggleHeading({ level: 3 }).run()}>H3</Tool>
+          <Tool
+            label="Paragraph"
+            active={!state.h1 && !state.h2 && !state.h3}
+            onClick={() => chain().setParagraph().run()}
+          >
+            ¶
+          </Tool>
+          <Tool
+            label="Heading 1"
+            active={state.h1}
+            onClick={() => chain().toggleHeading({ level: 1 }).run()}
+          >
+            H1
+          </Tool>
+          <Tool
+            label="Heading 2"
+            active={state.h2}
+            onClick={() => chain().toggleHeading({ level: 2 }).run()}
+          >
+            H2
+          </Tool>
+          <Tool
+            label="Heading 3"
+            active={state.h3}
+            onClick={() => chain().toggleHeading({ level: 3 }).run()}
+          >
+            H3
+          </Tool>
         </div>
         <div className="seb-group">
-          <Tool label="Bold" active={state.bold} onClick={() => chain().toggleBold().run()}><b>B</b></Tool>
-          <Tool label="Italic" active={state.italic} onClick={() => chain().toggleItalic().run()}><i>I</i></Tool>
-          <Tool label="Underline" active={state.underline} onClick={() => chain().toggleUnderline().run()}><u>U</u></Tool>
-          <Tool label="Strikethrough" active={state.strike} onClick={() => chain().toggleStrike().run()}><s>S</s></Tool>
-          <Tool label="Text colour" active={panel === 'color'} onClick={() => toggle('color')}>A</Tool>
+          <Tool label="Bold" active={state.bold} onClick={() => chain().toggleBold().run()}>
+            <b>B</b>
+          </Tool>
+          <Tool label="Italic" active={state.italic} onClick={() => chain().toggleItalic().run()}>
+            <i>I</i>
+          </Tool>
+          <Tool
+            label="Underline"
+            active={state.underline}
+            onClick={() => chain().toggleUnderline().run()}
+          >
+            <u>U</u>
+          </Tool>
+          <Tool
+            label="Strikethrough"
+            active={state.strike}
+            onClick={() => chain().toggleStrike().run()}
+          >
+            <s>S</s>
+          </Tool>
+          <Tool label="Text colour" active={panel === 'color'} onClick={() => toggle('color')}>
+            A
+          </Tool>
         </div>
         <div className="seb-group">
-          <Tool label="Align left" active={state.left} onClick={() => chain().setTextAlign('left').run()}>⇤</Tool>
-          <Tool label="Align centre" active={state.center} onClick={() => chain().setTextAlign('center').run()}>↔</Tool>
-          <Tool label="Align right" active={state.right} onClick={() => chain().setTextAlign('right').run()}>⇥</Tool>
+          <Tool
+            label="Align left"
+            active={state.left}
+            onClick={() => chain().setTextAlign('left').run()}
+          >
+            ⇤
+          </Tool>
+          <Tool
+            label="Align centre"
+            active={state.center}
+            onClick={() => chain().setTextAlign('center').run()}
+          >
+            ↔
+          </Tool>
+          <Tool
+            label="Align right"
+            active={state.right}
+            onClick={() => chain().setTextAlign('right').run()}
+          >
+            ⇥
+          </Tool>
         </div>
         <div className="seb-group">
-          <Tool label="Bulleted list" active={state.bullet} onClick={() => chain().toggleBulletList().run()}>•</Tool>
-          <Tool label="Numbered list" active={state.ordered} onClick={() => chain().toggleOrderedList().run()}>1.</Tool>
-          <Tool label="Quote" active={state.quote} onClick={() => chain().toggleBlockquote().run()}>❝</Tool>
-          <Tool label="Divider" onClick={() => chain().setHorizontalRule().run()}>―</Tool>
+          <Tool
+            label="Bulleted list"
+            active={state.bullet}
+            onClick={() => chain().toggleBulletList().run()}
+          >
+            •
+          </Tool>
+          <Tool
+            label="Numbered list"
+            active={state.ordered}
+            onClick={() => chain().toggleOrderedList().run()}
+          >
+            1.
+          </Tool>
+          <Tool label="Quote" active={state.quote} onClick={() => chain().toggleBlockquote().run()}>
+            ❝
+          </Tool>
+          <Tool label="Divider" onClick={() => chain().setHorizontalRule().run()}>
+            ―
+          </Tool>
         </div>
         <div className="seb-group">
-          <Tool label="Link" active={state.link || panel === 'link'} onClick={() => toggle('link')}>🔗</Tool>
-          <Tool label="Button" active={state.button || panel === 'button'} onClick={() => toggle('button')}>▭</Tool>
-          <Tool label="Image" active={panel === 'image'} onClick={() => toggle('image')}>🖼</Tool>
+          <Tool label="Link" active={state.link || panel === 'link'} onClick={() => toggle('link')}>
+            🔗
+          </Tool>
+          <Tool
+            label="Button"
+            active={state.button || panel === 'button'}
+            onClick={() => toggle('button')}
+          >
+            ▭
+          </Tool>
+          <Tool label="Image" active={panel === 'image'} onClick={() => toggle('image')}>
+            🖼
+          </Tool>
         </div>
         <div className="seb-group">
           <MergeFieldPicker
@@ -158,7 +248,9 @@ export function Toolbar({ editor, mergeFields, brandColors, onUploadImage }: Too
         <ImagePanel
           onUploadImage={onUploadImage}
           onApply={({ url, alt }) => {
-            chain().setImage({ src: url, alt: alt ?? '' }).run()
+            chain()
+              .setImage({ src: url, alt: alt ?? '' })
+              .run()
             setPanel(null)
           }}
           onCancel={() => setPanel(null)}
@@ -240,7 +332,11 @@ function LinkPanel({
     <PanelForm
       label="Link"
       onCancel={onCancel}
-      onSubmit={() => (validUrl(href) ? onApply(href.trim()) : setError('Use an address starting with https://, mailto: or tel:'))}
+      onSubmit={() =>
+        validUrl(href)
+          ? onApply(href.trim())
+          : setError('Use an address starting with https://, mailto: or tel:')
+      }
       extra={
         initial ? (
           <button type="button" className="seb-action" onClick={onRemove}>
@@ -288,21 +384,37 @@ function ButtonPanel({
       onCancel={onCancel}
       onSubmit={() => {
         if (!label.trim()) return setError('Give the button a label')
-        if (!validUrl(href)) return setError('Use an address starting with https://, mailto: or tel:')
+        if (!validUrl(href))
+          return setError('Use an address starting with https://, mailto: or tel:')
         onApply({ label: label.trim(), href: href.trim(), align })
       }}
     >
       <label className="seb-field">
         <span>Label</span>
-        <input className="seb-input" autoFocus value={label} placeholder="Book now" onChange={(e) => setLabel(e.target.value)} />
+        <input
+          className="seb-input"
+          autoFocus
+          value={label}
+          placeholder="Book now"
+          onChange={(e) => setLabel(e.target.value)}
+        />
       </label>
       <label className="seb-field">
         <span>Link address</span>
-        <input className="seb-input" value={href} placeholder="https://" onChange={(e) => setHref(e.target.value)} />
+        <input
+          className="seb-input"
+          value={href}
+          placeholder="https://"
+          onChange={(e) => setHref(e.target.value)}
+        />
       </label>
       <label className="seb-field">
         <span>Alignment</span>
-        <select className="seb-input" value={align} onChange={(e) => setAlign(e.target.value as ButtonAlign)}>
+        <select
+          className="seb-input"
+          value={align}
+          onChange={(e) => setAlign(e.target.value as ButtonAlign)}
+        >
           <option value="left">Left</option>
           <option value="center">Centre</option>
           <option value="right">Right</option>
@@ -349,7 +461,8 @@ function ImagePanel({
       submitLabel="Insert image"
       onCancel={onCancel}
       onSubmit={() => {
-        if (!/^https?:/i.test(url.trim())) return setError('Upload an image or give an https:// address')
+        if (!/^https?:/i.test(url.trim()))
+          return setError('Upload an image or give an https:// address')
         onApply({ url: url.trim(), alt: alt.trim() })
       }}
     >
@@ -369,11 +482,21 @@ function ImagePanel({
       )}
       <label className="seb-field">
         <span>Image address</span>
-        <input className="seb-input" value={url} placeholder="https://" onChange={(e) => setUrl(e.target.value)} />
+        <input
+          className="seb-input"
+          value={url}
+          placeholder="https://"
+          onChange={(e) => setUrl(e.target.value)}
+        />
       </label>
       <label className="seb-field">
         <span>Description (alt text)</span>
-        <input className="seb-input" value={alt} placeholder="What the image shows" onChange={(e) => setAlt(e.target.value)} />
+        <input
+          className="seb-input"
+          value={alt}
+          placeholder="What the image shows"
+          onChange={(e) => setAlt(e.target.value)}
+        />
       </label>
       {error && <p className="seb-error">{error}</p>}
     </PanelForm>

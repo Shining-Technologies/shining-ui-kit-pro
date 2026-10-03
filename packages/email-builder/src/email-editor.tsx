@@ -4,7 +4,12 @@ import type { Editor } from '@tiptap/core'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { useEffect, useMemo, useRef } from 'react'
 import { chipMergeTags } from './chips'
-import { emptyDesign, toRichTextDesign, type MergeFieldDefinition, type RichTextDesign } from './design'
+import {
+  emptyDesign,
+  toRichTextDesign,
+  type MergeFieldDefinition,
+  type RichTextDesign,
+} from './design'
 import { emailExtensions } from './extensions'
 import { Toolbar, type UploadedImage } from './toolbar'
 
@@ -71,12 +76,18 @@ export function EmailEditor({
 
   const editor = useEditor(
     {
-      extensions: emailExtensions({ mergeFields, getMergeFields: () => fields.current, placeholder }),
+      extensions: emailExtensions({
+        mergeFields,
+        getMergeFields: () => fields.current,
+        placeholder,
+      }),
       content: chipMergeTags(design?.html ?? ''),
       editable: !disabled && design !== null,
       // Created after mount: safe under server rendering and the App Router.
       immediatelyRender: false,
-      editorProps: { attributes: { 'aria-label': ariaLabel, 'aria-multiline': 'true', role: 'textbox' } },
+      editorProps: {
+        attributes: { 'aria-label': ariaLabel, 'aria-multiline': 'true', role: 'textbox' },
+      },
       onUpdate: ({ editor: current }) => {
         const html = htmlOf(current)
         lastEmitted.current = html

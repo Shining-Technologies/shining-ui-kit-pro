@@ -12,7 +12,12 @@ import {
 
 describe('designs', () => {
   it('builds and recognises rich-text designs', () => {
-    expect(emptyDesign('<p>x</p>')).toEqual({ version: 1, mode: 'richtext', settings: {}, html: '<p>x</p>' })
+    expect(emptyDesign('<p>x</p>')).toEqual({
+      version: 1,
+      mode: 'richtext',
+      settings: {},
+      html: '<p>x</p>',
+    })
     expect(isRichTextDesign({ html: '<p>x</p>' })).toBe(true)
     expect(isRichTextDesign({ mode: 'blocks', rows: [] })).toBe(false)
     expect(isRichTextDesign({ mode: 'richtext', version: 2 })).toBe(false)
@@ -35,8 +40,14 @@ describe('merge tags', () => {
   })
 
   it('parses both syntaxes', () => {
-    expect(parseMergeTag('Hi {{ contact.first_name|there }}!')).toEqual({ path: 'contact.first_name', fallback: 'there' })
-    expect(parseMergeTag('{{ contact.first_name | default:"friend" }}')).toEqual({ path: 'contact.first_name', fallback: 'friend' })
+    expect(parseMergeTag('Hi {{ contact.first_name|there }}!')).toEqual({
+      path: 'contact.first_name',
+      fallback: 'there',
+    })
+    expect(parseMergeTag('{{ contact.first_name | default:"friend" }}')).toEqual({
+      path: 'contact.first_name',
+      fallback: 'friend',
+    })
     expect(parseMergeTag('{% if %}')).toBeNull()
   })
 
@@ -47,10 +58,14 @@ describe('merge tags', () => {
   })
 
   it('inserts at the caret', () => {
-    expect(insertAtCursor({ value: 'Hello !', selectionStart: 6, selectionEnd: 6 }, '{{ x }}')).toEqual({
+    expect(
+      insertAtCursor({ value: 'Hello !', selectionStart: 6, selectionEnd: 6 }, '{{ x }}'),
+    ).toEqual({
       value: 'Hello {{ x }}!',
       caret: 13,
     })
-    expect(insertAtCursor({ value: 'ab', selectionStart: null, selectionEnd: null }, 'c').value).toBe('abc')
+    expect(
+      insertAtCursor({ value: 'ab', selectionStart: null, selectionEnd: null }, 'c').value,
+    ).toBe('abc')
   })
 })

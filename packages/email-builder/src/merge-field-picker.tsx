@@ -83,7 +83,11 @@ export function MergeFieldPicker({
   }
 
   return (
-    <div className={['seb-picker', className].filter(Boolean).join(' ')} ref={root} onKeyDown={onKeyDown}>
+    <div
+      className={['seb-picker', className].filter(Boolean).join(' ')}
+      ref={root}
+      onKeyDown={onKeyDown}
+    >
       <button
         type="button"
         className="seb-tool seb-tool-text"

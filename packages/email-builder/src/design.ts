@@ -65,7 +65,8 @@ export function toRichTextDesign(value: unknown): RichTextDesign | null {
  * server's rule: anything else stays literal text). */
 export const MERGE_PATH = /^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*$/
 
-const TAG = /\{\{\s*([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*)\s*(?:\|\s*(?:default\s*:\s*)?([^}]*?))?\s*\}\}/g
+const TAG =
+  /\{\{\s*([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*)\s*(?:\|\s*(?:default\s*:\s*)?([^}]*?))?\s*\}\}/g
 
 export function isMergePath(path: string): boolean {
   return MERGE_PATH.test(path)
@@ -91,7 +92,11 @@ export function parseMergeTag(text: string): ParsedMergeTag | null {
   const match = TAG.exec(text)
   if (!match || !match[1]) return null
   let fallback = (match[2] ?? '').trim()
-  if (fallback.length >= 2 && fallback[0] === fallback[fallback.length - 1] && `"'`.includes(fallback[0]!)) {
+  if (
+    fallback.length >= 2 &&
+    fallback[0] === fallback[fallback.length - 1] &&
+    `"'`.includes(fallback[0]!)
+  ) {
     fallback = fallback.slice(1, -1)
   }
   return { path: match[1], fallback }

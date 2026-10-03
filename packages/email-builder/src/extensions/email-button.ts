@@ -65,7 +65,11 @@ export const EmailButton = Node.create({
     delete attrs.href
     delete attrs.label
     delete attrs.align
-    return ['a', mergeAttributes(attrs, { 'data-type': 'button', 'data-align': align, href }), label]
+    return [
+      'a',
+      mergeAttributes(attrs, { 'data-type': 'button', 'data-align': align, href }),
+      label,
+    ]
   },
 
   renderText({ node }) {

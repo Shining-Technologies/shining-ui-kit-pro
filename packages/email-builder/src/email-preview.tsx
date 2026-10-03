@@ -50,7 +50,10 @@ export function EmailPreview({
   }
 
   return (
-    <section className={['seb-preview', className].filter(Boolean).join(' ')} aria-label="Email preview">
+    <section
+      className={['seb-preview', className].filter(Boolean).join(' ')}
+      aria-label="Email preview"
+    >
       <header className="seb-preview-head">
         {(subject || preheader) && (
           <div className="seb-preview-inbox">

@@ -18,7 +18,8 @@ export function chipMergeTags(html: string): string {
   const texts: Text[] = []
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const text = node as Text
-    if (text.data.includes('{{') && !text.parentElement?.closest('[data-merge-field]')) texts.push(text)
+    if (text.data.includes('{{') && !text.parentElement?.closest('[data-merge-field]'))
+      texts.push(text)
   }
   let changed = false
   for (const text of texts) {

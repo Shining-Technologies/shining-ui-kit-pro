@@ -48,7 +48,8 @@ export function emailExtensions({
       HTMLAttributes: { rel: null, target: null },
       // The server's rule: http(s), mailto and tel, or a merge field that
       // becomes one ({{ unsubscribe_url }}). Anything else would be dropped.
-      isAllowedUri: (url) => /^(https?:|mailto:|tel:)/i.test(url.trim()) || /^\{\{[^}]+\}\}/.test(url.trim()),
+      isAllowedUri: (url) =>
+        /^(https?:|mailto:|tel:)/i.test(url.trim()) || /^\{\{[^}]+\}\}/.test(url.trim()),
     }),
     Underline,
     TextStyle,

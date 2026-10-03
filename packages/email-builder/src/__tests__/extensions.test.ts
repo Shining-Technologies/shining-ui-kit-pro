@@ -17,17 +17,22 @@ afterEach(() => {
 
 describe('the document round-trips through the server shape', () => {
   it('keeps merge fields as span + tag text', () => {
-    const html = '<p>Hi <span data-merge-field="contact.first_name">{{ contact.first_name|there }}</span>,</p>'
+    const html =
+      '<p>Hi <span data-merge-field="contact.first_name">{{ contact.first_name|there }}</span>,</p>'
     expect(make(html).getHTML()).toBe(html)
   })
 
   it('reads a merge field written with the nexus syntax', () => {
-    const e = make('<p><span data-merge-field="contact.first_name">{{ contact.first_name | default:"friend" }}</span></p>')
+    const e = make(
+      '<p><span data-merge-field="contact.first_name">{{ contact.first_name | default:"friend" }}</span></p>',
+    )
     expect(e.getHTML()).toContain('{{ contact.first_name|friend }}')
   })
 
   it('drops a merge-field span with an unsafe path', () => {
-    expect(make('<p><span data-merge-field="__class__">x</span></p>').getHTML()).not.toContain('data-merge-field')
+    expect(make('<p><span data-merge-field="__class__">x</span></p>').getHTML()).not.toContain(
+      'data-merge-field',
+    )
   })
 
   it('keeps the button node', () => {
@@ -41,7 +46,19 @@ describe('the document round-trips through the server shape', () => {
       '<span style="color: rgb(255, 0, 0);">red</span> <a href="https://x.test/">link</a></p>' +
       '<ul><li><p>one</p></li></ul><blockquote><p>q</p></blockquote><hr><img src="https://cdn.test/a.png" alt="A">'
     const out = make(html).getHTML()
-    for (const part of ['<h2 style="text-align: center;">', '<strong>', '<em>', '<u>', '<s>', 'color: rgb(255, 0, 0)', 'href="https://x.test/"', '<ul>', '<blockquote>', '<hr>', 'alt="A"']) {
+    for (const part of [
+      '<h2 style="text-align: center;">',
+      '<strong>',
+      '<em>',
+      '<u>',
+      '<s>',
+      'color: rgb(255, 0, 0)',
+      'href="https://x.test/"',
+      '<ul>',
+      '<blockquote>',
+      '<hr>',
+      'alt="A"',
+    ]) {
       expect(out).toContain(part)
     }
     expect(out).not.toContain('target=')
@@ -49,7 +66,9 @@ describe('the document round-trips through the server shape', () => {
   })
 
   it('refuses javascript: links and keeps merge-field links', () => {
-    const out = make('<p><a href="javascript:alert(1)">bad</a> <a href="{{ unsubscribe_url }}">u</a></p>').getHTML()
+    const out = make(
+      '<p><a href="javascript:alert(1)">bad</a> <a href="{{ unsubscribe_url }}">u</a></p>',
+    ).getHTML()
     expect(out).not.toContain('javascript:')
     expect(out).toContain('href="{{ unsubscribe_url }}"')
   })
@@ -60,7 +79,9 @@ describe('commands', () => {
     const e = make('<p>Hi </p>')
     e.commands.focus('end')
     expect(e.commands.insertMergeField('contact.first_name', 'there')).toBe(true)
-    expect(e.getHTML()).toContain('<span data-merge-field="contact.first_name">{{ contact.first_name|there }}</span>')
+    expect(e.getHTML()).toContain(
+      '<span data-merge-field="contact.first_name">{{ contact.first_name|there }}</span>',
+    )
     expect(e.commands.insertMergeField('bad path')).toBe(false)
   })
 
@@ -68,7 +89,9 @@ describe('commands', () => {
     const e = make('<p>x</p>')
     e.commands.focus('end')
     e.commands.setEmailButton({ label: 'Go', href: 'https://a.test/', align: 'left' })
-    expect(e.getHTML()).toContain('<a data-type="button" data-align="left" href="https://a.test/">Go</a>')
+    expect(e.getHTML()).toContain(
+      '<a data-type="button" data-align="left" href="https://a.test/">Go</a>',
+    )
     let position = -1
     e.state.doc.descendants((node, pos) => {
       if (node.type.name === 'emailButton') position = pos
@@ -81,7 +104,9 @@ describe('commands', () => {
   })
 
   it('writes plain text with tags and button URLs', () => {
-    const e = make('<p>Hi <span data-merge-field="contact.first_name">{{ contact.first_name }}</span></p><a data-type="button" href="https://a.test/">Go</a>')
+    const e = make(
+      '<p>Hi <span data-merge-field="contact.first_name">{{ contact.first_name }}</span></p><a data-type="button" href="https://a.test/">Go</a>',
+    )
     const text = e.getText()
     expect(text).toContain('Hi {{ contact.first_name }}')
     expect(text).toContain('Go: https://a.test/')

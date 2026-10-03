@@ -25,6 +25,8 @@ describe(`release notes for ${version}`, () => {
 
   it('has a row in the index', () => {
     const index = readFileSync(resolve(RELEASES, 'README.md'), 'utf8')
-    expect(index).toContain(`| [ui-v${version}](${page}) |`)
+    // Prettier pads table cells, so the row is matched up to the cell's padding.
+    const escaped = `[ui-v${version}](${page})`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    expect(index).toMatch(new RegExp(`^\\| ${escaped} *\\|`, 'm'))
   })
 })

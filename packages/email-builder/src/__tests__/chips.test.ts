@@ -3,7 +3,9 @@ import { chipMergeTags } from '../chips'
 
 describe('chipMergeTags', () => {
   it('turns text tags into merge-field spans, fallback and all', () => {
-    expect(chipMergeTags('<p>Hi {{ contact.first_name|there }}, from {{organization.name}}</p>')).toBe(
+    expect(
+      chipMergeTags('<p>Hi {{ contact.first_name|there }}, from {{organization.name}}</p>'),
+    ).toBe(
       '<p>Hi <span data-merge-field="contact.first_name">{{ contact.first_name|there }}</span>, from ' +
         '<span data-merge-field="organization.name">{{ organization.name }}</span></p>',
     )

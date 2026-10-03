@@ -102,16 +102,22 @@ describe('EmailEditor', () => {
     await userEvent.clear(screen.getByLabelText('Link address'))
     await userEvent.type(screen.getByLabelText('Link address'), 'https://book.test/')
     await userEvent.click(screen.getByRole('button', { name: 'Add button' }))
-    expect(changes.at(-1)!.html).toContain('<a data-type="button" data-align="center" href="https://book.test/">Book now</a>')
+    expect(changes.at(-1)!.html).toContain(
+      '<a data-type="button" data-align="center" href="https://book.test/">Book now</a>',
+    )
   })
 
   it('uploads an image through the caller', async () => {
-    const onUploadImage = vi.fn().mockResolvedValue({ url: 'https://cdn.test/pic.png', alt: 'A pic' })
+    const onUploadImage = vi
+      .fn()
+      .mockResolvedValue({ url: 'https://cdn.test/pic.png', alt: 'A pic' })
     const { changes } = await mountEditor(undefined, { onUploadImage })
     await userEvent.click(screen.getByRole('button', { name: 'Image' }))
     const file = new File(['x'], 'pic.png', { type: 'image/png' })
     await userEvent.upload(screen.getByLabelText('Upload an image'), file)
-    await waitFor(() => expect(screen.getByLabelText('Image address')).toHaveValue('https://cdn.test/pic.png'))
+    await waitFor(() =>
+      expect(screen.getByLabelText('Image address')).toHaveValue('https://cdn.test/pic.png'),
+    )
     await userEvent.click(screen.getByRole('button', { name: 'Insert image' }))
     expect(onUploadImage).toHaveBeenCalledWith(file)
     expect(changes.at(-1)!.html).toContain('<img src="https://cdn.test/pic.png" alt="A pic">')
@@ -127,21 +133,41 @@ describe('EmailEditor', () => {
     expect(document.querySelector('.seb-merge-chip')).toHaveTextContent('contact.first_name')
     const first = editor
     rerender(<EmailEditor {...props} mergeFields={fields} />)
-    rerender(<EmailEditor {...props} value={emptyDesign('<p>Hello {{ contact.first_name }}</p>')} mergeFields={fields} />)
-    await waitFor(() => expect(document.querySelector('.seb-merge-chip')).toHaveTextContent('First name'))
+    rerender(
+      <EmailEditor
+        {...props}
+        value={emptyDesign('<p>Hello {{ contact.first_name }}</p>')}
+        mergeFields={fields}
+      />,
+    )
+    await waitFor(() =>
+      expect(document.querySelector('.seb-merge-chip')).toHaveTextContent('First name'),
+    )
     expect(editor).toBe(first)
     expect((editor as unknown as Editor).isDestroyed).toBe(false)
   })
 
   it('shows a notice instead of editing a block design', async () => {
-    render(<EmailEditor value={{ version: 1, mode: 'blocks', settings: {}, rows: [] }} onChange={() => undefined} />)
+    render(
+      <EmailEditor
+        value={{ version: 1, mode: 'blocks', settings: {}, rows: [] }}
+        onChange={() => undefined}
+      />,
+    )
     expect(screen.getByRole('status')).toHaveTextContent('designed with blocks')
     expect(screen.queryByRole('toolbar')).toBeNull()
   })
 
   it('hides the toolbar when disabled', async () => {
     let ready = false
-    render(<EmailEditor value={emptyDesign('<p>x</p>')} onChange={() => undefined} disabled onReady={() => (ready = true)} />)
+    render(
+      <EmailEditor
+        value={emptyDesign('<p>x</p>')}
+        onChange={() => undefined}
+        disabled
+        onReady={() => (ready = true)}
+      />,
+    )
     await waitFor(() => expect(ready).toBe(true))
     expect(screen.queryByRole('toolbar')).toBeNull()
   })
