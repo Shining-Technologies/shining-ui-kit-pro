@@ -67,6 +67,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # changesets/action reads NPM_TOKEN by this name. Without it the action
+          # falls back to npm trusted publishing (OIDC), which a package that is
+          # not on npm yet cannot use: changesets reports success and nothing is
+          # published (email-builder 0.1.0, 2026-10-03).
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Summary
         if: steps.changesets.outputs.published == 'true'
