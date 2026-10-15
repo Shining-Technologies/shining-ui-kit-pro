@@ -78,6 +78,8 @@ import { BlockEditor } from '@shining-technologies/email-builder'
     save: (name, row) => api.saveRow({ name, row }),
     remove: (id) => api.deleteSavedRow(id),
   }}
+  highlight={serverError} // optional, { path?, blockId?, message } | null
+  onHighlightClear={() => setServerError(null)}
   device={device} // optional, 'desktop' | 'mobile'
   onDeviceChange={setDevice}
   disabled={!canEdit}
@@ -103,6 +105,15 @@ import { BlockEditor } from '@shining-technologies/email-builder'
   back; do not replace it with the server's copy after a save (the server stores designs compact,
   so its copy is not byte-for-byte what the editor emitted) unless you mean to start a new history.
   `value` itself may be compact: the editor fills defaults on read.
+- **Showing a server error.** Pass the refused design's error as `highlight`: `{ path, message }`
+  with the leading path of the server's message (`rows[0].columns[0].blocks[1].url`), or
+  `{ blockId, message }`. The block, column or row it points at is outlined, scrolled into view and
+  selected, and the message shows above the canvas (`role="alert"`). A path into the settings, or one
+  that points at nothing, shows the message alone. The editor drops the highlight when its target is
+  edited or removed, or when the author dismisses it, and calls `onHighlightClear` so the host can
+  stop passing it.
+- **Brand footer text.** `brand.footer_html` (from `GET brand/`) is shown in the footer block above
+  the block's own text, cleaned the same way, as the server renders them in the email's footer.
 - **Merge fields.** `mergeFields` entries are `{ key, label, group?, description? }`. A
   `description` shows as a muted second line in the picker, is searched with the label, and is read
   out with the option (`aria-describedby`). The server's merge-fields list already carries one.

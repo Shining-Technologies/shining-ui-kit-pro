@@ -54,6 +54,10 @@ None. `BlockDesign` is now fully typed (`settings` and `rows` were `Record<strin
   height, or set `--seb-block-editor-height` on it (default `100%`, at least 32rem).
 - `BlockEditor` makes no requests: merge fields, the brand, image upload and saved rows are passed in
   as props and callbacks.
+- `BlockEditor` gains `highlight` (`{ path?, blockId?, message } | null`) and `onHighlightClear` for
+  showing a server validation error: the target is outlined, scrolled to and selected, and the message
+  is announced; it clears when the target is edited. `BrandPreview` gains `footer_html`, shown in the
+  footer block above the block's own text.
 - `MergeFieldDefinition` gains an optional `description`, shown as a muted second line in the merge-field
   picker and searched with the label.
 

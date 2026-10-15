@@ -27,6 +27,14 @@ export interface SavedRowsAdapter {
   remove(id: SavedRow['id']): Promise<void>
 }
 
+/** A server validation error to show on the canvas. Give ``blockId`` or ``path``
+ * (the leading path of the server's message, ``rows[0].columns[0].blocks[1].url``). */
+export interface BlockEditorHighlight {
+  path?: string
+  blockId?: string
+  message: string
+}
+
 export interface BlockEditorProps {
   /** The stored design. ``null``/``undefined`` is an empty block design. */
   value: unknown
@@ -42,6 +50,12 @@ export interface BlockEditorProps {
   device?: Device
   onDeviceChange?: (device: Device) => void
   disabled?: boolean
+  /** Shows a server error: the block, column or row it points at is outlined, scrolled into view
+   * and selected, and the message is announced. It clears when that target is edited. */
+  highlight?: BlockEditorHighlight | null
+  /** Called when the editor drops the highlight (the target was edited or the message dismissed),
+   * so the host can stop passing it. */
+  onHighlightClear?: () => void
   className?: string
   'aria-label'?: string
 }

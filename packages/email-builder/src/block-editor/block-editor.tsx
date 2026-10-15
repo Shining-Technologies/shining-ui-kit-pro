@@ -32,6 +32,7 @@ import {
   findBlock,
   findColumn,
   findRow,
+  issueTarget,
   removeBlock as removeBlockIn,
   removeRow as removeRowIn,
   setRowLayout,
@@ -111,6 +112,46 @@ function newProblem(previous: BlockDesign, next: BlockDesign): string | null {
     (issue) => issue.severity === 'error' && !known.has(`${issue.path}|${issue.message}`),
   )
   return fresh ? fresh.message : null
+}
+
+type HighlightTarget =
+  | { kind: 'block'; id: string }
+  | { kind: 'column'; id: string }
+  | { kind: 'row'; id: string }
+  | { kind: 'settings' }
+  | { kind: 'design' }
+
+interface ActiveHighlight {
+  key: string
+  target: HighlightTarget
+  /** The target as it was when the error was shown; a different value means it was edited. */
+  json: string
+}
+
+/** The block, column or row an error points at; the settings or the whole design otherwise. */
+function resolveHighlight(
+  design: BlockDesign,
+  highlight: NonNullable<BlockEditorProps['highlight']>,
+): HighlightTarget {
+  if (highlight.blockId && findBlock(design, highlight.blockId))
+    return { kind: 'block', id: highlight.blockId }
+  const found = highlight.path ? issueTarget(design, highlight.path) : null
+  if (found?.kind === 'settings') return { kind: 'settings' }
+  if ((found?.kind === 'block' || found?.kind === 'column' || found?.kind === 'row') && found.id)
+    return { kind: found.kind, id: found.id }
+  return { kind: 'design' }
+}
+
+function snapshotOf(design: BlockDesign, target: HighlightTarget): string {
+  if (target.kind === 'settings') return JSON.stringify(design.settings)
+  if (target.kind === 'design') return JSON.stringify(design)
+  const found =
+    target.kind === 'block'
+      ? findBlock(design, target.id)?.block
+      : target.kind === 'column'
+        ? findColumn(design, target.id)?.column
+        : findRow(design, target.id)?.row
+  return found ? JSON.stringify(found) : '(removed)'
 }
 
 /** Rows and layouts are placed by the row under the pointer; blocks by the block or column. */
@@ -222,6 +263,8 @@ function Workspace({
   device: deviceProp,
   onDeviceChange,
   disabled = false,
+  highlight,
+  onHighlightClear,
   className,
   'aria-label': ariaLabel = 'Email builder',
 }: BlockEditorProps & { design: BlockDesign }) {
@@ -252,6 +295,63 @@ function Workspace({
           : findBlock(design, id)
     return exists ? rawSelection : null
   }, [rawSelection, design])
+  /* -- a server error shown on the canvas ----------------------------------- */
+
+  const highlightKey = highlight
+    ? JSON.stringify([highlight.path ?? '', highlight.blockId ?? '', highlight.message])
+    : ''
+  const [dismissedKey, setDismissedKey] = useState('')
+  const shown = highlight && highlightKey !== dismissedKey ? highlight : null
+  const shownKey = shown ? highlightKey : ''
+  const shownRef = useRef(shown)
+  shownRef.current = shown
+  const clearRef = useRef(onHighlightClear)
+  clearRef.current = onHighlightClear
+  const [active, setActive] = useState<ActiveHighlight | null>(null)
+
+  const dismissHighlight = useCallback(() => {
+    setDismissedKey(highlightKey)
+    setActive(null)
+    clearRef.current?.()
+  }, [highlightKey])
+
+  // Once the host drops the highlight, the same error may be shown again later.
+  useEffect(() => {
+    if (!highlightKey) setDismissedKey('')
+  }, [highlightKey])
+
+  useEffect(() => {
+    const current = shownRef.current
+    if (!current) {
+      setActive(null)
+      return
+    }
+    const target = resolveHighlight(latest.current, current)
+    setActive({ key: shownKey, target, json: snapshotOf(latest.current, target) })
+    setRawSelection(
+      target.kind === 'block' || target.kind === 'column' || target.kind === 'row'
+        ? { kind: target.kind, id: target.id }
+        : null,
+    )
+    setFocusRequest(null)
+  }, [shownKey, latest])
+
+  useEffect(() => {
+    if (!active || active.key !== shownKey) return
+    const { target } = active
+    if (target.kind !== 'block' && target.kind !== 'column' && target.kind !== 'row') return
+    const attr = target.kind === 'block' ? 'data-block-id' : `data-${target.kind}-id`
+    const element = root.current?.querySelector<HTMLElement>(`[${attr}="${CSS.escape(target.id)}"]`)
+    if (element && typeof element.scrollIntoView === 'function')
+      element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [active, shownKey])
+
+  // Editing what the error points at drops it (so does removing it).
+  useEffect(() => {
+    if (!active || active.key !== shownKey) return
+    if (snapshotOf(design, active.target) !== active.json) dismissHighlight()
+  }, [design, active, shownKey, dismissHighlight])
+
   const selectionRef = useRef(selection)
   selectionRef.current = selection
 
@@ -385,6 +485,14 @@ function Workspace({
     getMergeFields: () => fieldsRef.current,
     onUploadImage,
     dropHint,
+    highlight:
+      active &&
+      active.key === shownKey &&
+      (active.target.kind === 'block' ||
+        active.target.kind === 'column' ||
+        active.target.kind === 'row')
+        ? { kind: active.target.kind, id: active.target.id }
+        : null,
     focusRequest,
     clearFocusRequest,
     formatEditor,
@@ -726,6 +834,14 @@ function Workspace({
               <div className="seb-sr-only" aria-live="polite" aria-atomic="true">
                 {live}
               </div>
+              {shown && (
+                <div className="seb-alert" role="alert">
+                  <span>{shown.message}</span>
+                  <button type="button" className="seb-action" onClick={dismissHighlight}>
+                    Dismiss
+                  </button>
+                </div>
+              )}
               {notice && (
                 <p className="seb-flash" role="status">
                   {notice}

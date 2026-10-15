@@ -2,7 +2,12 @@ export { EmailEditor, type EmailEditorProps } from './email-editor'
 export { EmailPreview, type EmailPreviewProps, type PreviewDevice } from './email-preview'
 export { MergeFieldPicker, type MergeFieldPickerProps } from './merge-field-picker'
 export { BlockEditor } from './block-editor/block-editor'
-export type { BlockEditorProps, SavedRow, SavedRowsAdapter } from './block-editor/types'
+export type {
+  BlockEditorHighlight,
+  BlockEditorProps,
+  SavedRow,
+  SavedRowsAdapter,
+} from './block-editor/types'
 export type { Device as BlockEditorDevice } from './block-editor/devices'
 export type { UploadedImage } from './toolbar'
 export { chipMergeTags } from './chips'

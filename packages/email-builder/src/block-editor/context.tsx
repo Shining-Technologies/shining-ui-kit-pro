@@ -35,6 +35,8 @@ export interface EditorApi {
   getMergeFields: () => MergeFieldDefinition[]
   onUploadImage?: (file: File) => Promise<UploadedImage>
   dropHint: DropHint | null
+  /** The block, column or row a server error points at, if any. */
+  highlight: { kind: 'block' | 'column' | 'row'; id: string } | null
   /** A text editor that should take focus once it mounts; used once. */
   focusRequest: FocusRequest | null
   clearFocusRequest: () => void

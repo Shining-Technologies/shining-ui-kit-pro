@@ -455,6 +455,9 @@ export interface BrandPreview {
   phone?: string
   website?: string
   social_links?: SocialLink[]
+  /** The brand's footer text (HTML). The footer block shows it above its own text, as the server
+   * does in the email's footer. */
+  footer_html?: string
 }
 
 const BRAND_DEFAULTS: Record<BrandColorAttr | BrandFontAttr, string> = {

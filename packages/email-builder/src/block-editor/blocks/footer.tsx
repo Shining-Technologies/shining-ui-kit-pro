@@ -16,6 +16,12 @@ import {
 function View({ block }: ViewProps<FooterBlock>) {
   const api = useEditorApi()
   const { brand } = api
+  // The brand's footer text first, then the block's own, as the server renders them.
+  const brandHtml = brand.footer_html ?? ''
+  const brandExtra = useMemo(
+    () => renderInline(brandHtml, api.mergeFields),
+    [brandHtml, api.mergeFields],
+  )
   const extra = useMemo(
     () => renderInline(block.html ?? '', api.mergeFields),
     [block.html, api.mergeFields],
@@ -29,6 +35,7 @@ function View({ block }: ViewProps<FooterBlock>) {
       <p className="seb-footer-flag" role="note">
         Shown below the email, wherever it is placed
       </p>
+      {brandHtml && <div data-brand-footer dangerouslySetInnerHTML={{ __html: brandExtra }} />}
       {block.html && <div dangerouslySetInnerHTML={{ __html: extra }} />}
       {block.show_business && (
         <div>
