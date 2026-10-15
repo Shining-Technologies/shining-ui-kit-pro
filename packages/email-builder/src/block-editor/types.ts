@@ -20,11 +20,13 @@ export interface SavedRow {
   row: Row
 }
 
+/** ``list`` is required. Leave out ``save`` and ``remove`` for a user who may only insert saved
+ * rows: the editor then hides "Save as row" and the delete buttons. */
 export interface SavedRowsAdapter {
   list(): Promise<SavedRow[]>
   /** ``designWidth`` is the email's width (480–700), for the server to check the row's images against. */
-  save(name: string, row: Row, designWidth?: number): Promise<SavedRow>
-  remove(id: SavedRow['id']): Promise<void>
+  save?(name: string, row: Row, designWidth?: number): Promise<SavedRow>
+  remove?(id: SavedRow['id']): Promise<void>
 }
 
 /** A server validation error to show on the canvas. Give ``blockId`` or ``path``

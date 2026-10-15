@@ -165,7 +165,7 @@ function RowSettings({ id }: { id: string }) {
           onChange={(value) => api.updateRow(row.id, { hide_on: hideFrom(value) })}
         />
       </Section>
-      {api.savedRows.enabled && (
+      {api.savedRows.canSave && (
         <Section title="Save as row">
           <p className="seb-hint">Keep this row to reuse in other emails.</p>
           <SaveRowForm rowId={row.id} />

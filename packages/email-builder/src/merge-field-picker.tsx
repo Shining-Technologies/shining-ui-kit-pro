@@ -95,6 +95,7 @@ export function MergeFieldPicker({
       <button
         type="button"
         className="seb-tool seb-tool-text"
+        aria-label={label}
         aria-haspopup="listbox"
         aria-expanded={open}
         disabled={disabled || fields.length === 0}

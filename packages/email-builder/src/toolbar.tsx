@@ -2,7 +2,7 @@
 
 import type { Editor } from '@tiptap/core'
 import { useEditorState } from '@tiptap/react'
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useRef, useState, type FormEvent, type ReactNode, type Ref } from 'react'
 import type { MergeFieldDefinition } from './design'
 import type { ButtonAlign, EmailButtonAttrs } from './extensions/email-button'
 import { MergeFieldPicker } from './merge-field-picker'
@@ -36,16 +36,20 @@ export function Tool({
   active,
   disabled,
   onClick,
+  buttonRef,
   children,
 }: {
   label: string
   active?: boolean
   disabled?: boolean
   onClick: () => void
+  /** The button itself, so a panel it opens can return focus to it. */
+  buttonRef?: Ref<HTMLButtonElement>
   children: ReactNode
 }) {
   return (
     <button
+      ref={buttonRef}
       type="button"
       className="seb-tool"
       aria-label={label}
@@ -266,7 +270,10 @@ export function Toolbar({ editor, mergeFields, brandColors, onUploadImage }: Too
             else chain().unsetColor().run()
             setPanel(null)
           }}
-          onCancel={() => setPanel(null)}
+          onCancel={() => {
+            setPanel(null)
+            chain().run()
+          }}
         />
       )}
     </div>
@@ -532,6 +539,8 @@ export function ColorPanel({
             key={index}
             type="button"
             className="seb-swatch"
+            // Focus moves into the panel so Esc (and Tab) work from the keyboard.
+            autoFocus={index === 0}
             style={{ background: choice.value }}
             aria-label={choice.name}
             title={choice.title}

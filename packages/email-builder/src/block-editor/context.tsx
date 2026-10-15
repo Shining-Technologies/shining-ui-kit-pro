@@ -68,6 +68,9 @@ export interface EditorApi {
 
   savedRows: SavedRowsState & {
     enabled: boolean
+    /** The adapter has ``save`` / ``remove``; without them the matching buttons are hidden. */
+    canSave: boolean
+    canRemove: boolean
     reload: () => void
     saveRow: (rowId: string, name: string) => Promise<EditResult>
     removeSaved: (id: SavedRow['id']) => Promise<void>

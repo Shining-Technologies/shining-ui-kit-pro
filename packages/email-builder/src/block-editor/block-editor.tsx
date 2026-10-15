@@ -577,11 +577,13 @@ function Workspace({
     savedRows: {
       ...saved,
       enabled,
+      canSave: Boolean(adapter?.save),
+      canRemove: Boolean(adapter?.remove),
       reload: reloadSaved,
       saveRow: async (rowId, name) => {
         const current = adapterRef.current
         const found = findRow(latest.current, rowId)
-        if (!current || !found) return 'The row could not be saved'
+        if (!current?.save || !found) return 'The row could not be saved'
         try {
           const row = await current.save(
             name,
@@ -599,7 +601,7 @@ function Workspace({
       },
       removeSaved: async (id) => {
         const current = adapterRef.current
-        if (!current) return
+        if (!current?.remove) return
         try {
           await current.remove(id)
           if (mounted.current)

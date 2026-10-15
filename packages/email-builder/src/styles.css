@@ -546,7 +546,9 @@
     gap: 0.25rem;
   }
 
-  /* The formatting bar floats under the text block being edited. */
+  /* The formatting bar floats beside the text block being edited: below it, or above it when
+     the scroll area has room. Its left edge and width are set from the block's position so it
+     stays inside the canvas and clear of the block's toolbar (see format-bar.tsx). */
   .seb-format {
     position: absolute;
     top: calc(100% + 3px);
@@ -563,16 +565,27 @@
     cursor: default;
   }
 
-  /* Its link and colour panels open as popovers below the bar. */
+  .seb-format[data-side='above'] {
+    top: auto;
+    bottom: calc(100% + 3px);
+  }
+
+  /* Its link and colour panels open as popovers on the side away from the block. */
   .seb-format .seb-inline-panel {
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
     width: 16rem;
+    max-width: calc(100vw - 2rem);
     border: 1px solid var(--seb-border);
     border-radius: var(--seb-radius);
     background: var(--seb-popover);
     box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
+  }
+
+  .seb-format[data-side='above'] .seb-inline-panel {
+    top: auto;
+    bottom: calc(100% + 4px);
   }
 
   .seb-flash {
@@ -844,7 +857,8 @@
     flex: 1;
     min-height: 0;
     overflow: auto;
-    padding: 1.5rem 1rem 2rem;
+    /* Room on both sides for the toolbars that hang in the margins. */
+    padding: 1.5rem 3rem 2rem;
   }
 
   .seb-email {
@@ -1120,9 +1134,11 @@
     left: auto;
   }
 
-  .seb-row-toolbar {
-    left: 0.25rem;
-    right: auto;
+  /* The row's toolbar hangs in the left margin, like a block's in the right one, and opens
+     its menus sideways over the row, so it never covers the row above. */
+  .seb-toolbar-float[data-gutter] .seb-popover {
+    top: 0;
+    left: calc(100% + 6px);
   }
 
   .seb-popover-host {

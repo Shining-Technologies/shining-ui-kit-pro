@@ -93,7 +93,7 @@ function SavedItem({ saved, onInsert }: { saved: SavedRow; onInsert: () => void 
         <Icon name="layout" />
         <span>{saved.name}</span>
       </button>
-      {confirming ? (
+      {!api.savedRows.canRemove ? null : confirming ? (
         <span className="seb-saved-confirm">
           <button
             type="button"
@@ -191,7 +191,9 @@ export function Palette({
           )}
           {saved.status === 'ready' && saved.items.length === 0 && (
             <p className="seb-hint">
-              No saved rows yet. Select a row and choose “Save as row” to keep it for later.
+              {saved.canSave
+                ? 'No saved rows yet. Select a row and choose “Save as row” to keep it for later.'
+                : 'No saved rows yet.'}
             </p>
           )}
           {saved.items.length > 0 && (

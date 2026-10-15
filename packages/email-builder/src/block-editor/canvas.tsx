@@ -440,7 +440,7 @@ function BlockCell({
         api.formatEditor &&
         !api.formatEditor.editor.isDestroyed &&
         (block.type === 'text' || block.type === 'heading') && (
-          <FormatBar target={api.formatEditor} />
+          <FormatBar target={api.formatEditor} gutter={gutter} />
         )}
       <View block={block} live={live} />
       {selected && !api.disabled && Overlay && (
@@ -521,13 +521,11 @@ function RowToolbar({
   count: number
 }) {
   const api = useEditorApi()
-  const { bar, side } = useToolbarSide()
   const current = layoutOf(row)
   return (
     <div
-      ref={bar}
       className="seb-toolbar-float seb-row-toolbar"
-      data-side={side}
+      data-gutter="left"
       role="toolbar"
       aria-label={`Row ${index + 1} actions`}
       onClick={(event) => event.stopPropagation()}
@@ -607,7 +605,7 @@ function RowToolbar({
           />
         )}
       </Popover>
-      {api.savedRows.enabled && (
+      {api.savedRows.canSave && (
         <Popover label="Save as row" icon="save">
           {(close) => <SaveRowForm rowId={row.id} onDone={close} />}
         </Popover>

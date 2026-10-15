@@ -58,6 +58,9 @@ None. `BlockDesign` is now fully typed (`settings` and `rows` were `Record<strin
   showing a server validation error: the target is outlined, scrolled to and selected, and the message
   is announced; it clears when the target is edited. `BrandPreview` gains `footer_html`, shown in the
   footer block above the block's own text.
+- `SavedRowsAdapter` needs only `list`; `save` and `remove` are optional. Without `save` the editor
+  hides "Save as row"; without `remove` it hides the delete buttons; listing and inserting still work,
+  for a read-only user.
 - `MergeFieldDefinition` gains an optional `description`, shown as a muted second line in the merge-field
   picker and searched with the label.
 

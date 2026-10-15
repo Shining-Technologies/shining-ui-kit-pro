@@ -1,7 +1,7 @@
 'use client'
 
 import { useEditorState } from '@tiptap/react'
-import { useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { MergeFieldPicker } from '../merge-field-picker'
 import { ColorPanel, LinkPanel, Tool } from '../toolbar'
 import { resolveBrand, BRAND_COLOR_ATTRS, brandRef } from '../design'
@@ -12,16 +12,95 @@ import type { FormatEditor } from './types'
 
 type Panel = null | 'link' | 'color'
 
+const BAR_MAX = 480
+const EDGE = 4
+
+/**
+ * Where the bar goes, as the cell's own coordinates: inside the canvas's visible width (wrapping
+ * to a narrower bar when the canvas is narrow), never under the block's toolbar in the margin,
+ * and above the block when the scroll area has room for it, else below. Written straight to the
+ * element, so scrolling does not re-render.
+ */
+function usePlacement(gutter: 'left' | 'right' | null) {
+  const bar = useRef<HTMLDivElement | null>(null)
+  const [side, setSide] = useState<'above' | 'below'>('below')
+  const place = useCallback(() => {
+    const element = bar.current
+    const cell = element?.parentElement
+    const scroller = element?.closest<HTMLElement>('[data-canvas-scroll]')
+    if (!element || !cell || !scroller) return
+    const view = scroller.getBoundingClientRect()
+    const viewLeft = view.left + scroller.clientLeft + EDGE
+    const viewRight = view.left + scroller.clientLeft + scroller.clientWidth - EDGE
+    const box = cell.getBoundingClientRect()
+
+    // Horizontal: the block's toolbar hangs in the left or right margin, so the bar stays
+    // between the block's edges on that side.
+    const minX = gutter === 'left' ? Math.max(viewLeft, box.left) : viewLeft
+    const maxX = gutter === 'right' ? Math.min(viewRight, box.right) : viewRight
+    element.style.maxWidth = `${Math.max(160, Math.min(BAR_MAX, maxX - minX))}px`
+    const width = element.offsetWidth
+    const x = Math.max(minX, Math.min(box.left + EDGE, maxX - width))
+    element.style.left = `${x - box.left}px`
+
+    // Vertical: above when it fits under the top of the scroll area, else below. In a middle
+    // column the block's own toolbar is above or below, so the bar takes the other side.
+    const height = element.offsetHeight
+    let next: 'above' | 'below' = box.top - view.top >= height + 2 * EDGE ? 'above' : 'below'
+    if (gutter === null) {
+      const toolbar = cell.querySelector<HTMLElement>(':scope > .seb-toolbar-float')
+      if (toolbar) {
+        const toolbarAbove = box.top - view.top >= toolbar.offsetHeight + EDGE
+        next = toolbarAbove ? 'below' : 'above'
+      }
+    }
+    setSide(next)
+  }, [gutter])
+
+  useLayoutEffect(() => {
+    const element = bar.current
+    const scroller = element?.closest<HTMLElement>('[data-canvas-scroll]')
+    place()
+    if (!element || !scroller) return
+    scroller.addEventListener('scroll', place, { passive: true })
+    window.addEventListener('resize', place)
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(place) : null
+    observer?.observe(scroller)
+    observer?.observe(element)
+    return () => {
+      scroller.removeEventListener('scroll', place)
+      window.removeEventListener('resize', place)
+      observer?.disconnect()
+    }
+  }, [place])
+  return { bar, side }
+}
+
 /**
  * The formatting controls for the heading or text block being edited: marks,
  * link, colour, lists and quotes (text only) and the merge-field picker. It
  * sits above the canvas and drives the block's own editor, so it never covers
  * the email.
  */
-export function FormatBar({ target }: { target: FormatEditor }) {
+export function FormatBar({
+  target,
+  gutter = null,
+}: {
+  target: FormatEditor
+  /** Which margin the block's toolbar hangs in, so the bar keeps clear of it. */
+  gutter?: 'left' | 'right' | null
+}) {
   const { editor, kind } = target
   const api = useEditorApi()
   const [panel, setPanel] = useState<Panel>(null)
+  const { bar, side } = usePlacement(gutter)
+  const colorTrigger = useRef<HTMLButtonElement | null>(null)
+  const linkTrigger = useRef<HTMLButtonElement | null>(null)
+  /** Close a panel without applying anything; focus goes back to the button that opened it. */
+  const cancel = (trigger: { current: HTMLButtonElement | null }) => {
+    setPanel(null)
+    trigger.current?.focus()
+  }
   const state = useEditorState({
     editor,
     selector: ({ editor: e }) => ({
@@ -44,7 +123,9 @@ export function FormatBar({ target }: { target: FormatEditor }) {
 
   return (
     <div
+      ref={bar}
       className="seb-format"
+      data-side={side}
       // Floats over the canvas under the block, so it never pushes the email down.
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
@@ -73,6 +154,7 @@ export function FormatBar({ target }: { target: FormatEditor }) {
           </Tool>
           <Tool
             label="Text colour"
+            buttonRef={colorTrigger}
             active={panel === 'color'}
             onClick={() => setPanel((p) => (p === 'color' ? null : 'color'))}
           >
@@ -80,6 +162,7 @@ export function FormatBar({ target }: { target: FormatEditor }) {
           </Tool>
           <Tool
             label="Link"
+            buttonRef={linkTrigger}
             active={state.link || panel === 'link'}
             onClick={() => setPanel((p) => (p === 'link' ? null : 'link'))}
           >
@@ -129,7 +212,7 @@ export function FormatBar({ target }: { target: FormatEditor }) {
             chain().extendMarkRange('link').unsetLink().run()
             setPanel(null)
           }}
-          onCancel={() => setPanel(null)}
+          onCancel={() => cancel(linkTrigger)}
         />
       )}
       {panel === 'color' && (
@@ -140,7 +223,7 @@ export function FormatBar({ target }: { target: FormatEditor }) {
             else chain().unsetColor().run()
             setPanel(null)
           }}
-          onCancel={() => setPanel(null)}
+          onCancel={() => cancel(colorTrigger)}
         />
       )}
     </div>

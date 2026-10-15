@@ -73,7 +73,7 @@ import { BlockEditor } from '@shining-technologies/email-builder'
     return { url: asset.url, alt: asset.alt_default, assetId: asset.id }
   }}
   savedRows={{
-    // optional: GET/POST/DELETE saved-rows/
+    // optional: GET/POST/DELETE saved-rows/; leave out save and remove for a read-only user
     list: () => api.listSavedRows(),
     save: (name, row) => api.saveRow({ name, row }),
     remove: (id) => api.deleteSavedRow(id),
@@ -117,7 +117,9 @@ import { BlockEditor } from '@shining-technologies/email-builder'
 - **Merge fields.** `mergeFields` entries are `{ key, label, group?, description? }`. A
   `description` shows as a muted second line in the picker, is searched with the label, and is read
   out with the option (`aria-describedby`). The server's merge-fields list already carries one.
-- **Saved rows.** `savedRows.save(name, row, designWidth)` receives the email's width (480–700);
+- **Saved rows.** Only `list` is required. Without `save` the editor hides "Save as row"; without
+  `remove` it hides the delete buttons; listing and inserting still work, so a read-only user keeps
+  the saved rows. `savedRows.save(name, row, designWidth)` receives the email's width (480–700);
   the server checks the row's images against it.
 - **Size.** The editor fills its parent. Give it a height, or set `--seb-block-editor-height`.
 
