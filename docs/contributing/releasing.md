@@ -85,6 +85,39 @@ Check the tarball contents: `cd packages/ui && npm pack --dry-run` should list `
 3. If none are pending, it runs `scripts/publish.mjs`, which publishes every package whose
    version is not on npm yet and pushes the git tags.
 
+**Known gaps (found releasing email-builder 0.2.0, 2026-10-15).**
+
+- **The Version Packages pull request has to be opened by hand.** The workflow pushes the
+  `changeset-release/master` branch, but Actions is not permitted to create pull requests in
+  this repository, so the step fails with `GitHub Actions is not permitted to create or approve
+  pull requests`. Open it yourself: `gh pr create --base master --head changeset-release/master
+  --title "chore: version packages"`, wait for its checks, and squash-merge it (master stays
+  linear).
+- **The tag and the GitHub Release have to be created by hand.** With changesets CLI v3 the
+  publish prints a spinner instead of the `New tag:` lines that `changesets/action` parses, so
+  the action reports `published: false`, skips the "Summary" step, and neither pushes the tag nor
+  creates the release, even though the package is on npm. After the publish, tag the merged
+  version commit (annotated, message `<name> <version>`) and create the release from the page in
+  `docs/releases`:
+
+  ```bash
+  git tag -a '@shining-technologies/email-builder@X.Y.Z' <version-commit> -m '@shining-technologies/email-builder X.Y.Z'
+  git push origin '@shining-technologies/email-builder@X.Y.Z'
+  gh release create '@shining-technologies/email-builder@X.Y.Z' --verify-tag --title '@shining-technologies/email-builder X.Y.Z' --notes-file docs/releases/email-builder-vX.Y.Z.md
+  ```
+
+  Until the workflow is adapted, do not re-run it to "fix" this: the publish already happened.
+- **Verify a publish with a cache-busted registry query, not `npm view`.** Right after a publish
+  `npm view` can keep answering from a stale CDN cache for minutes and show the old version as
+  `latest`. Query the registry directly:
+
+  ```bash
+  curl -s -H "Cache-Control: no-cache" "https://registry.npmjs.org/@shining-technologies%2femail-builder?t=$(date +%s)" \
+    | node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(Object.keys(d.versions),d['dist-tags'])"
+  ```
+
+  `npm pack @shining-technologies/email-builder@X.Y.Z --dry-run` also proves the tarball exists.
+
 ### By hand
 
 ```bash
