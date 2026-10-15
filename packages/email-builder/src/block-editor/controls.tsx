@@ -31,8 +31,12 @@ function useDraft<T extends string | number>(value: T, commit: Commit<T>) {
   return {
     draft,
     error,
-    set(text: string, parsed: T | null) {
+    /** Show ``text``; commit ``parsed`` unless it is ``null`` (not ready yet) or there is a
+     * ``problem`` with it. An invalid entry stays visible, with its reason, until it is
+     * fixed or reverted with Esc (`reset`). */
+    set(text: string, parsed: T | null, problem?: string) {
       setDraft(text)
+      if (problem) return setError(problem)
       if (parsed === null) return setError(null)
       const result = commit(parsed)
       seen.current = result ? seen.current : parsed
@@ -42,6 +46,16 @@ function useDraft<T extends string | number>(value: T, commit: Commit<T>) {
       setDraft(String(value))
       setError(null)
     },
+  }
+}
+
+/** Esc reverts an entry that was refused. */
+function revertOnEscape(error: string | null, reset: () => void) {
+  return (event: { key: string; stopPropagation: () => void }) => {
+    if (event.key === 'Escape' && error) {
+      event.stopPropagation()
+      reset()
+    }
   }
 }
 
@@ -156,7 +170,7 @@ export function TextInput({
           placeholder={placeholder}
           {...aria}
           onChange={(event) => d.set(event.target.value, event.target.value)}
-          onBlur={() => d.error && d.reset()}
+          onKeyDown={revertOnEscape(d.error, d.reset)}
         />
       )}
     </Field>
@@ -188,6 +202,7 @@ export function TextArea({
           value={d.draft}
           {...aria}
           onChange={(event) => d.set(event.target.value, event.target.value)}
+          onKeyDown={revertOnEscape(d.error, d.reset)}
         />
       )}
     </Field>
@@ -214,11 +229,8 @@ export function NumberInput({
   compact?: boolean
 }) {
   const d = useDraft(value, onChange)
-  const parse = (text: string): number | null => {
-    if (text.trim() === '') return null
-    const n = Number(text)
-    return Number.isFinite(n) && Number.isInteger(n) && n >= min && n <= max ? n : null
-  }
+  const [note, setNote] = useState<string | null>(null)
+  const limit = (n: number) => (n < min ? `Min ${min}` : n > max ? `Max ${max}` : null)
   const numberInput = (aria: FieldControlProps) => (
     <input
       className="seb-input seb-number"
@@ -232,16 +244,45 @@ export function NumberInput({
       aria-label={compact ? label : undefined}
       onChange={(event) => {
         const text = event.target.value
-        d.set(text, parse(text))
+        setNote(null)
+        if (text.trim() === '') return d.set(text, null)
+        const n = Number(text)
+        if (!Number.isFinite(n) || !Number.isInteger(n))
+          return d.set(text, null, 'Whole numbers only')
+        const problem = limit(n)
+        if (problem) return d.set(text, null, problem)
+        d.set(text, n)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && (d.error || note)) {
+          event.stopPropagation()
+          setNote(null)
+          d.reset()
+        }
       }}
       onBlur={() => {
-        if (parse(d.draft) === null) d.reset()
+        const n = Number(d.draft)
+        if (d.draft.trim() === '' || !Number.isFinite(n)) return d.reset()
+        // Out of range: clamp, and say so.
+        const whole = Math.round(n)
+        const clamped = Math.min(max, Math.max(min, whole))
+        if (clamped === value && !d.error) return
+        if (clamped !== whole) setNote(limit(whole))
+        if (clamped === value) d.reset()
+        else d.set(String(clamped), clamped)
       }}
     />
   )
-  if (compact) return numberInput({})
+  const shown = d.error ?? note
+  if (compact)
+    return (
+      <>
+        {numberInput({ 'aria-invalid': d.error ? true : undefined })}
+        {shown && <small className="seb-note">{shown}</small>}
+      </>
+    )
   return (
-    <Field label={label} hint={`${min}–${max}${unit ? ` ${unit}` : ''}`} error={d.error}>
+    <Field label={label} hint={note ?? `${min}–${max}${unit ? ` ${unit}` : ''}`} error={d.error}>
       {numberInput}
     </Field>
   )
@@ -283,7 +324,7 @@ export function Segmented<T extends string | number>({
 }: {
   label: string
   value: T | null
-  options: { value: T; label: string; icon?: IconName }[]
+  options: { value: T; label: string; icon?: IconName; short?: string }[]
   onChange: (value: T) => void
 }) {
   return (
@@ -299,7 +340,7 @@ export function Segmented<T extends string | number>({
             title={option.label}
             onClick={() => onChange(option.value)}
           >
-            {option.icon ? <Icon name={option.icon} /> : option.label}
+            {option.icon ? <Icon name={option.icon} /> : (option.short ?? option.label)}
           </button>
         ))}
       </div>
@@ -336,7 +377,7 @@ export function Toggle({
 
 /* -- colour ---------------------------------------------------------------- */
 
-const BRAND_COLOR_LABELS: Record<(typeof BRAND_COLOR_ATTRS)[number], string> = {
+export const BRAND_COLOR_LABELS: Record<(typeof BRAND_COLOR_ATTRS)[number], string> = {
   primary_color: 'Primary',
   text_color: 'Text',
   muted_text_color: 'Muted text',
@@ -381,7 +422,7 @@ export function ColorInput({
             className="seb-swatch"
             style={{ background: resolveBrand(brandRef(attr), brand) }}
             aria-label={`${label}: brand ${BRAND_COLOR_LABELS[attr]}`}
-            title={`Brand: ${BRAND_COLOR_LABELS[attr]}`}
+            title={`Brand: ${BRAND_COLOR_LABELS[attr]} (${resolveBrand(brandRef(attr), brand)})`}
             aria-pressed={value === brandRef(attr)}
             onClick={() => onChange(brandRef(attr))}
           />
@@ -412,9 +453,11 @@ export function ColorInput({
           maxLength={7}
           onChange={(event) => {
             const text = event.target.value
-            d.set(text, HEX.test(text) ? text : null)
+            if (text === '') return d.set(text, null)
+            if (HEX.test(text)) return d.set(text, text)
+            d.set(text, null, 'Use #rgb or #rrggbb')
           }}
-          onBlur={() => d.reset()}
+          onKeyDown={revertOnEscape(d.error, d.reset)}
         />
         {clearable && (
           <button

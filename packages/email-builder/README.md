@@ -103,6 +103,9 @@ import { BlockEditor } from '@shining-technologies/email-builder'
   back; do not replace it with the server's copy after a save (the server stores designs compact,
   so its copy is not byte-for-byte what the editor emitted) unless you mean to start a new history.
   `value` itself may be compact: the editor fills defaults on read.
+- **Merge fields.** `mergeFields` entries are `{ key, label, group?, description? }`. A
+  `description` shows as a muted second line in the picker, is searched with the label, and is read
+  out with the option (`aria-describedby`). The server's merge-fields list already carries one.
 - **Saved rows.** `savedRows.save(name, row, designWidth)` receives the email's width (480–700);
   the server checks the row's images against it.
 - **Size.** The editor fills its parent. Give it a height, or set `--seb-block-editor-height`.

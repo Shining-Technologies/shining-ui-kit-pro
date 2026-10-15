@@ -75,6 +75,13 @@ export interface ActionResult {
   focusId?: string
 }
 
+/** Where the caret goes when a text block takes focus: the end (Enter) or
+ * where the pointer was. One-shot: it is used once, then dropped. */
+export interface FocusRequest {
+  id: string
+  at: 'end' | { x: number; y: number }
+}
+
 export interface FormatEditor {
   editor: Editor
   kind: 'heading' | 'text'

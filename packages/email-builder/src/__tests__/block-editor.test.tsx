@@ -449,15 +449,19 @@ describe('BlockEditor: properties', () => {
     expect(blockDesignErrors(last())).toEqual([])
   })
 
-  it('does not commit a value outside its range', async () => {
+  it('clamps a value outside its range when the field is left, and says so', async () => {
     const { last } = mount()
     await addBlock('Spacer')
     const height = screen.getByRole('spinbutton', { name: /Height/ })
     await userEvent.clear(height)
     await userEvent.type(height, '3')
+    // While typing nothing is committed, and the reason is shown.
     expect((allBlocks(last())[0] as SpacerBlock).height).toBe(24)
+    expect(screen.getByRole('alert')).toHaveTextContent('Min 4')
     await userEvent.tab()
-    expect(height).toHaveValue(24)
+    expect((allBlocks(last())[0] as SpacerBlock).height).toBe(4)
+    expect(height).toHaveValue(4)
+    expect(screen.getByText('Min 4')).toBeInTheDocument()
   })
 
   it('refuses an address the server would, and says why', async () => {

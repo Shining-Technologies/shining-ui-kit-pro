@@ -5,6 +5,7 @@ import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
+  MeasuringStrategy,
   PointerSensor,
   pointerWithin,
   useSensor,
@@ -64,7 +65,6 @@ import { Canvas } from './canvas'
 import { EditorContext, type EditorApi, type EditResult } from './context'
 import { DEVICES, type Device } from './devices'
 import { parsePaletteId, resolveDrop } from './drop'
-import { FormatBar } from './format-bar'
 import { shortcutFor, useHistory } from './history'
 import { Icon } from './icons'
 import { Palette } from './palette'
@@ -74,6 +74,7 @@ import type {
   BlockEditorProps,
   DropHint,
   DropResolution,
+  FocusRequest,
   FormatEditor,
   SavedRow,
   SavedRowsState,
@@ -230,7 +231,7 @@ function Workspace({
   const { commit, latest } = history
 
   const [rawSelection, setRawSelection] = useState<Selection>(null)
-  const [focusTextId, setFocusTextId] = useState<string | null>(null)
+  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null)
   const [formatEditor, setFormatEditor] = useState<FormatEditor | null>(null)
   const [notice, setNotice] = useState('')
   const [ownDevice, setOwnDevice] = useState<Device>('desktop')
@@ -298,7 +299,10 @@ function Workspace({
     if (!id) return
     // A focus request lasts for one change of the design, however it ends.
     pendingFocus.current = null
-    root.current?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(id)}"]`)?.focus()
+    const safe = CSS.escape(id)
+    root.current
+      ?.querySelector<HTMLElement>(`[data-block-id="${safe}"], [data-row-id="${safe}"]`)
+      ?.focus()
   }, [design])
 
   useEffect(() => {
@@ -307,10 +311,12 @@ function Workspace({
     return () => clearTimeout(timer)
   }, [notice])
 
-  const select = useCallback((next: Selection, focusText = false) => {
+  const select = useCallback<EditorApi['select']>((next, focusText = false) => {
     setRawSelection(next)
-    setFocusTextId(focusText && next?.kind === 'block' ? next.id : null)
+    // A request lasts for one selection: a new one replaces it, none clears it.
+    setFocusRequest(focusText && next?.kind === 'block' ? { id: next.id, at: focusText } : null)
   }, [])
+  const clearFocusRequest = useCallback(() => setFocusRequest(null), [])
 
   /** Apply an action's result. Nothing happens, and no focus is requested,
    * unless the design changes; a change that would add a problem the server
@@ -379,14 +385,23 @@ function Workspace({
     getMergeFields: () => fieldsRef.current,
     onUploadImage,
     dropHint,
-    focusTextId,
+    focusRequest,
+    clearFocusRequest,
+    formatEditor,
     setFormatEditor,
     edit,
     updateBlock: (id, patch, key) => edit((d) => updateBlockIn<Block>(d, id, patch), key),
     updateRow: (id, patch, key) => edit((d) => updateRowIn(d, id, patch), key),
     updateColumn: (id, patch, key) => edit((d) => updateColumnIn(d, id, patch), key),
     updateSettings: (patch, key) => edit((d) => updateSettingsIn(d, patch), key),
-    addBlockAt: (type, columnId, index) => apply(addBlockAt(latest.current, type, columnId, index)),
+    addBlockAt: (type, columnId, index) => {
+      const result = addBlockAt(latest.current, type, columnId, index)
+      // The "+" menu closes, so focus goes to the new block.
+      apply({
+        ...result,
+        focusId: result.selection?.kind === 'block' ? result.selection.id : undefined,
+      })
+    },
     nudgeBlock: (id, delta) => moveAnnounced(id, nudgeBlock(latest.current, id, delta)),
     nudgeBlockSideways: (id, delta) =>
       moveAnnounced(id, nudgeBlockSideways(latest.current, id, delta)),
@@ -405,7 +420,8 @@ function Workspace({
     removeBlock: (id) => {
       const before = latest.current
       const neighbour = neighbourOf(before, id)
-      const column = findBlock(before, id)?.column.id
+      const found = findBlock(before, id)
+      const column = found?.column.id
       apply({
         design: removeBlockIn(before, id),
         selection: neighbour
@@ -413,7 +429,8 @@ function Workspace({
           : column
             ? { kind: 'column', id: column }
             : null,
-        focusId: neighbour ?? undefined,
+        // The next block, or when the column is empty, the row it was in.
+        focusId: neighbour ?? found?.row.id,
       })
     },
     setLayout: (rowId, layout: LayoutId) =>
@@ -421,10 +438,11 @@ function Workspace({
     nudgeRow: (id, delta) => {
       const before = latest.current
       const next = nudgeRow(before, id, delta)
+      const from = findRow(before, id)?.index ?? 0
       if (next === before) {
-        setLive(`${describeItem(before, id)} cannot move ${delta < 0 ? 'up' : 'down'} any further.`)
-      } else if (apply({ design: next })) {
-        setLive(`Moved ${describeItem(next, id)} to ${describePlace(next, id)}.`)
+        setLive(`Row ${from + 1} cannot move ${delta < 0 ? 'up' : 'down'} any further.`)
+      } else if (apply({ design: next, focusId: id })) {
+        setLive(`Moved row ${from + 1} to position ${findRow(next, id)!.index + 1}.`)
       }
     },
     duplicateRow: (id) => {
@@ -432,9 +450,22 @@ function Workspace({
       const next = duplicateRowIn(before, id)
       const at = findRow(before, id)
       const copy = at ? next.rows[at.index + 1] : undefined
-      apply({ design: next, selection: copy ? { kind: 'row', id: copy.id } : undefined })
+      apply({
+        design: next,
+        selection: copy ? { kind: 'row', id: copy.id } : undefined,
+        focusId: copy?.id,
+      })
     },
-    removeRow: (id) => apply({ design: removeRowIn(latest.current, id), selection: null }),
+    removeRow: (id) => {
+      const before = latest.current
+      const at = findRow(before, id)
+      const neighbour = at ? (before.rows[at.index + 1] ?? before.rows[at.index - 1]) : undefined
+      apply({
+        design: removeRowIn(before, id),
+        selection: neighbour ? { kind: 'row', id: neighbour.id } : null,
+        focusId: neighbour?.id,
+      })
+    },
     savedRows: {
       ...saved,
       enabled,
@@ -598,8 +629,6 @@ function Workspace({
     onDeviceChange?.(next)
   }
 
-  const showFormat = formatEditor && !formatEditor.editor.isDestroyed && !disabled
-
   return (
     <EditorContext.Provider value={api}>
       <div
@@ -614,6 +643,10 @@ function Workspace({
           sensors={sensors}
           accessibility={{ announcements }}
           collisionDetection={collisionDetection}
+          // Drop areas move while the canvas scrolls under a drag: measure them all the time,
+          // and scroll gently near the edges.
+          measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+          autoScroll={{ threshold: { x: 0.05, y: 0.05 }, acceleration: 3, interval: 10 }}
           onDragStart={onDragStart}
           onDragMove={onDragMove}
           onDragEnd={onDragEnd}
@@ -693,7 +726,6 @@ function Workspace({
               <div className="seb-sr-only" aria-live="polite" aria-atomic="true">
                 {live}
               </div>
-              {showFormat && <FormatBar target={formatEditor} />}
               {notice && (
                 <p className="seb-flash" role="status">
                   {notice}

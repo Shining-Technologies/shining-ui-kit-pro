@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { MergeFieldPicker } from '../merge-field-picker'
 import { ColorPanel, LinkPanel, Tool } from '../toolbar'
 import { resolveBrand, BRAND_COLOR_ATTRS, brandRef } from '../design'
+import { BRAND_COLOR_LABELS } from './controls'
 import { useEditorApi } from './context'
 import { Icon } from './icons'
 import type { FormatEditor } from './types'
@@ -36,10 +37,18 @@ export function FormatBar({ target }: { target: FormatEditor }) {
     }),
   })
   const chain = () => editor.chain().focus()
-  const colors = BRAND_COLOR_ATTRS.map((attr) => resolveBrand(brandRef(attr), api.brand))
+  const colors = BRAND_COLOR_ATTRS.map((attr) => ({
+    value: resolveBrand(brandRef(attr), api.brand),
+    label: `Brand ${BRAND_COLOR_LABELS[attr].toLowerCase()}`,
+  }))
 
   return (
-    <div className="seb-format">
+    <div
+      className="seb-format"
+      // Floats over the canvas under the block, so it never pushes the email down.
+      onClick={(event) => event.stopPropagation()}
+      onDoubleClick={(event) => event.stopPropagation()}
+    >
       <div className="seb-toolbar" role="toolbar" aria-label="Formatting">
         <div className="seb-group">
           <Tool label="Bold" active={state.bold} onClick={() => chain().toggleBold().run()}>

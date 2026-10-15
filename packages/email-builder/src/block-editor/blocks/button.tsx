@@ -106,7 +106,11 @@ function Inspector({ block }: InspectorProps<ButtonBlock>) {
         <Segmented
           label="Size"
           value={buttonSizeOf(style)}
-          options={BUTTON_SIZES.map((size) => ({ value: size.id, label: size.label }))}
+          options={BUTTON_SIZES.map((size) => ({
+            value: size.id,
+            label: size.label,
+            short: size.short,
+          }))}
           onChange={(id) => {
             const size = BUTTON_SIZES.find((s) => s.id === id)!
             setStyle({ padding_y: size.padding_y, padding_x: size.padding_x })
@@ -123,7 +127,7 @@ function Inspector({ block }: InspectorProps<ButtonBlock>) {
           value={style.background}
           brand={api.brand}
           clearable
-          inheritLabel="Brand button colour"
+          inheritLabel="Brand colour"
           onChange={(background) => setStyle({ background })}
         />
         <ColorInput
@@ -131,7 +135,7 @@ function Inspector({ block }: InspectorProps<ButtonBlock>) {
           value={style.color}
           brand={api.brand}
           clearable
-          inheritLabel="Brand button text"
+          inheritLabel="Brand text"
           onChange={(color) => setStyle({ color })}
         />
         <NumberInput

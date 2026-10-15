@@ -1,12 +1,11 @@
 import { Node, type AnyExtension } from '@tiptap/core'
 import { Color } from '@tiptap/extension-color'
-import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { TextStyle } from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import StarterKit from '@tiptap/starter-kit'
 import type { MergeFieldDefinition } from '../design'
-import { MergeField } from '../extensions'
+import { MergeField, linkExtension } from '../extensions'
 
 /** A heading is one line of inline content: the document is a single paragraph. */
 const SingleLineDocument = Node.create({
@@ -52,14 +51,7 @@ export function blockTextExtensions({
       blockquote: heading ? false : undefined,
     }),
     ...(heading ? [SingleLineDocument] : []),
-    Link.configure({
-      openOnClick: false,
-      autolink: true,
-      protocols: ['mailto', 'tel'],
-      HTMLAttributes: { rel: null, target: null },
-      isAllowedUri: (url) =>
-        /^(https?:|mailto:|tel:)/i.test(url.trim()) || /^\{\{[^}]+\}\}/.test(url.trim()),
-    }),
+    linkExtension(),
     Underline,
     TextStyle,
     Color,
@@ -84,9 +76,10 @@ export function htmlFromEditor(
  * or loaded text is joined rather than cut after the first line. */
 export function joinLines(html: string): string {
   return html
-    .replace(/<\/(?:p|div|h[1-6]|li)>\s*<(?:p|div|h[1-6]|li)\b[^>]*>/gi, ' ')
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<\/?(?:p|div|h[1-6]|ul|ol|li)\b[^>]*>/gi, '')
+    .replace(
+      /<\/?(?:p|div|h[1-6]|ul|ol|li|blockquote|br|tr|td|th|table|section|article)\b[^>]*>/gi,
+      ' ',
+    )
     .replace(/\s{2,}/g, ' ')
     .trim()
 }

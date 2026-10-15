@@ -148,7 +148,7 @@ export function Palette({
               onAdd={() => onAddLayout(layout.id)}
             >
               <LayoutPreview widths={layout.widths} />
-              <span>{layout.label}</span>
+              <span className="seb-tile-label">{layout.label.replace(/ /g, '')}</span>
             </Tile>
           ))}
         </div>

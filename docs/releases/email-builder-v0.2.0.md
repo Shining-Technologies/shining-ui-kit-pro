@@ -54,6 +54,8 @@ None. `BlockDesign` is now fully typed (`settings` and `rows` were `Record<strin
   height, or set `--seb-block-editor-height` on it (default `100%`, at least 32rem).
 - `BlockEditor` makes no requests: merge fields, the brand, image upload and saved rows are passed in
   as props and callbacks.
+- `MergeFieldDefinition` gains an optional `description`, shown as a muted second line in the merge-field
+  picker and searched with the label.
 
 ## Upgrading
 

@@ -34,8 +34,9 @@ const KEY_STEP = 10
 const FINE_STEP = 1
 const PAGE_STEP = 50
 
-const clamp = (px: number, cell: number) =>
-  Math.round(Math.min(Math.max(cell || HARD_MAX, MIN_WIDTH), HARD_MAX, Math.max(MIN_WIDTH, px)))
+/** The width the server allows is the column's share of the design width, not what the canvas has room for. */
+const clamp = (px: number, limit: number) =>
+  Math.round(Math.min(Math.max(limit || HARD_MAX, MIN_WIDTH), HARD_MAX, Math.max(MIN_WIDTH, px)))
 
 interface Props {
   block: ImageBlock
@@ -123,12 +124,8 @@ export function ImageResizeHandles({ block, frame, maxWidth, onLive, onCommit }:
     }
   }, [frame, measure])
 
-  const cell = box?.cell ?? 0
-  const maximum = Math.max(
-    MIN_WIDTH,
-    Math.min(HARD_MAX, maxWidth ?? HARD_MAX, Math.floor(cell) || HARD_MAX),
-  )
-  const current = block.width === 'full' ? clamp(box?.width ?? 0, cell) : block.width
+  const maximum = Math.max(MIN_WIDTH, Math.min(HARD_MAX, maxWidth ?? HARD_MAX))
+  const current = block.width === 'full' ? clamp(box?.width ?? 0, maximum) : block.width
   const shown = drag ?? current
 
   const begin = (event: PointerEvent<HTMLElement>, dir: 1 | -1) => {
@@ -137,7 +134,9 @@ export function ImageResizeHandles({ block, frame, maxWidth, onLive, onCommit }:
     event.currentTarget.setPointerCapture?.(event.pointerId)
     state.current = {
       startX: event.clientX,
-      startPx: image()?.getBoundingClientRect().width ?? box?.width ?? 0,
+      // From the stored width, not from what the canvas shows: dragging never shrinks it unless
+      // the pointer goes inward.
+      startPx: current,
       cellPx: cellWidth(),
       dir,
     }
@@ -148,10 +147,7 @@ export function ImageResizeHandles({ block, frame, maxWidth, onLive, onCommit }:
     if (!s) return
     // A centred picture grows on both sides, so an edge follows the pointer at half the change.
     const factor = block.align === 'center' ? 2 : 1
-    const next = Math.min(
-      maxWidth ?? HARD_MAX,
-      clamp(s.startPx + factor * s.dir * (event.clientX - s.startX), s.cellPx),
-    )
+    const next = clamp(s.startPx + factor * s.dir * (event.clientX - s.startX), maximum)
     dragValue.current = next
     setDrag(next)
     onLive(next)

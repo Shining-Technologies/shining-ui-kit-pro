@@ -14,6 +14,28 @@ import { MergeField } from './merge-field'
 export { EmailButton, type ButtonAlign, type EmailButtonAttrs } from './email-button'
 export { MergeField, type MergeFieldOptions } from './merge-field'
 
+let protocolsRegistered = false
+
+/**
+ * The Link extension, as the server's sanitiser allows it. linkify warns when a
+ * custom protocol is registered a second time, and every editor created would
+ * register ``mailto`` and ``tel`` again, so only the first one does.
+ */
+export function linkExtension() {
+  const protocols = protocolsRegistered ? [] : ['mailto', 'tel']
+  protocolsRegistered = true
+  return Link.configure({
+    openOnClick: false,
+    autolink: true,
+    protocols,
+    HTMLAttributes: { rel: null, target: null },
+    // The server's rule: http(s), mailto and tel, or a merge field that
+    // becomes one ({{ unsubscribe_url }}). Anything else would be dropped.
+    isAllowedUri: (url) =>
+      /^(https?:|mailto:|tel:)/i.test(url.trim()) || /^\{\{[^}]+\}\}/.test(url.trim()),
+  })
+}
+
 export interface EmailExtensionOptions {
   mergeFields?: MergeFieldDefinition[]
   /** Overrides ``mergeFields`` for chip labels: read whenever a chip is drawn. */
@@ -41,16 +63,7 @@ export function emailExtensions({
       code: false,
       codeBlock: false,
     }),
-    Link.configure({
-      openOnClick: false,
-      autolink: true,
-      protocols: ['mailto', 'tel'],
-      HTMLAttributes: { rel: null, target: null },
-      // The server's rule: http(s), mailto and tel, or a merge field that
-      // becomes one ({{ unsubscribe_url }}). Anything else would be dropped.
-      isAllowedUri: (url) =>
-        /^(https?:|mailto:|tel:)/i.test(url.trim()) || /^\{\{[^}]+\}\}/.test(url.trim()),
-    }),
+    linkExtension(),
     Underline,
     TextStyle,
     Color,

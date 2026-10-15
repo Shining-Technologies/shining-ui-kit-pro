@@ -82,11 +82,36 @@ export function InlineText({
     return () => setFormatEditor(null)
   }, [editor, kind, setFormatEditor])
 
-  // Take the caret when the block was selected by clicking or pressing Enter on it.
-  const wantsFocus = api.focusTextId === block.id
+  // Take the caret when the block was selected by clicking it (where the pointer was) or
+  // pressing Enter on it (at the end). One-shot: the request is dropped once used, so a
+  // later render never pulls focus back here.
+  const request = api.focusRequest?.id === block.id ? api.focusRequest : null
+  const clearFocusRequest = api.clearFocusRequest
   useEffect(() => {
-    if (usable(editor) && wantsFocus && editable) editor.commands.focus('end')
-  }, [editor, wantsFocus, editable])
+    if (!usable(editor) || !request) return
+    // One frame later: the editor's DOM is in the page and laid out, so a point maps to the
+    // text under it.
+    const frame = requestAnimationFrame(() => {
+      if (!usable(editor)) return
+      if (editable) {
+        let placed = false
+        if (request.at !== 'end') {
+          try {
+            const found = editor.view.posAtCoords({ left: request.at.x, top: request.at.y })
+            if (found) {
+              editor.chain().focus().setTextSelection(found.pos).run()
+              placed = true
+            }
+          } catch {
+            // No layout to ask (a test environment): fall back to the end.
+          }
+        }
+        if (!placed) editor.commands.focus('end')
+      }
+      clearFocusRequest()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [editor, request, editable, clearFocusRequest])
 
   useEffect(() => {
     if (usable(editor) && editor.isEditable !== editable) editor.setEditable(editable, false)
@@ -123,10 +148,12 @@ export function InlineText({
       className={className}
       style={style}
       data-inline-editor={kind}
+      onBlur={() => clearFocusRequest()}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           event.preventDefault()
           event.stopPropagation()
+          clearFocusRequest()
           event.currentTarget.closest<HTMLElement>('[data-block-id]')?.focus()
         }
       }}

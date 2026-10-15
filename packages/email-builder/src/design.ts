@@ -25,6 +25,8 @@ export interface MergeFieldDefinition {
   label: string
   group?: string
   sample?: string
+  /** One line saying what the field is for (``GET merge-fields/`` returns it for some fields). */
+  description?: string
 }
 
 export function emptyDesign(html = ''): RichTextDesign {
@@ -579,10 +581,10 @@ export const DEFAULT_BLOCK_PADDING: Record<BlockType, Padding> = {
 /** Button sizes and shapes: editor presets that write ``padding_y``/``padding_x``
  * and ``radius`` (no schema change). */
 export const BUTTON_SIZES = [
-  { id: 'x-small', label: 'Extra small', padding_y: 6, padding_x: 12 },
-  { id: 'small', label: 'Small', padding_y: 8, padding_x: 16 },
-  { id: 'medium', label: 'Medium', padding_y: 12, padding_x: 24 },
-  { id: 'large', label: 'Large', padding_y: 16, padding_x: 32 },
+  { id: 'x-small', label: 'Extra small', short: 'XS', padding_y: 6, padding_x: 12 },
+  { id: 'small', label: 'Small', short: 'S', padding_y: 8, padding_x: 16 },
+  { id: 'medium', label: 'Medium', short: 'M', padding_y: 12, padding_x: 24 },
+  { id: 'large', label: 'Large', short: 'L', padding_y: 16, padding_x: 32 },
 ] as const
 export const BUTTON_SHAPES = [
   { id: 'rectangle', label: 'Rectangle', radius: 0 },

@@ -11,7 +11,14 @@ import type {
 } from '../design'
 import type { UploadedImage } from '../toolbar'
 import type { Device } from './devices'
-import type { DropHint, FormatEditor, Selection, SavedRow, SavedRowsState } from './types'
+import type {
+  DropHint,
+  FocusRequest,
+  FormatEditor,
+  Selection,
+  SavedRow,
+  SavedRowsState,
+} from './types'
 
 /** ``null`` when the change was made; otherwise why it was refused. */
 export type EditResult = string | null
@@ -19,7 +26,8 @@ export type EditResult = string | null
 export interface EditorApi {
   design: BlockDesign
   selection: Selection
-  select: (selection: Selection, focusText?: boolean) => void
+  /** ``focusText``: put the caret in the text block at its end, or at a point. */
+  select: (selection: Selection, focusText?: false | 'end' | { x: number; y: number }) => void
   device: Device
   disabled: boolean
   brand: BrandPreview
@@ -27,8 +35,11 @@ export interface EditorApi {
   getMergeFields: () => MergeFieldDefinition[]
   onUploadImage?: (file: File) => Promise<UploadedImage>
   dropHint: DropHint | null
-  /** The block whose text editor should take focus once it mounts. */
-  focusTextId: string | null
+  /** A text editor that should take focus once it mounts; used once. */
+  focusRequest: FocusRequest | null
+  clearFocusRequest: () => void
+  /** The editor the formatting bar drives (the selected heading or text block). */
+  formatEditor: FormatEditor | null
   setFormatEditor: (editor: FormatEditor | null) => void
 
   /** Apply a change to the design. It is refused (and nothing changes) when it

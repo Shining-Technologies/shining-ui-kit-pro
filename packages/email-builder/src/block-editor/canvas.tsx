@@ -28,6 +28,7 @@ import { ColorInput, SelectInput } from './controls'
 import { useEditorApi } from './context'
 import { CANVAS_END } from './drop'
 import { deviceWidth, isHiddenOn } from './devices'
+import { FormatBar } from './format-bar'
 import { Icon } from './icons'
 
 /** Items do not shift while dragging: the drop line shows where the item lands. */
@@ -278,12 +279,15 @@ function BlockToolbar({
   dragProps,
   first,
   last,
+  gutter,
 }: {
   block: Block
   activatorRef: (el: HTMLElement | null) => void
   dragProps: object
   first: boolean
   last: boolean
+  /** Beside the block, in the margin, so it never covers the block above. */
+  gutter: 'left' | 'right' | null
 }) {
   const api = useEditorApi()
   const { bar, side } = useToolbarSide()
@@ -292,6 +296,7 @@ function BlockToolbar({
       ref={bar}
       className="seb-toolbar-float"
       data-side={side}
+      data-gutter={gutter ?? undefined}
       role="toolbar"
       aria-label={`${blockLabel(block.type)} block actions`}
       onClick={(event) => event.stopPropagation()}
@@ -329,7 +334,17 @@ function BlockToolbar({
   )
 }
 
-function BlockCell({ block, column, index }: { block: Block; column: Column; index: number }) {
+function BlockCell({
+  block,
+  column,
+  index,
+  gutter,
+}: {
+  block: Block
+  column: Column
+  index: number
+  gutter: 'left' | 'right' | null
+}) {
   const api = useEditorApi()
   const mod = blockModule(block.type)
   const [frame, setFrame] = useState<HTMLElement | null>(null)
@@ -347,7 +362,7 @@ function BlockCell({ block, column, index }: { block: Block; column: Column; ind
     if (event.target !== event.currentTarget) return
     if (event.key === 'Enter') {
       event.preventDefault()
-      api.select({ kind: 'block', id: block.id }, true)
+      api.select({ kind: 'block', id: block.id }, 'end')
     } else if (api.disabled) {
       return
     } else if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
@@ -389,7 +404,13 @@ function BlockCell({ block, column, index }: { block: Block; column: Column; ind
       aria-current={selected ? 'true' : undefined}
       onClick={(event) => {
         event.stopPropagation()
-        api.select({ kind: 'block', id: block.id }, true)
+        // A click inside the text being edited already placed the caret.
+        if ((event.target as HTMLElement).closest('.ProseMirror, .seb-format')) return
+        api.select(
+          { kind: 'block', id: block.id },
+          // The caret goes where the pointer was.
+          { x: event.clientX, y: event.clientY },
+        )
       }}
       onKeyDown={onKeyDown}
     >
@@ -401,8 +422,16 @@ function BlockCell({ block, column, index }: { block: Block; column: Column; ind
           dragProps={{ ...attributes, ...listeners }}
           first={index === 0}
           last={index === column.blocks.length - 1}
+          gutter={gutter}
         />
       )}
+      {selected &&
+        !api.disabled &&
+        api.formatEditor &&
+        !api.formatEditor.editor.isDestroyed &&
+        (block.type === 'text' || block.type === 'heading') && (
+          <FormatBar target={api.formatEditor} />
+        )}
       <View block={block} live={live} />
       {selected && !api.disabled && Overlay && (
         <Overlay block={block} frame={frame} onLive={setLive} />
@@ -414,7 +443,7 @@ function BlockCell({ block, column, index }: { block: Block; column: Column; ind
 
 /* -- columns and rows ------------------------------------------------------ */
 
-function ColumnView({ column }: { column: Column }) {
+function ColumnView({ column, gutter }: { column: Column; gutter: 'left' | 'right' | null }) {
   const api = useEditorApi()
   const { setNodeRef } = useDroppable({ id: column.id, data: { kind: 'column' } })
   const selected = api.selection?.kind === 'column' && api.selection.id === column.id
@@ -450,7 +479,7 @@ function ColumnView({ column }: { column: Column }) {
           }}
         >
           {column.blocks.map((block, index) => (
-            <BlockCell key={block.id} block={block} column={column} index={index} />
+            <BlockCell key={block.id} block={block} column={column} index={index} gutter={gutter} />
           ))}
           {column.blocks.length === 0 && (
             <div className="seb-col-empty">
@@ -647,8 +676,19 @@ function RowView({ row, index, count }: { row: Row; index: number; count: number
           data-stacked={mobile || undefined}
           style={{ gap: mobile ? 0 : (row.gap ?? DEFAULT_ROW_GAP) }}
         >
-          {row.columns.map((column) => (
-            <ColumnView key={column.id} column={column} />
+          {row.columns.map((column, i) => (
+            <ColumnView
+              key={column.id}
+              column={column}
+              // The first column's toolbar hangs in the left margin, the last one's in the right.
+              gutter={
+                row.columns.length === 1 || i === row.columns.length - 1
+                  ? 'right'
+                  : i === 0
+                    ? 'left'
+                    : null
+              }
+            />
           ))}
         </div>
       </div>

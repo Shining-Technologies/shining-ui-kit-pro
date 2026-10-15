@@ -36,7 +36,11 @@ export function MergeFieldPicker({
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase()
     return fields.filter(
-      (field) => !q || field.label.toLowerCase().includes(q) || field.key.toLowerCase().includes(q),
+      (field) =>
+        !q ||
+        field.label.toLowerCase().includes(q) ||
+        field.key.toLowerCase().includes(q) ||
+        (field.description ?? '').toLowerCase().includes(q),
     )
   }, [fields, query])
 
@@ -124,13 +128,22 @@ export function MergeFieldPicker({
                         key={field.key}
                         id={`${listId}-${index}`}
                         role="option"
+                        aria-label={field.description ? `${field.label} ${field.key}` : undefined}
+                        aria-describedby={field.description ? `${listId}-${index}-d` : undefined}
                         aria-selected={index === active}
                         className="seb-picker-option"
                         onMouseEnter={() => setActive(index)}
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => choose(field)}
                       >
-                        <span>{field.label}</span>
+                        <span className="seb-picker-text">
+                          <span>{field.label}</span>
+                          {field.description && (
+                            <small id={`${listId}-${index}-d`} className="seb-picker-desc">
+                              {field.description}
+                            </small>
+                          )}
+                        </span>
                         <code>{field.key}</code>
                       </li>
                     )

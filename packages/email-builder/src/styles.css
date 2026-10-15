@@ -242,6 +242,18 @@
     background: var(--seb-muted);
   }
 
+  .seb-picker-text {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .seb-picker-desc {
+    color: var(--seb-muted-fg);
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
   .seb-picker-option code {
     color: var(--seb-muted-fg);
     font-size: 0.75rem;
@@ -534,9 +546,33 @@
     gap: 0.25rem;
   }
 
+  /* The formatting bar floats under the text block being edited. */
   .seb-format {
-    border-bottom: 1px solid var(--seb-border);
-    background: var(--seb-card);
+    position: absolute;
+    top: calc(100% + 3px);
+    left: 0.25rem;
+    z-index: 19;
+    width: max-content;
+    max-width: min(30rem, calc(100vw - 2rem));
+    border: 1px solid var(--seb-border);
+    border-radius: calc(var(--seb-radius) - 2px);
+    background: var(--seb-popover);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+    color: var(--seb-fg);
+    font: 0.8125rem/1.4 var(--font-sans, system-ui, sans-serif);
+    cursor: default;
+  }
+
+  /* Its link and colour panels open as popovers below the bar. */
+  .seb-format .seb-inline-panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 16rem;
+    border: 1px solid var(--seb-border);
+    border-radius: var(--seb-radius);
+    background: var(--seb-popover);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
   }
 
   .seb-flash {
@@ -917,6 +953,7 @@
     position: static;
     transform: none;
     opacity: 1;
+    pointer-events: auto;
   }
 
   .seb-cell {
@@ -1045,6 +1082,23 @@
     top: calc(100% + 3px);
   }
 
+  /* Beside the block, in the margin: it never covers the block above. */
+  .seb-toolbar-float[data-gutter] {
+    top: 0;
+    bottom: auto;
+    flex-direction: column;
+  }
+
+  .seb-toolbar-float[data-gutter='right'] {
+    right: auto;
+    left: calc(100% + 4px);
+  }
+
+  .seb-toolbar-float[data-gutter='left'] {
+    right: calc(100% + 4px);
+    left: auto;
+  }
+
   .seb-row-toolbar {
     left: 0.25rem;
     right: auto;
@@ -1077,21 +1131,25 @@
     gap: 0.5rem;
   }
 
+  /* A "+" between blocks. It hangs just outside the block, over the edge of the next
+     one, and takes the pointer only while it is shown: a short block (a rule, a spacer)
+     keeps its whole area for selecting. */
   .seb-insert {
     position: absolute;
     left: 50%;
     z-index: 15;
     transform: translateX(-50%);
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.12s;
   }
 
   .seb-insert[data-where='before'] {
-    top: -10px;
+    top: -22px;
   }
 
   .seb-insert[data-where='after'] {
-    bottom: -10px;
+    bottom: -22px;
   }
 
   .seb-cell:hover > .seb-insert,
@@ -1099,11 +1157,13 @@
   .seb-insert:focus-within,
   .seb-insert[data-open] {
     opacity: 1;
+    pointer-events: auto;
   }
 
   @media (hover: none) {
     .seb-insert {
       opacity: 1;
+      pointer-events: auto;
     }
   }
 
@@ -1610,5 +1670,38 @@
     clip: rect(0 0 0 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  /* -- small fixes ------------------------------------------------------------ */
+
+  .seb-tile-label {
+    white-space: nowrap;
+  }
+
+  .seb-video > span:first-child {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.75rem;
+    z-index: 1;
+  }
+
+  .seb-hex {
+    width: 7.5rem;
+  }
+
+  .seb-note {
+    color: var(--seb-muted-fg);
+    font-size: 0.6875rem;
+    line-height: 1.2;
+  }
+
+  .seb-columns[data-stacked] .seb-col-tag {
+    display: none !important;
+  }
+
+  /* Every swatch gets an outline, so a dark one shows against a dark pane. */
+  .seb-blocks .seb-swatch,
+  .seb-format .seb-swatch {
+    border: 1px solid color-mix(in srgb, var(--seb-fg) 30%, transparent);
   }
 }

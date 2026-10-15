@@ -505,28 +505,37 @@ function ImagePanel({
   )
 }
 
+/** A swatch: a colour, named when it is a brand colour. */
+export type ColorChoice = string | { value: string; label: string }
+
 export function ColorPanel({
   colors,
   onApply,
   onCancel,
 }: {
-  colors: string[]
+  colors: ColorChoice[]
   onApply: (color: string | null) => void
   onCancel: () => void
 }) {
-  const [custom, setCustom] = useState(colors[0] ?? '#000000')
+  const choices = colors.map((color) =>
+    typeof color === 'string'
+      ? { value: color, name: `Colour ${color}`, title: color }
+      : { value: color.value, name: color.label, title: `${color.label} (${color.value})` },
+  )
+  const [custom, setCustom] = useState(choices[0]?.value ?? '#000000')
   return (
     <PanelForm label="Text colour" onCancel={onCancel} onSubmit={() => onApply(custom)}>
       <div className="seb-swatches" role="group" aria-label="Brand colours">
-        {colors.map((color) => (
+        {/* Keyed by position: two brand colours may share a value. */}
+        {choices.map((choice, index) => (
           <button
-            key={color}
+            key={index}
             type="button"
             className="seb-swatch"
-            style={{ background: color }}
-            aria-label={`Colour ${color}`}
-            title={color}
-            onClick={() => onApply(color)}
+            style={{ background: choice.value }}
+            aria-label={choice.name}
+            title={choice.title}
+            onClick={() => onApply(choice.value)}
           />
         ))}
         <button type="button" className="seb-action" onClick={() => onApply(null)}>

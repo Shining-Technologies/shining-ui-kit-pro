@@ -78,9 +78,21 @@ export function boxStyle(block: Block, brand: BrandPreview): CSSProperties {
   return css
 }
 
+const NETWORKS: Record<string, string> = {
+  linkedin: 'LinkedIn',
+  youtube: 'YouTube',
+  tiktok: 'TikTok',
+  x: 'X',
+  twitter: 'X',
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  pinterest: 'Pinterest',
+  whatsapp: 'WhatsApp',
+}
+
 export function pillLabel(link: SocialLink): string {
   const name = link.network.trim() || 'Link'
-  return name.charAt(0).toUpperCase() + name.slice(1)
+  return NETWORKS[name.toLowerCase()] ?? name.charAt(0).toUpperCase() + name.slice(1)
 }
 
 /** Edits for one block: ``set`` merges a patch, ``setStyle`` merges the shared style. */
