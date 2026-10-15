@@ -30,7 +30,9 @@ export interface SavedRowsAdapter {
 }
 
 /** A server validation error to show on the canvas. Give ``blockId`` or ``path``
- * (the leading path of the server's message, ``rows[0].columns[0].blocks[1].url``). */
+ * (the leading path of the server's message, ``rows[0].columns[0].blocks[1].url``). Prefer
+ * ``blockId`` for a background save: a ``path`` is an index into the design as it was sent, and
+ * points at the wrong block once the user has moved or inserted rows meanwhile. */
 export interface BlockEditorHighlight {
   path?: string
   blockId?: string
@@ -53,10 +55,11 @@ export interface BlockEditorProps {
   onDeviceChange?: (device: Device) => void
   disabled?: boolean
   /** Shows a server error: the block, column or row it points at is outlined, scrolled into view
-   * and selected, and the message is announced. It clears when that target is edited. */
+   * and selected, and the message is announced. It clears when that target is edited or when
+   * ``value`` is replaced. */
   highlight?: BlockEditorHighlight | null
-  /** Called when the editor drops the highlight (the target was edited or the message dismissed),
-   * so the host can stop passing it. */
+  /** Called when the editor drops the highlight (the target was edited, ``value`` was replaced or
+   * the message dismissed), so the host can stop passing it. */
   onHighlightClear?: () => void
   className?: string
   'aria-label'?: string

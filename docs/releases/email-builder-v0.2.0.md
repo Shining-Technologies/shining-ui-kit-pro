@@ -1,6 +1,6 @@
 # @shining-technologies/email-builder v0.2.0
 
-Unreleased · Minor · [CHANGELOG entry](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/%40shining-technologies%2Femail-builder%400.2.0/packages/email-builder/CHANGELOG.md#020)
+Released 2026-10-15 · Minor · [CHANGELOG entry](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/%40shining-technologies%2Femail-builder%400.2.0/packages/email-builder/CHANGELOG.md#020)
 
 `BlockEditor`: the drag-and-drop editor for shining-email 0.3's block designs, with a palette, a canvas
 that approximates the email at a real desktop or mobile width, and properties for every block, row,
