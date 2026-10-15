@@ -66,6 +66,7 @@ function Inspector({ block }: InspectorProps<AvatarBlock>) {
         )}
         <TextInput
           label="Picture address"
+          trim
           value={block.src}
           placeholder="https://"
           onChange={(src) => set({ src, asset_id: undefined }, 'src')}

@@ -94,6 +94,7 @@ function Inspector({ block }: InspectorProps<ImageBlock>) {
         )}
         <TextInput
           label="Image address"
+          trim
           value={block.src}
           placeholder="https://"
           onChange={(src) => set({ src, asset_id: undefined }, 'src')}
@@ -122,6 +123,7 @@ function Inspector({ block }: InspectorProps<ImageBlock>) {
         <AlignInput value={block.align} onChange={(align) => set({ align })} />
         <TextInput
           label="Link address"
+          trim
           value={block.link ?? ''}
           placeholder="https://"
           hint="Optional. Opens when the image is clicked."

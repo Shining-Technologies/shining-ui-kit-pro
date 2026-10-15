@@ -23,6 +23,7 @@ export function useHistory(design: BlockDesign, onChange: (design: BlockDesign) 
   onChangeRef.current = onChange
 
   const key = useMemo(() => JSON.stringify(design), [design])
+  const latestKey = useRef(key)
   if (key !== shown.current) {
     // A value we did not emit starts a new history.
     if (shown.current !== null && key !== emitted.current) {
@@ -33,17 +34,20 @@ export function useHistory(design: BlockDesign, onChange: (design: BlockDesign) 
     shown.current = key
   }
   latest.current = design
+  latestKey.current = key
 
   const emit = (next: BlockDesign) => {
     // The parent hands the value back through `toBlockDesign`, which fills defaults.
     emitted.current = JSON.stringify(withDefaults(next))
     latest.current = next
+    latestKey.current = emitted.current
     onChangeRef.current(next)
     bump()
   }
 
   const commit = useCallback((next: BlockDesign, coalesceKey?: string) => {
-    if (next === latest.current) return
+    // Compare the content, not the identity: a move to where a block already is makes no step.
+    if (next === latest.current || JSON.stringify(withDefaults(next)) === latestKey.current) return
     const now = Date.now()
     const last = lastCommit.current
     const merge = Boolean(

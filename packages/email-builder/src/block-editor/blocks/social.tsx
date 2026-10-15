@@ -84,6 +84,7 @@ function Inspector({ block }: InspectorProps<SocialBlock>) {
                 />
                 <TextInput
                   label={`Address ${index + 1}`}
+                  trim
                   value={link.url}
                   placeholder="https://"
                   onChange={(url) =>

@@ -6,7 +6,7 @@ import { useEffect, useRef, type CSSProperties } from 'react'
 import { chipMergeTags } from '../chips'
 import type { HeadingBlock, TextBlock } from '../design'
 import { useEditorApi } from './context'
-import { blockTextExtensions, contentForEditor, htmlFromEditor } from './text-extensions'
+import { blockTextExtensions, contentForEditor, htmlFromEditor, joinLines } from './text-extensions'
 
 function usable(editor: Editor | null): editor is Editor {
   return editor !== null && !editor.isDestroyed
@@ -53,6 +53,12 @@ export function InlineText({
       editable,
       immediatelyRender: false,
       editorProps: {
+        ...(kind === 'heading'
+          ? {
+              transformPastedHTML: joinLines,
+              transformPastedText: (pasted: string) => pasted.replace(/\s*[\r\n]+\s*/g, ' '),
+            }
+          : {}),
         attributes: {
           'aria-label': kind === 'heading' ? 'Heading text' : 'Text',
           'aria-multiline': kind === 'heading' ? 'false' : 'true',

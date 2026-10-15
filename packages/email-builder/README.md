@@ -97,6 +97,14 @@ import { BlockEditor } from '@shining-technologies/email-builder'
 - **Validation.** Every change is checked with `validateBlockDesign` before it is applied and is
   refused, with the reason, if it would add a problem the server would reject. An unfinished block
   (no picture, no link) is a warning, not a refusal.
+- **Undo history and the value you pass.** The editor keeps its own undo stack. It resets the
+  stack when `value` is not the design it last emitted, because it takes that as a different
+  template being loaded. So keep the design from `onChange` in local state and pass it straight
+  back; do not replace it with the server's copy after a save (the server stores designs compact,
+  so its copy is not byte-for-byte what the editor emitted) unless you mean to start a new history.
+  `value` itself may be compact: the editor fills defaults on read.
+- **Saved rows.** `savedRows.save(name, row, designWidth)` receives the email's width (480–700);
+  the server checks the row's images against it.
 - **Size.** The editor fills its parent. Give it a height, or set `--seb-block-editor-height`.
 
 When the server refuses a design, its error starts with a path such as

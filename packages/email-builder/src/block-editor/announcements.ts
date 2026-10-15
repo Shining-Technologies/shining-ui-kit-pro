@@ -8,46 +8,63 @@ import { CANVAS_END, parsePaletteId } from './drop'
  * reads out raw ids; these name the thing in the editor's own words instead:
  * "Picked up Heading block.", "… is over position 2 in column 1 of row 3.".
  */
+/** An item in the editor's own words: "Heading block “Welcome”", "Row 2". */
+export function describeItem(
+  design: BlockDesign,
+  id: UniqueIdentifier,
+  savedName: (id: string) => string | undefined = () => undefined,
+): string {
+  const key = String(id)
+  const palette = parsePaletteId(key)
+  if (palette?.kind === 'palette-block') return `${blockLabel(palette.type)} block`
+  if (palette?.kind === 'palette-layout') {
+    const layout = ROW_LAYOUTS.find((l) => l.id === palette.layout)
+    return `${layout ? layout.label.replace(/ /g, '') : ''} row layout`.trim()
+  }
+  if (palette?.kind === 'palette-saved') {
+    const name = savedName(palette.id)
+    return name ? `Saved row “${name}”` : 'Saved row'
+  }
+  const block = findBlock(design, key)
+  if (block) {
+    const summary = blockSummary(block.block)
+    return `${blockLabel(block.block.type)} block${summary ? ` “${summary}”` : ''}`
+  }
+  const row = findRow(design, key)
+  if (row) return `Row ${row.index + 1}`
+  return 'Item'
+}
+
+/** Where an item is: "position 2 in column 1 of row 3", or ``null``. */
+export function describePlace(
+  design: BlockDesign,
+  id: UniqueIdentifier | undefined,
+): string | null {
+  if (id === undefined) return null
+  const key = String(id)
+  if (key === CANVAS_END) return 'the end of the email'
+  const block = findBlock(design, key)
+  if (block) {
+    return `position ${block.blockIndex + 1} in column ${block.columnIndex + 1} of row ${block.rowIndex + 1}`
+  }
+  const column = findColumn(design, key)
+  if (column) return `the end of column ${column.columnIndex + 1} of row ${column.rowIndex + 1}`
+  const row = findRow(design, key)
+  if (row) return `row ${row.index + 1}`
+  return null
+}
+
+/**
+ * What the screen reader says while something is dragged. dnd-kit's default
+ * reads out raw ids; these name the thing in the editor's own words instead:
+ * "Picked up Heading block.", "… is over position 2 in column 1 of row 3.".
+ */
 export function buildAnnouncements(
   design: BlockDesign,
   savedName: (id: string) => string | undefined = () => undefined,
 ): Announcements {
-  const describe = (id: UniqueIdentifier): string => {
-    const key = String(id)
-    const palette = parsePaletteId(key)
-    if (palette?.kind === 'palette-block') return `${blockLabel(palette.type)} block`
-    if (palette?.kind === 'palette-layout') {
-      const layout = ROW_LAYOUTS.find((l) => l.id === palette.layout)
-      return `${layout ? layout.label.replace(/ /g, '') : ''} row layout`.trim()
-    }
-    if (palette?.kind === 'palette-saved') {
-      const name = savedName(palette.id)
-      return name ? `Saved row “${name}”` : 'Saved row'
-    }
-    const block = findBlock(design, key)
-    if (block) {
-      const summary = blockSummary(block.block)
-      return `${blockLabel(block.block.type)} block${summary ? ` “${summary}”` : ''}`
-    }
-    const row = findRow(design, key)
-    if (row) return `Row ${row.index + 1}`
-    return 'Item'
-  }
-
-  const where = (id: UniqueIdentifier | undefined): string | null => {
-    if (id === undefined) return null
-    const key = String(id)
-    if (key === CANVAS_END) return 'the end of the email'
-    const block = findBlock(design, key)
-    if (block) {
-      return `position ${block.blockIndex + 1} in column ${block.columnIndex + 1} of row ${block.rowIndex + 1}`
-    }
-    const column = findColumn(design, key)
-    if (column) return `the end of column ${column.columnIndex + 1} of row ${column.rowIndex + 1}`
-    const row = findRow(design, key)
-    if (row) return `row ${row.index + 1}`
-    return null
-  }
+  const describe = (id: UniqueIdentifier) => describeItem(design, id, savedName)
+  const where = (id: UniqueIdentifier | undefined) => describePlace(design, id)
 
   return {
     onDragStart: ({ active }) => `Picked up ${describe(active.id)}.`,

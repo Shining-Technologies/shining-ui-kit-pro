@@ -79,6 +79,11 @@ None. `BlockDesign` is now fully typed (`settings` and `rows` were `Record<strin
 - The server is the authority. `validateBlockDesign` mirrors its rules for hints; an unfinished block
   (an image with no picture, a button with no link) is reported as a `warning`, which the server
   would still refuse on save.
+- The editor resets its undo history when `value` differs from the design it last emitted. Keep the
+  `onChange` design in local state; do not swap in the server's compact copy after a save unless you
+  intend to start a new history.
+- `savedRows.save(name, row, designWidth)` gets a third argument, the email's width, for the server's
+  `design_width`.
 - The footer block renders below the email card whatever its place in the tree; the canvas flags it.
 - The button's pill preset writes `radius: 40`, the server's maximum.
 - ESM only. React 18.3 and 19.

@@ -58,7 +58,7 @@ import {
   nudgeRow,
   rowInsertionIndex,
 } from './actions'
-import { buildAnnouncements } from './announcements'
+import { buildAnnouncements, describeItem, describePlace } from './announcements'
 import { blockLabel, blockModule, blockSummary } from './blocks'
 import { Canvas } from './canvas'
 import { EditorContext, type EditorApi, type EditResult } from './context'
@@ -136,6 +136,10 @@ const collisionDetection: CollisionDetection = (args) => {
   return closestCenter({ ...args, droppableContainers: targets })
 }
 
+const FOCUSABLE =
+  'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+
+/** A modal sheet: focus moves in, Tab stays inside, Escape closes, and focus returns to where it was. */
 function Sheet({
   side,
   title,
@@ -147,14 +151,22 @@ function Sheet({
   onClose: () => void
   children: ReactNode
 }) {
+  const panel = useRef<HTMLDivElement>(null)
   const close = useRef<HTMLButtonElement>(null)
-  useEffect(() => close.current?.focus(), [])
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null
+    close.current?.focus()
+    return () => {
+      if (opener && opener.isConnected) opener.focus()
+    }
+  }, [])
   return (
     <div
       className="seb-sheet-backdrop"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
       <div
+        ref={panel}
         className="seb-sheet"
         data-side={side}
         role="dialog"
@@ -164,6 +176,20 @@ function Sheet({
           if (event.key === 'Escape') {
             event.stopPropagation()
             onClose()
+            return
+          }
+          if (event.key !== 'Tab' || !panel.current) return
+          const items = Array.from(panel.current.querySelectorAll<HTMLElement>(FOCUSABLE))
+          if (items.length === 0) return
+          const first = items[0]!
+          const last = items[items.length - 1]!
+          const active = document.activeElement
+          if (event.shiftKey && (active === first || !panel.current.contains(active))) {
+            event.preventDefault()
+            last.focus()
+          } else if (!event.shiftKey && (active === last || !panel.current.contains(active))) {
+            event.preventDefault()
+            first.focus()
           }
         }}
       >
@@ -211,6 +237,7 @@ function Workspace({
   const [sheet, setSheet] = useState<null | 'palette' | 'properties'>(null)
   const [dragging, setDragging] = useState<string | null>(null)
   const [dropHint, setDropHint] = useState<DropHint | null>(null)
+  const [live, setLive] = useState('')
   const device = deviceProp ?? ownDevice
 
   const selection = useMemo<Selection>(() => {
@@ -269,11 +296,9 @@ function Workspace({
   useLayoutEffect(() => {
     const id = pendingFocus.current
     if (!id) return
-    const el = root.current?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(id)}"]`)
-    if (el) {
-      pendingFocus.current = null
-      el.focus()
-    }
+    // A focus request lasts for one change of the design, however it ends.
+    pendingFocus.current = null
+    root.current?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(id)}"]`)?.focus()
   }, [design])
 
   useEffect(() => {
@@ -287,12 +312,25 @@ function Workspace({
     setFocusTextId(focusText && next?.kind === 'block' ? next.id : null)
   }, [])
 
+  /** Apply an action's result. Nothing happens, and no focus is requested,
+   * unless the design changes; a change that would add a problem the server
+   * refuses is turned down with the reason. Returns whether it was applied. */
   const apply = useCallback(
-    (result: ActionResult, coalesceKey?: string) => {
+    (result: ActionResult, coalesceKey?: string): boolean => {
+      if (result.design === latest.current) {
+        setNotice(result.notice ?? '')
+        return false
+      }
+      const problem = newProblem(latest.current, result.design)
+      if (problem) {
+        setNotice(problem)
+        return false
+      }
       setNotice(result.notice ?? '')
-      if (result.design !== latest.current) commit(result.design, coalesceKey)
+      pendingFocus.current = result.focusId ?? null
+      commit(result.design, coalesceKey)
       if (result.selection !== undefined) select(result.selection)
-      if (result.focusId) pendingFocus.current = result.focusId
+      return true
     },
     [commit, latest, select],
   )
@@ -305,6 +343,7 @@ function Workspace({
       const problem = newProblem(current, next)
       if (problem) return problem
       setNotice('')
+      pendingFocus.current = null
       commit(next, key)
       return null
     },
@@ -318,6 +357,16 @@ function Workspace({
     if (block && (block.block.type === 'text' || block.block.type === 'heading')) return
     setSheet('properties')
   }, [isDesktop, selection, latest])
+
+  /** A keyboard move: applied if it changes anything, and spoken either way. */
+  const moveAnnounced = (id: string, next: BlockDesign) => {
+    const before = latest.current
+    if (next === before) {
+      setLive(`${describeItem(before, id)} cannot move any further that way.`)
+    } else if (apply({ design: next, focusId: id })) {
+      setLive(`Moved ${describeItem(next, id)} to ${describePlace(next, id)}.`)
+    }
+  }
 
   const api: EditorApi = {
     design,
@@ -338,22 +387,20 @@ function Workspace({
     updateColumn: (id, patch, key) => edit((d) => updateColumnIn(d, id, patch), key),
     updateSettings: (patch, key) => edit((d) => updateSettingsIn(d, patch), key),
     addBlockAt: (type, columnId, index) => apply(addBlockAt(latest.current, type, columnId, index)),
-    nudgeBlock: (id, delta) => {
-      pendingFocus.current = id
-      apply({ design: nudgeBlock(latest.current, id, delta) })
-    },
-    nudgeBlockSideways: (id, delta) => {
-      pendingFocus.current = id
-      apply({ design: nudgeBlockSideways(latest.current, id, delta) })
-    },
+    nudgeBlock: (id, delta) => moveAnnounced(id, nudgeBlock(latest.current, id, delta)),
+    nudgeBlockSideways: (id, delta) =>
+      moveAnnounced(id, nudgeBlockSideways(latest.current, id, delta)),
     duplicateBlock: (id) => {
       const before = latest.current
       const next = duplicateBlockIn(before, id)
       if (next === before) return
       const found = findBlock(next, id)
       const copy = found ? found.column.blocks[found.blockIndex + 1] : undefined
-      apply({ design: next, selection: copy ? { kind: 'block', id: copy.id } : undefined })
-      if (copy) pendingFocus.current = copy.id
+      apply({
+        design: next,
+        selection: copy ? { kind: 'block', id: copy.id } : undefined,
+        focusId: copy?.id,
+      })
     },
     removeBlock: (id) => {
       const before = latest.current
@@ -366,12 +413,20 @@ function Workspace({
           : column
             ? { kind: 'column', id: column }
             : null,
+        focusId: neighbour ?? undefined,
       })
-      if (neighbour) pendingFocus.current = neighbour
     },
     setLayout: (rowId, layout: LayoutId) =>
       apply({ design: setRowLayout(latest.current, rowId, layout) }),
-    nudgeRow: (id, delta) => apply({ design: nudgeRow(latest.current, id, delta) }),
+    nudgeRow: (id, delta) => {
+      const before = latest.current
+      const next = nudgeRow(before, id, delta)
+      if (next === before) {
+        setLive(`${describeItem(before, id)} cannot move ${delta < 0 ? 'up' : 'down'} any further.`)
+      } else if (apply({ design: next })) {
+        setLive(`Moved ${describeItem(next, id)} to ${describePlace(next, id)}.`)
+      }
+    },
     duplicateRow: (id) => {
       const before = latest.current
       const next = duplicateRowIn(before, id)
@@ -389,7 +444,11 @@ function Workspace({
         const found = findRow(latest.current, rowId)
         if (!current || !found) return 'The row could not be saved'
         try {
-          const row = await current.save(name, cloneRowWithNewIds(found.row))
+          const row = await current.save(
+            name,
+            cloneRowWithNewIds(found.row),
+            latest.current.settings.width,
+          )
           if (mounted.current) {
             setSaved((state) => ({ ...state, status: 'ready', items: [...state.items, row] }))
             setNotice(`Saved the row as “${name}”.`)
@@ -439,6 +498,8 @@ function Workspace({
 
   /* -- undo, redo and shortcuts -------------------------------------------- */
 
+  const historyRef = useRef(history)
+  historyRef.current = history
   useEffect(() => {
     if (disabled) return
     const onKeyDown = (event: KeyboardEvent) => {
@@ -451,12 +512,12 @@ function Workspace({
       const action = shortcutFor(event)
       if (!action) return
       event.preventDefault()
-      if (action === 'undo') history.undo()
-      else history.redo()
+      if (action === 'undo') historyRef.current.undo()
+      else historyRef.current.redo()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [disabled, history.undo, history.redo, history])
+  }, [disabled])
 
   /* -- drag and drop ------------------------------------------------------- */
 
@@ -606,13 +667,12 @@ function Workspace({
                     </>
                   )}
                 </div>
-                <div className="seb-segmented" role="tablist" aria-label="Canvas width">
+                <div className="seb-segmented" role="group" aria-label="Canvas width">
                   {DEVICES.map((option) => (
                     <button
                       key={option.value}
                       type="button"
-                      role="tab"
-                      aria-selected={device === option.value}
+                      aria-pressed={device === option.value}
                       className="seb-segment"
                       onClick={() => chooseDevice(option.value)}
                     >
@@ -629,6 +689,9 @@ function Workspace({
                     Properties
                   </button>
                 )}
+              </div>
+              <div className="seb-sr-only" aria-live="polite" aria-atomic="true">
+                {live}
               </div>
               {showFormat && <FormatBar target={formatEditor} />}
               {notice && (

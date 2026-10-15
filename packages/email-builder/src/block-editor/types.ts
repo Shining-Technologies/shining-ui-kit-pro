@@ -22,7 +22,8 @@ export interface SavedRow {
 
 export interface SavedRowsAdapter {
   list(): Promise<SavedRow[]>
-  save(name: string, row: Row): Promise<SavedRow>
+  /** ``designWidth`` is the email's width (480–700), for the server to check the row's images against. */
+  save(name: string, row: Row, designWidth?: number): Promise<SavedRow>
   remove(id: SavedRow['id']): Promise<void>
 }
 

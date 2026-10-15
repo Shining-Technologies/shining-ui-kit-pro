@@ -38,6 +38,7 @@ function Inspector({ block }: InspectorProps<VideoBlock>) {
       <Section title="Video">
         <TextInput
           label="Video address"
+          trim
           value={block.url}
           placeholder="https://"
           hint="The email shows a picture that links here; it never embeds the video."
@@ -66,6 +67,7 @@ function Inspector({ block }: InspectorProps<VideoBlock>) {
         )}
         <TextInput
           label="Thumbnail address"
+          trim
           value={block.thumbnail?.src ?? ''}
           placeholder="https://"
           hint="A YouTube address gets its own thumbnail when this is empty."

@@ -56,6 +56,12 @@ export function sharedStyleOf(block: Block): BlockStyle {
   return style && typeof style === 'object' ? (style as BlockStyle) : {}
 }
 
+/** The text size a block has when ``style.font_size`` is not set: a heading's comes from its level. */
+export function defaultFontSize(block: Block): number {
+  if (block.type === 'heading') return { 1: 32, 2: 24, 3: 20 }[block.level]
+  return block.type === 'footer' ? 12 : 16
+}
+
 /** The box a block is drawn in: the shared ``style`` over the type's defaults. */
 export function boxStyle(block: Block, brand: BrandPreview): CSSProperties {
   const style = sharedStyleOf(block)
@@ -141,7 +147,7 @@ export function StyleSection({ block, fields }: { block: Block; fields: StyleFie
       {has('font_size') && (
         <NumberInput
           label="Font size"
-          value={style.font_size ?? 16}
+          value={style.font_size ?? defaultFontSize(block)}
           min={12}
           max={32}
           unit="px"

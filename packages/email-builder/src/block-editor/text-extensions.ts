@@ -80,6 +80,17 @@ export function htmlFromEditor(
   return match ? match[1]! : html
 }
 
+/** A heading is one line: paragraph and line breaks become a space, so pasted
+ * or loaded text is joined rather than cut after the first line. */
+export function joinLines(html: string): string {
+  return html
+    .replace(/<\/(?:p|div|h[1-6]|li)>\s*<(?:p|div|h[1-6]|li)\b[^>]*>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/?(?:p|div|h[1-6]|ul|ol|li)\b[^>]*>/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
 export function contentForEditor(html: string, kind: 'heading' | 'text'): string {
-  return kind === 'heading' ? `<p>${html}</p>` : html
+  return kind === 'heading' ? `<p>${joinLines(html)}</p>` : html
 }

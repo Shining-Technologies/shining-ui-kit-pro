@@ -513,13 +513,32 @@ export function resolveFont(value: string | null | undefined, brand?: BrandPrevi
   return isBrandRef(value) ? resolveBrand(value, brand) : fontStack(value)
 }
 
-/** The video id of a YouTube address (watch, share, embed, shorts, live), or ``null``. */
+/** The video id of a YouTube address (watch, share, embed, shorts, live, v), or
+ * ``null``; the host is matched without regard to case, as the server does. */
 export function youtubeId(address: string): string | null {
-  const match =
-    /^https?:\/\/(?:www\.|m\.)?(?:youtu\.be\/([A-Za-z0-9_-]{11})(?:[/?#]|$)|youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=([A-Za-z0-9_-]{11})(?:[&#]|$)|(?:embed|shorts|live|v)\/([A-Za-z0-9_-]{11})(?:[/?#]|$)))/.exec(
-      address.trim(),
-    )
-  return match ? (match[1] ?? match[2] ?? match[3] ?? null) : null
+  const parts = /^https?:\/\/([^/?#]*)([^?#]*)(?:\?([^#]*))?/i.exec(address.trim())
+  if (!parts) return null
+  const host = parts[1]!
+    .replace(/^.*@/, '')
+    .replace(/:\d*$/, '')
+    .toLowerCase()
+    .replace(/^www\./, '')
+    .replace(/^m\./, '')
+  const path = parts[2] ?? ''
+  const segments = path.split('/').filter(Boolean)
+  let candidate: string | undefined
+  if (host === 'youtu.be') candidate = segments[0]
+  else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+    if (path === '/watch') {
+      candidate = (parts[3] ?? '')
+        .split('&')
+        .map((pair) => pair.split('='))
+        .find(([key]) => key === 'v')?.[1]
+    } else if (segments.length >= 2 && ['embed', 'shorts', 'live', 'v'].includes(segments[0]!)) {
+      candidate = segments[1]
+    }
+  }
+  return candidate && /^[A-Za-z0-9_-]{11}$/.test(candidate) ? candidate : null
 }
 
 /** The thumbnail YouTube serves for a video address, or ``''``. */
@@ -553,7 +572,7 @@ export const DEFAULT_BLOCK_PADDING: Record<BlockType, Padding> = {
   spacer: [0, 0, 0, 0],
   social: [8, 0, 8, 0],
   video: [8, 0, 8, 0],
-  footer: [8, 0, 8, 0],
+  footer: [0, 0, 0, 0],
   html: [0, 0, 0, 0],
 }
 
@@ -694,23 +713,67 @@ const padding =
 
 const WEB = ['http', 'https']
 const LINK = ['http', 'https', 'mailto', 'tel']
-/** An address with one of ``schemes`` (or a merge tag standing for one). A
- * required address left empty is only unfinished. */
+/** The server's merge tag (`merge.TAG_RE`), with the default form. */
+const TAG_SOURCE =
+  '\\{\\{\\s*([A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*)\\s*(?:\\|\\s*(?:default\\s*:\\s*)?([^}]*?))?\\s*\\}\\}'
+/** What may not appear in a URL outside a merge tag (the server's `_URL_UNSAFE`). */
+// eslint-disable-next-line no-control-regex -- the control characters are the point
+const URL_UNSAFE = /[\s\u0000-\u001f\u007f"<>\\]/
+
+/**
+ * Why ``value`` is not an acceptable URL, or ``null``: a port of the server's
+ * `url_problem`. Each merge tag is set aside and the rest is checked as a URL:
+ * an allowed scheme, and no whitespace, control characters, quotes, angle
+ * brackets or backslashes. A tag may stand for the whole URL, start it (followed
+ * by ``/``, ``?`` or ``#``), or sit anywhere later. At most 2000 characters.
+ */
+export function urlProblem(
+  value: unknown,
+  schemes: readonly string[],
+  maximum = 2000,
+): string | null {
+  if (typeof value !== 'string') return 'must be a web address'
+  const text = value.trim()
+  if (!text || [...text].length > maximum) return 'must be a valid address'
+  const sticky = new RegExp(TAG_SOURCE, 'y')
+  let position = 0
+  let leading = false
+  for (;;) {
+    sticky.lastIndex = position
+    const tag = sticky.exec(text)
+    if (!tag) break
+    position = sticky.lastIndex
+    leading = true
+  }
+  const probe = text.slice(position).replace(new RegExp(TAG_SOURCE, 'g'), 'x')
+  if (URL_UNSAFE.test(probe)) return 'must be a valid address'
+  if (leading) {
+    return probe && !'/?#'.includes(probe[0]!)
+      ? 'must be a whole merge field, or one followed by /, ? or #'
+      : null
+  }
+  const scheme = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(probe)?.[1]?.toLowerCase()
+  if (!scheme || !schemes.includes(scheme))
+    return `must start with ${[...schemes]
+      .sort()
+      .map((x) => `${x}:`)
+      .join(', ')}`
+  return null
+}
+
+/** An address with one of ``schemes`` (see `urlProblem`). A required address
+ * left empty is only unfinished. */
 const address =
   (schemes: string[], what: string, mustHave = false): Check =>
   (v, p, c) => {
     if (typeof v !== 'string') return fail(c, p, `${what} must be a web address`)
-    const value = v.trim()
-    if (!value)
+    if (!v.trim()) {
       return mustHave
         ? unfinished(c, p, `${what} is empty`)
-        : fail(c, p, `${what} is not a valid address`)
-    if (value.startsWith('{{')) return
-    if (value.length > 2000 || /\s/.test(value) || [...value].some((ch) => ch.charCodeAt(0) < 32))
-      return fail(c, p, `${what} is not a valid address`)
-    const scheme = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(value)?.[1]?.toLowerCase()
-    if (!scheme || !schemes.includes(scheme))
-      fail(c, p, `${what} must start with ${schemes.map((s) => `${s}:`).join(', ')}`)
+        : fail(c, p, `${what} must be a valid address`)
+    }
+    const problem = urlProblem(v, schemes)
+    if (problem) fail(c, p, `${what} ${problem}`)
   }
 
 /** An object checked against a table: unknown keys are refused, a missing
@@ -1190,6 +1253,11 @@ export function withDefaults(design: BlockDesign): BlockDesign {
           if (sub) {
             filled.style = fill(defaultsOf(sub), isRecord(style) ? style : {})
           }
+          if (block.type === 'video' && !filled.thumbnail) {
+            // The server fills a YouTube video's thumbnail; so do we.
+            const own = youtubeThumbnail(String(filled.url ?? ''))
+            if (own) filled.thumbnail = { src: own }
+          }
           return filled as unknown as Block
         }),
       })),
@@ -1292,10 +1360,41 @@ export function insertBlock(
   index?: number,
 ): BlockDesign {
   if (!findColumn(design, columnId)) return design
-  return mapColumns(design, (column) =>
+  const placed = mapColumns(design, (column) =>
     column.id === columnId
       ? { ...column, blocks: insertAt(column.blocks, index ?? column.blocks.length, block) }
       : column,
+  )
+  // A block moved to a narrower column keeps within it.
+  return fitColumns(placed, [columnId])
+}
+
+/** The most an image may be wide in ``column``: its share of the design width. */
+export function columnPixels(design: BlockDesign, column: Pick<Column, 'width'>): number {
+  return Math.max(1, Math.floor((design.settings.width * column.width) / 100))
+}
+
+/** ``column`` with any image wider than the column sends back to full width,
+ * which the server would otherwise refuse. */
+function fitImages(design: BlockDesign, column: Column): Column {
+  const limit = columnPixels(design, column)
+  if (
+    !column.blocks.some((b) => b.type === 'image' && typeof b.width === 'number' && b.width > limit)
+  )
+    return column
+  return {
+    ...column,
+    blocks: column.blocks.map((block) =>
+      block.type === 'image' && typeof block.width === 'number' && block.width > limit
+        ? { ...block, width: 'full' as const }
+        : block,
+    ),
+  }
+}
+
+function fitColumns(design: BlockDesign, ids: string[]): BlockDesign {
+  return mapColumns(design, (column) =>
+    ids.includes(column.id) ? fitImages(design, column) : column,
   )
 }
 
@@ -1347,7 +1446,12 @@ export function cloneRowWithNewIds(row: Row): Row {
 
 /** Insert ``row`` at ``index`` (the end when omitted). */
 export function insertRow(design: BlockDesign, row: Row, index?: number): BlockDesign {
-  return { ...design, rows: insertAt(design.rows, index ?? design.rows.length, row) }
+  const placed = { ...design, rows: insertAt(design.rows, index ?? design.rows.length, row) }
+  // A saved row made for a wider email keeps within this one.
+  return fitColumns(
+    placed,
+    row.columns.map((c) => c.id),
+  )
 }
 
 export function removeRow(design: BlockDesign, id: string): BlockDesign {
@@ -1395,27 +1499,14 @@ export function updateColumn(
  * wider than its new column goes back to full width, which the server would
  * otherwise refuse. */
 export function setRowLayout(design: BlockDesign, id: string, layout: LayoutId): BlockDesign {
-  return {
-    ...design,
-    rows: design.rows.map((row) => {
-      if (row.id !== id) return row
-      const next = relayoutRow(row, layout)
-      return {
-        ...next,
-        columns: next.columns.map((column) => {
-          const limit = Math.floor((design.settings.width * column.width) / 100)
-          return {
-            ...column,
-            blocks: column.blocks.map((block) =>
-              block.type === 'image' && typeof block.width === 'number' && block.width > limit
-                ? { ...block, width: 'full' as const }
-                : block,
-            ),
-          }
-        }),
-      }
-    }),
-  }
+  const target = design.rows.find((row) => row.id === id)
+  if (!target) return design
+  const next = relayoutRow(target, layout)
+  const placed = { ...design, rows: design.rows.map((row) => (row.id === id ? next : row)) }
+  return fitColumns(
+    placed,
+    next.columns.map((c) => c.id),
+  )
 }
 
 export function updateSettings(design: BlockDesign, patch: Partial<BlockSettings>): BlockDesign {
@@ -1424,8 +1515,22 @@ export function updateSettings(design: BlockDesign, patch: Partial<BlockSettings
 
 /* -- validation ----------------------------------------------------------- */
 
+/** The design as Python's ``json.dumps(ensure_ascii=False)`` writes it (``", "``
+ * and ``": "`` separators), which is what the server's size limit counts. */
+function pythonJson(value: unknown): string {
+  if (value === null || value === undefined) return 'null'
+  if (Array.isArray(value)) return `[${value.map(pythonJson).join(', ')}]`
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>).filter(
+      ([, v]) => v !== undefined,
+    )
+    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}: ${pythonJson(v)}`).join(', ')}}`
+  }
+  return JSON.stringify(value)
+}
+
 function jsonBytes(value: unknown): number {
-  const text = JSON.stringify(value)
+  const text = pythonJson(value)
   return typeof TextEncoder !== 'undefined' ? new TextEncoder().encode(text).length : text.length
 }
 
@@ -1509,7 +1614,7 @@ export function validateBlockDesign(value: unknown): BlockDesignIssue[] {
   }
 
   const rows = value.rows
-  if (rows === undefined || rows === null) {
+  if (rows === undefined) {
     // No rows is an empty email.
   } else if (!Array.isArray(rows)) fail(ctx, 'rows', 'Must be a list')
   else {

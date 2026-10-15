@@ -401,11 +401,11 @@ describe('BlockEditor: devices', () => {
     mount({ ...design(), settings: { ...design().settings, width: 640 } })
     expect(email()).toHaveStyle({ width: '640px' })
     expect(email().style.transform).toBe('')
-    await userEvent.click(screen.getByRole('tab', { name: 'Mobile' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Mobile' }))
     expect(email()).toHaveStyle({ width: '360px' })
     expect(email()).toHaveAttribute('data-device', 'mobile')
     expect(email().style.transform).toBe('')
-    expect(screen.getByRole('tab', { name: 'Mobile' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('button', { name: 'Mobile' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('dims what is hidden on the device and says so', async () => {
@@ -414,7 +414,7 @@ describe('BlockEditor: devices', () => {
     expect(screen.getByText('Hidden on desktop')).toBeInTheDocument()
     expect(screen.queryByText('Hidden on mobile')).toBeNull()
     expect(document.querySelectorAll('[data-hidden]')).toHaveLength(1)
-    await userEvent.click(screen.getByRole('tab', { name: 'Mobile' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Mobile' }))
     expect(screen.getByText('Hidden on mobile')).toBeInTheDocument()
     expect(screen.queryByText('Hidden on desktop')).toBeNull()
     expect(document.querySelector('.seb-col[data-hidden]')).not.toBeNull()
@@ -424,7 +424,7 @@ describe('BlockEditor: devices', () => {
     const onDeviceChange = vi.fn()
     mount(design(), { device: 'mobile', onDeviceChange })
     expect(email()).toHaveAttribute('data-device', 'mobile')
-    await userEvent.click(screen.getByRole('tab', { name: 'Desktop' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Desktop' }))
     expect(onDeviceChange).toHaveBeenCalledWith('desktop')
     // Controlled: it stays on mobile until the parent says otherwise.
     expect(email()).toHaveAttribute('data-device', 'mobile')
@@ -433,7 +433,7 @@ describe('BlockEditor: devices', () => {
   it('stacks the columns on mobile', async () => {
     mount(design())
     expect(document.querySelector('.seb-columns')).not.toHaveAttribute('data-stacked')
-    await userEvent.click(screen.getByRole('tab', { name: 'Mobile' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Mobile' }))
     expect(document.querySelector('.seb-columns')).toHaveAttribute('data-stacked')
   })
 })

@@ -45,6 +45,12 @@ function useDraft<T extends string | number>(value: T, commit: Commit<T>) {
   }
 }
 
+interface FieldControlProps {
+  'aria-describedby'?: string
+  'aria-invalid'?: boolean
+}
+
+/** A labelled control, with its hint and error linked to it through ``aria-describedby``. */
 export function Field({
   label,
   hint,
@@ -54,17 +60,32 @@ export function Field({
   label: string
   hint?: string
   error?: string | null
-  children: ReactNode
+  children: ReactNode | ((props: FieldControlProps) => ReactNode)
 }) {
+  const id = useId()
+  const hintId = hint && !error ? `${id}-hint` : undefined
+  const errorId = error ? `${id}-error` : undefined
+  const describedBy = errorId ?? hintId
+  const control =
+    typeof children === 'function'
+      ? children({
+          'aria-describedby': describedBy,
+          'aria-invalid': error ? true : undefined,
+        })
+      : children
   return (
     <div className="seb-field">
       <label className="seb-field-label">
         <span>{label}</span>
-        {children}
+        {control}
       </label>
-      {hint && !error && <small className="seb-hint">{hint}</small>}
-      {error && (
-        <small className="seb-error" role="alert">
+      {hintId && (
+        <small id={hintId} className="seb-hint">
+          {hint}
+        </small>
+      )}
+      {errorId && (
+        <small id={errorId} className="seb-error" role="alert">
           {error}
         </small>
       )}
@@ -76,10 +97,12 @@ export function Group({
   label,
   children,
   className,
+  describedBy,
 }: {
   label: string
   children: ReactNode
   className?: string
+  describedBy?: string
 }) {
   const id = useId()
   return (
@@ -87,6 +110,7 @@ export function Group({
       className={['seb-field', className].filter(Boolean).join(' ')}
       role="group"
       aria-labelledby={id}
+      aria-describedby={describedBy}
     >
       <span id={id}>{label}</span>
       {children}
@@ -110,6 +134,7 @@ export function TextInput({
   placeholder,
   hint,
   type = 'text',
+  trim = false,
 }: {
   label: string
   value: string
@@ -117,19 +142,23 @@ export function TextInput({
   placeholder?: string
   hint?: string
   type?: string
+  /** Commit the text without its surrounding spaces (addresses). */
+  trim?: boolean
 }) {
-  const d = useDraft(value, onChange)
+  const d = useDraft(value, (text) => onChange(trim ? text.trim() : text))
   return (
     <Field label={label} hint={hint} error={d.error}>
-      <input
-        className="seb-input"
-        type={type}
-        value={d.draft}
-        placeholder={placeholder}
-        aria-invalid={Boolean(d.error)}
-        onChange={(event) => d.set(event.target.value, event.target.value)}
-        onBlur={() => d.error && d.reset()}
-      />
+      {(aria) => (
+        <input
+          className="seb-input"
+          type={type}
+          value={d.draft}
+          placeholder={placeholder}
+          {...aria}
+          onChange={(event) => d.set(event.target.value, event.target.value)}
+          onBlur={() => d.error && d.reset()}
+        />
+      )}
     </Field>
   )
 }
@@ -152,13 +181,15 @@ export function TextArea({
   const d = useDraft(value, onChange)
   return (
     <Field label={label} hint={hint} error={d.error}>
-      <textarea
-        className={['seb-input seb-textarea', mono && 'seb-mono'].filter(Boolean).join(' ')}
-        rows={rows}
-        value={d.draft}
-        aria-invalid={Boolean(d.error)}
-        onChange={(event) => d.set(event.target.value, event.target.value)}
-      />
+      {(aria) => (
+        <textarea
+          className={['seb-input seb-textarea', mono && 'seb-mono'].filter(Boolean).join(' ')}
+          rows={rows}
+          value={d.draft}
+          {...aria}
+          onChange={(event) => d.set(event.target.value, event.target.value)}
+        />
+      )}
     </Field>
   )
 }
@@ -188,7 +219,7 @@ export function NumberInput({
     const n = Number(text)
     return Number.isFinite(n) && Number.isInteger(n) && n >= min && n <= max ? n : null
   }
-  const input = (
+  const numberInput = (aria: FieldControlProps) => (
     <input
       className="seb-input seb-number"
       type="number"
@@ -197,7 +228,7 @@ export function NumberInput({
       min={min}
       max={max}
       step={step}
-      aria-invalid={Boolean(d.error)}
+      {...aria}
       aria-label={compact ? label : undefined}
       onChange={(event) => {
         const text = event.target.value
@@ -208,10 +239,10 @@ export function NumberInput({
       }}
     />
   )
-  if (compact) return input
+  if (compact) return numberInput({})
   return (
     <Field label={label} hint={`${min}–${max}${unit ? ` ${unit}` : ''}`} error={d.error}>
-      {input}
+      {numberInput}
     </Field>
   )
 }
@@ -339,8 +370,9 @@ export function ColorInput({
 }) {
   const literal = value && !value.startsWith('brand.') ? value : ''
   const d = useDraft(literal, (hex) => onChange(hex))
+  const errorId = useId()
   return (
-    <Group label={label} className="seb-color">
+    <Group label={label} className="seb-color" describedBy={d.error ? errorId : undefined}>
       <div className="seb-swatches" role="group" aria-label={`${label}: brand colours`}>
         {BRAND_COLOR_ATTRS.map((attr) => (
           <button
@@ -376,6 +408,7 @@ export function ColorInput({
           placeholder={value?.startsWith('brand.') ? 'Brand colour' : value ? '' : inheritLabel}
           aria-label={`${label}: hex`}
           aria-invalid={Boolean(d.error)}
+          aria-describedby={d.error ? errorId : undefined}
           maxLength={7}
           onChange={(event) => {
             const text = event.target.value
@@ -395,7 +428,7 @@ export function ColorInput({
         )}
       </div>
       {d.error && (
-        <small className="seb-error" role="alert">
+        <small id={errorId} className="seb-error" role="alert">
           {d.error}
         </small>
       )}
@@ -473,6 +506,7 @@ export function PaddingInput({
   const shown = value ?? fallback
   const [linked, setLinked] = useState(shown.every((side) => side === shown[0]))
   const [error, setError] = useState<string | null>(null)
+  const errorId = useId()
   const write = (next: Padding | null) => setError(onChange(next) ?? null)
   const setSide = (index: number, n: number) => {
     const next = (
@@ -481,7 +515,7 @@ export function PaddingInput({
     write(next)
   }
   return (
-    <Group label={label} className="seb-padding">
+    <Group label={label} className="seb-padding" describedBy={error ? errorId : undefined}>
       <div className="seb-padding-row">
         {SIDES.map((side, index) => (
           <label key={side} className="seb-padding-side">
@@ -513,7 +547,7 @@ export function PaddingInput({
         )}
       </div>
       {error && (
-        <small className="seb-error" role="alert">
+        <small id={errorId} className="seb-error" role="alert">
           {error}
         </small>
       )}

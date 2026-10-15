@@ -89,6 +89,7 @@ function Inspector({ block }: InspectorProps<ButtonBlock>) {
         />
         <TextInput
           label="Link address"
+          trim
           value={block.url}
           placeholder="https://"
           hint="https://, mailto:, tel: or a merge field."
