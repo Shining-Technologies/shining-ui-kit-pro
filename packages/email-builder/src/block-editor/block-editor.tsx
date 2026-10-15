@@ -27,14 +27,18 @@ import {
 } from 'react'
 import {
   cloneRowWithNewIds,
+  detachSharedRow,
   duplicateBlock as duplicateBlockIn,
   duplicateRow as duplicateRowIn,
   findBlock,
   findColumn,
   findRow,
+  isSharedRowRef,
   issueTarget,
   removeBlock as removeBlockIn,
   removeRow as removeRowIn,
+  replaceRowWithSharedRef,
+  rowWithDefaults,
   setRowLayout,
   toBlockDesign,
   updateBlock as updateBlockIn,
@@ -47,13 +51,17 @@ import {
   type BlockDesign,
   type BlockType,
   type LayoutId,
+  type Row,
 } from '../design'
 import {
   addBlock,
   addBlockAt,
   addLayout,
   applyDrop,
+  constraintRefusal,
+  footerCount,
   insertSavedRow,
+  insertSharedRow,
   neighbourOf,
   nudgeBlock,
   nudgeBlockSideways,
@@ -63,23 +71,27 @@ import {
 import { buildAnnouncements, describeItem, describePlace } from './announcements'
 import { blockLabel, blockModule, blockSummary } from './blocks'
 import { Canvas } from './canvas'
-import { EditorContext, type EditorApi, type EditResult } from './context'
+import { EditorContext, type EditorApi, type EditResult, type SharedLookup } from './context'
 import { DEVICES, type Device } from './devices'
 import { parsePaletteId, resolveDrop } from './drop'
 import { shortcutFor, useHistory } from './history'
 import { Icon } from './icons'
+import { canonicalRef } from './refs'
 import { Palette } from './palette'
 import { Properties } from './properties'
-import type {
-  ActionResult,
-  BlockEditorProps,
-  DropHint,
-  DropResolution,
-  FocusRequest,
-  FormatEditor,
-  SavedRow,
-  SavedRowsState,
-  Selection,
+import { SharedRowDialog } from './shared-row-dialog'
+import {
+  SharedRowInUseError,
+  type ActionResult,
+  type BlockEditorProps,
+  type DropHint,
+  type DropResolution,
+  type EditorConstraints,
+  type FocusRequest,
+  type FormatEditor,
+  type SavedRow,
+  type SavedRowsState,
+  type Selection,
 } from './types'
 
 /** True at 1024px and above; below it the side panes become sheets. */
@@ -101,8 +113,20 @@ function useIsDesktop(): boolean {
   return matches
 }
 
+/** A shared block's saved row as the editor draws it: the server stores rows compact (a prop
+ * equal to its default is left out), so fill the defaults in, once, when it is stored here. */
+function readShared(item: SavedRow): SavedRow {
+  return item.shared ? { ...item, row: rowWithDefaults(item.row) } : item
+}
+
 /** The first problem `next` has that `previous` did not, or ``null``. */
-function newProblem(previous: BlockDesign, next: BlockDesign): string | null {
+function newProblem(
+  previous: BlockDesign,
+  next: BlockDesign,
+  constraints: EditorConstraints = {},
+): string | null {
+  const refused = constraintRefusal(next, constraints)
+  if (refused) return refused
   const known = new Set(
     validateBlockDesign(previous)
       .filter((issue) => issue.severity === 'error')
@@ -159,7 +183,12 @@ const collisionDetection: CollisionDetection = (args) => {
   const kind = String(args.active.data.current?.kind ?? '')
   const only = (...kinds: string[]) =>
     args.droppableContainers.filter((c) => kinds.includes(String(c.data.current?.kind)))
-  if (kind === 'row' || kind === 'palette-layout' || kind === 'palette-saved') {
+  if (
+    kind === 'row' ||
+    kind === 'palette-layout' ||
+    kind === 'palette-saved' ||
+    kind === 'palette-shared'
+  ) {
     return closestCenter({ ...args, droppableContainers: only('row', 'canvas-end') })
   }
   const targets = only('block', 'column', 'canvas-end')
@@ -260,6 +289,8 @@ function Workspace({
   brand,
   onUploadImage,
   savedRows: adapter,
+  dataSources,
+  constraints: constraintsProp,
   device: deviceProp,
   onDeviceChange,
   disabled = false,
@@ -282,7 +313,14 @@ function Workspace({
   const [dragging, setDragging] = useState<string | null>(null)
   const [dropHint, setDropHint] = useState<DropHint | null>(null)
   const [live, setLive] = useState('')
+  const [editingShared, setEditingShared] = useState<string | null>(null)
   const device = deviceProp ?? ownDevice
+  const constraints = useMemo<EditorConstraints>(() => constraintsProp ?? {}, [constraintsProp])
+  const constraintsRef = useRef(constraints)
+  constraintsRef.current = constraints
+  const sources = useMemo(() => dataSources ?? [], [dataSources])
+  const sourcesRef = useRef(sources)
+  sourcesRef.current = sources
 
   const selection = useMemo<Selection>(() => {
     if (!rawSelection) return null
@@ -371,6 +409,8 @@ function Workspace({
   adapterRef.current = adapter
   const enabled = Boolean(adapter)
   const [saved, setSaved] = useState<SavedRowsState>({ status: 'idle', items: [], error: '' })
+  // Shared blocks `get` failed for, until the saved rows are loaded again.
+  const [failed, setFailed] = useState<Record<string, true>>({})
   const mounted = useRef(true)
   useEffect(() => {
     mounted.current = true
@@ -382,9 +422,14 @@ function Workspace({
     const current = adapterRef.current
     if (!current) return
     setSaved((state) => ({ ...state, status: 'loading', error: '' }))
+    // A new load is a new chance for a shared block that could not be fetched.
+    setFailed({})
     current
       .list()
-      .then((items) => mounted.current && setSaved({ status: 'ready', items, error: '' }))
+      .then(
+        (items) =>
+          mounted.current && setSaved({ status: 'ready', items: items.map(readShared), error: '' }),
+      )
       .catch((caught: unknown) => {
         if (mounted.current)
           setSaved((state) => ({
@@ -397,6 +442,63 @@ function Workspace({
   useEffect(() => {
     if (enabled) reloadSaved()
   }, [enabled, reloadSaved])
+
+  /* -- shared blocks -------------------------------------------------------- */
+
+  const savedRef = useRef(saved)
+  savedRef.current = saved
+  // Shared blocks the list does not hold (a composer may not list them all) are fetched one by one.
+  const [fetched, setFetched] = useState<Record<string, SavedRow | 'missing'>>({})
+  const fetching = useRef(new Set<string>())
+  const sharedKey = canonicalRef
+  const listedShared = (ref: string) =>
+    savedRef.current.items.find(
+      (item) => item.shared && sharedKey(String(item.id)) === sharedKey(ref),
+    )
+  const resolveShared = (ref: string): SharedLookup => {
+    const listed = saved.items.find(
+      (item) => item.shared && sharedKey(String(item.id)) === sharedKey(ref),
+    )
+    if (listed) return listed
+    const cached = fetched[sharedKey(ref)]
+    if (cached) return cached
+    if (!adapter) return 'missing'
+    if (failed[sharedKey(ref)]) return 'unavailable'
+    if (saved.status === 'idle' || saved.status === 'loading') return 'loading'
+    if (adapter.get) return 'loading'
+    // Without `get`, a list that failed says nothing about whether the block exists.
+    return saved.status === 'error' ? 'unavailable' : 'missing'
+  }
+  const rowOfShared = (ref: string): Row | undefined => {
+    const found = resolveShared(ref)
+    return typeof found === 'string' ? undefined : found.row
+  }
+  useEffect(() => {
+    const get = adapterRef.current?.get
+    if (!get || saved.status === 'idle' || saved.status === 'loading') return
+    for (const row of design.rows) {
+      if (!isSharedRowRef(row)) continue
+      const key = sharedKey(row.ref)
+      if (listedShared(row.ref) || fetched[key] || failed[key] || fetching.current.has(key))
+        continue
+      fetching.current.add(key)
+      get(row.ref)
+        .then((found) => (found ? readShared({ ...found, shared: true }) : ('missing' as const)))
+        .then(
+          (result) => {
+            fetching.current.delete(key)
+            if (mounted.current) setFetched((state) => ({ ...state, [key]: result }))
+          },
+          () => {
+            // Not cached as gone: only a new load of the saved rows tries again.
+            fetching.current.delete(key)
+            if (mounted.current) setFailed((state) => ({ ...state, [key]: true }))
+          },
+        )
+    }
+    // `listedShared` reads the latest list through a ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [design.rows, saved.status, saved.items, fetched, failed])
 
   /* -- applying changes ---------------------------------------------------- */
 
@@ -434,7 +536,7 @@ function Workspace({
         setNotice(result.notice ?? '')
         return false
       }
-      const problem = newProblem(latest.current, result.design)
+      const problem = newProblem(latest.current, result.design, constraintsRef.current)
       if (problem) {
         setNotice(problem)
         return false
@@ -453,7 +555,7 @@ function Workspace({
       const current = latest.current
       const next = change(current)
       if (next === current) return null
-      const problem = newProblem(current, next)
+      const problem = newProblem(current, next, constraintsRef.current)
       if (problem) return problem
       setNotice('')
       pendingFocus.current = null
@@ -481,6 +583,28 @@ function Workspace({
     }
   }
 
+  /** What the add actions need to know about tables and shared blocks. */
+  const actionContext = () => ({ dataSources: sources, resolveShared: rowOfShared })
+
+  const sharedItems = saved.items.filter((item) => item.shared)
+  const plainItems = saved.items.filter((item) => !item.shared)
+  const hasUpdate = Boolean(adapter?.update)
+
+  const insertShared = (id: SavedRow['id']) => {
+    const found = saved.items.find((item) => item.shared && String(item.id) === String(id))
+    if (!found) return
+    apply(
+      insertSharedRow(
+        latest.current,
+        String(found.id),
+        found.row,
+        rowInsertionIndex(latest.current, selectionRef.current),
+        actionContext(),
+      ),
+    )
+    if (!isDesktop) setSheet(null)
+  }
+
   const api: EditorApi = {
     design,
     selection,
@@ -491,6 +615,8 @@ function Workspace({
     mergeFields,
     getMergeFields: () => fieldsRef.current,
     onUploadImage,
+    dataSources: sources,
+    constraints,
     dropHint,
     highlight:
       active &&
@@ -510,7 +636,7 @@ function Workspace({
     updateColumn: (id, patch, key) => edit((d) => updateColumnIn(d, id, patch), key),
     updateSettings: (patch, key) => edit((d) => updateSettingsIn(d, patch), key),
     addBlockAt: (type, columnId, index) => {
-      const result = addBlockAt(latest.current, type, columnId, index)
+      const result = addBlockAt(latest.current, type, columnId, index, actionContext())
       // The "+" menu closes, so focus goes to the new block.
       apply({
         ...result,
@@ -562,8 +688,23 @@ function Workspace({
     },
     duplicateRow: (id) => {
       const before = latest.current
-      const next = duplicateRowIn(before, id)
       const at = findRow(before, id)
+      if (at && isSharedRowRef(at.row)) {
+        const shared = rowOfShared(at.row.ref)
+        if (!shared) {
+          // Its content is not known (yet), so a footer in it could not be checked for.
+          setNotice(
+            'The shared block is not loaded yet, so it cannot be copied. Try again in a moment.',
+          )
+          return
+        }
+        // Two placeholders for a shared footer would give the email two footers.
+        if (shared.columns.some((c) => c.blocks.some((b) => b.type === 'footer'))) {
+          setNotice('This shared block has a footer, and an email can have only one footer.')
+          return
+        }
+      }
+      const next = duplicateRowIn(before, id)
       const copy = at ? next.rows[at.index + 1] : undefined
       apply({
         design: next,
@@ -581,8 +722,129 @@ function Workspace({
         focusId: neighbour?.id,
       })
     },
+    sharedRows: {
+      items: sharedItems,
+      enabled,
+      canShare: Boolean(adapter?.save) && constraints.allowShared !== false,
+      canEditShared: hasUpdate,
+      canRemove: Boolean(adapter?.remove),
+      resolve: resolveShared,
+      rowOf: rowOfShared,
+      retry: (ref) =>
+        setFailed((state) => {
+          const { [sharedKey(ref)]: _gone, ...rest } = state
+          return rest
+        }),
+      insertShared,
+      saveAsShared: async (rowId, name) => {
+        const current = adapterRef.current
+        const found = findRow(latest.current, rowId)
+        if (!current?.save || !found || isSharedRowRef(found.row))
+          return 'The row could not be saved'
+        // What is being saved: the placeholder replaces the row only if it is still this.
+        const snapshot = JSON.stringify(found.row)
+        try {
+          const created = await current.save(
+            name,
+            cloneRowWithNewIds(found.row),
+            latest.current.settings.width,
+            { shared: true },
+          )
+          const entry = readShared({
+            ...created,
+            shared: true,
+            usageCount: created.usageCount ?? 0,
+          })
+          if (mounted.current)
+            setSaved((state) => ({ ...state, status: 'ready', items: [...state.items, entry] }))
+          // The row stays a normal row if it was changed or removed while the request ran.
+          const now = findRow(latest.current, rowId)
+          if (now && JSON.stringify(now.row) !== snapshot) {
+            const message = `Saved “${name}” as a shared block from the earlier version of this row. The row was changed meanwhile, so it was left as it is; use the shared block from the palette to replace it.`
+            setNotice(message)
+            setLive(message)
+          } else if (now) {
+            apply({
+              design: replaceRowWithSharedRef(latest.current, rowId, String(entry.id)),
+              selection: { kind: 'row', id: rowId },
+              notice: `Saved “${name}” as a shared block. This row now uses it.`,
+            })
+            setLive(`Saved “${name}” as a shared block.`)
+          } else if (mounted.current) {
+            setNotice(`Saved “${name}” as a shared block.`)
+          }
+          return null
+        } catch (caught) {
+          return caught instanceof Error ? caught.message : 'The row could not be saved'
+        }
+      },
+      detach: (rowId) => {
+        const before = latest.current
+        const found = findRow(before, rowId)
+        if (!found || !isSharedRowRef(found.row)) return
+        const looked = resolveShared(found.row.ref)
+        if (typeof looked === 'string') {
+          setNotice(
+            looked === 'loading'
+              ? 'The shared block is still loading. Try again in a moment.'
+              : 'The shared block cannot be copied because it is not available.',
+          )
+          return
+        }
+        const next = detachSharedRow(before, rowId, looked.row)
+        const copy = next.rows[found.index]
+        if (
+          apply({
+            design: next,
+            selection: copy ? { kind: 'row', id: copy.id } : null,
+            focusId: copy?.id,
+            notice: `Made a copy of “${looked.name}” that you can edit here.`,
+          })
+        )
+          setLive(`Detached “${looked.name}”. The copy is part of this email and can be edited.`)
+      },
+      openEditor: (rowId) => {
+        const found = findRow(latest.current, rowId)
+        if (found && isSharedRowRef(found.row) && adapterRef.current?.update)
+          setEditingShared(rowId)
+      },
+      updateShared: async (id, row) => {
+        const current = adapterRef.current
+        if (!current?.update) return 'Shared blocks cannot be changed here.'
+        try {
+          const result = await current.update(id, { row }, latest.current.settings.width)
+          const updated = readShared({ ...result, shared: true })
+          const key = sharedKey(String(id))
+          if (mounted.current) {
+            setSaved((state) => ({
+              ...state,
+              items: state.items.map((item) =>
+                String(item.id) === String(id)
+                  ? { ...updated, usageCount: updated.usageCount ?? item.usageCount }
+                  : item,
+              ),
+            }))
+            setFetched((state) => (key in state ? { ...state, [key]: updated } : state))
+            // The block may now give this email a second footer (the server would refuse it).
+            const conflict =
+              footerCount(latest.current, (ref) =>
+                sharedKey(ref) === key ? updated.row : rowOfShared(ref),
+              ) > 1
+            const message = conflict
+              ? `Saved the shared block “${updated.name}”, but this email now has more than one footer. Remove one before saving the template.`
+              : `Saved the shared block “${updated.name}”.`
+            setLive(message)
+            setNotice(message)
+          }
+          return null
+        } catch (caught) {
+          return caught instanceof Error ? caught.message : 'The shared block could not be saved'
+        }
+      },
+    },
     savedRows: {
       ...saved,
+      items: plainItems,
       enabled,
       canSave: Boolean(adapter?.save),
       canRemove: Boolean(adapter?.remove),
@@ -590,7 +852,8 @@ function Workspace({
       saveRow: async (rowId, name) => {
         const current = adapterRef.current
         const found = findRow(latest.current, rowId)
-        if (!current?.save || !found) return 'The row could not be saved'
+        if (!current?.save || !found || isSharedRowRef(found.row))
+          return 'The row could not be saved'
         try {
           const row = await current.save(
             name,
@@ -614,10 +877,21 @@ function Workspace({
           if (mounted.current)
             setSaved((state) => ({ ...state, items: state.items.filter((item) => item.id !== id) }))
         } catch (caught) {
-          if (mounted.current)
-            setNotice(
-              caught instanceof Error ? caught.message : 'The saved row could not be deleted.',
-            )
+          if (!mounted.current) return
+          if (caught instanceof SharedRowInUseError) {
+            // A shared block in use is never deleted; say where it is used.
+            const names = caught.templates.map((template) => template.name).join(', ')
+            const count = caught.templates.length
+            const message = `Used in ${count} ${count === 1 ? 'template' : 'templates'}${
+              names ? `: ${names}` : ''
+            }. Remove it from those templates first.`
+            setNotice(message)
+            setLive(message)
+            return
+          }
+          setNotice(
+            caught instanceof Error ? caught.message : 'The saved row could not be deleted.',
+          )
         }
       },
     },
@@ -626,7 +900,7 @@ function Workspace({
   /* -- palette clicks ------------------------------------------------------ */
 
   const onAddBlock = (type: BlockType) => {
-    apply(addBlock(latest.current, type, selectionRef.current))
+    apply(addBlock(latest.current, type, selectionRef.current, actionContext()))
     if (!isDesktop) setSheet(null)
   }
   const onAddLayout = (layout: LayoutId) => {
@@ -639,6 +913,7 @@ function Workspace({
         latest.current,
         row.row,
         rowInsertionIndex(latest.current, selectionRef.current),
+        { resolveShared: rowOfShared },
       ),
     )
     if (!isDesktop) setSheet(null)
@@ -649,7 +924,8 @@ function Workspace({
   const historyRef = useRef(history)
   historyRef.current = history
   useEffect(() => {
-    if (disabled) return
+    // The "Edit shared block" dialog has its own editor and its own undo.
+    if (disabled || editingShared) return
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as Node | null
       const inside =
@@ -665,7 +941,7 @@ function Workspace({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [disabled])
+  }, [disabled, editingShared])
 
   /* -- drag and drop ------------------------------------------------------- */
 
@@ -702,6 +978,10 @@ function Workspace({
         String(event.active.id),
         resolution.drop,
         (id) => saved.items.find((item) => String(item.id) === id)?.row,
+        {
+          ...actionContext(),
+          sharedRow: (id) => saved.items.find((item) => String(item.id) === id)?.row,
+        },
       ),
     )
   }
@@ -729,6 +1009,10 @@ function Workspace({
       const row = saved.items.find((item) => String(item.id) === palette.id)
       return { icon: 'layout' as const, text: row ? `Saved row “${row.name}”` : 'Saved row' }
     }
+    if (palette?.kind === 'palette-shared') {
+      const row = saved.items.find((item) => String(item.id) === palette.id)
+      return { icon: 'link' as const, text: row ? `Shared block “${row.name}”` : 'Shared block' }
+    }
     const block = findBlock(design, dragging)
     if (block) {
       const summary = blockSummary(block.block)
@@ -738,8 +1022,19 @@ function Workspace({
       }
     }
     const row = findRow(design, dragging)
+    if (row && isSharedRowRef(row.row))
+      return { icon: 'link' as const, text: `Shared block · Row ${row.index + 1}` }
     return row ? { icon: 'layout' as const, text: `Row ${row.index + 1}` } : null
   })()
+
+  const editingRow = editingShared ? findRow(design, editingShared) : null
+  const editingLookup =
+    editingRow && isSharedRowRef(editingRow.row) ? resolveShared(editingRow.row.ref) : null
+  const editingSaved = editingLookup && typeof editingLookup !== 'string' ? editingLookup : null
+  useEffect(() => {
+    // The placeholder went away (or the block was deleted) while its dialog was open.
+    if (editingShared && !editingSaved) setEditingShared(null)
+  }, [editingShared, editingSaved])
 
   const chooseDevice = (next: Device) => {
     if (deviceProp === undefined) setOwnDevice(next)
@@ -754,6 +1049,8 @@ function Workspace({
         role="group"
         aria-label={ariaLabel}
         data-disabled={disabled || undefined}
+        // A drag in progress (its Esc cancels the drag; an enclosing dialog must not also close).
+        data-drag-active={dragging ? '' : undefined}
         data-layout={isDesktop ? 'wide' : 'narrow'}
       >
         <DndContext
@@ -776,6 +1073,7 @@ function Workspace({
                   onAddBlock={onAddBlock}
                   onAddLayout={onAddLayout}
                   onInsertSaved={onInsertSaved}
+                  onInsertShared={insertShared}
                 />
               </aside>
             )}
@@ -872,6 +1170,7 @@ function Workspace({
                 onAddBlock={onAddBlock}
                 onAddLayout={onAddLayout}
                 onInsertSaved={onInsertSaved}
+                onInsertShared={insertShared}
               />
             </Sheet>
           )}
@@ -890,6 +1189,18 @@ function Workspace({
             ) : null}
           </DragOverlay>
         </DndContext>
+        {editingShared && editingSaved && (
+          <SharedRowDialog
+            saved={editingSaved}
+            settings={design.settings}
+            mergeFields={mergeFields}
+            brand={brand}
+            onUploadImage={onUploadImage}
+            dataSources={sources}
+            onSave={(row) => api.sharedRows.updateShared(editingSaved.id, row)}
+            onClose={() => setEditingShared(null)}
+          />
+        )}
       </div>
     </EditorContext.Provider>
   )

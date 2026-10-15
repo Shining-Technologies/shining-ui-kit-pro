@@ -20,6 +20,7 @@ import {
   type SpacerBlock,
   type TextBlock,
 } from '../design'
+import { rowsOf } from './helpers'
 
 const fields = [{ key: 'contact.first_name', label: 'First name', group: 'Contact' }]
 const brand = {
@@ -134,10 +135,10 @@ describe('BlockEditor: adding, deleting and duplicating', () => {
   it('adds a layout row, then a block goes into its first column', async () => {
     const { last } = mount()
     await userEvent.click(layoutsPalette().getByRole('button', { name: 'Layout 50 / 50' }))
-    expect(last().rows[0]!.columns.map((c) => c.width)).toEqual([50, 50])
+    expect(rowsOf(last())[0]!.columns.map((c) => c.width)).toEqual([50, 50])
     await addBlock('Heading')
-    expect(last().rows[0]!.columns[0]!.blocks).toHaveLength(1)
-    expect(last().rows[0]!.columns[1]!.blocks).toHaveLength(0)
+    expect(rowsOf(last())[0]!.columns[0]!.blocks).toHaveLength(1)
+    expect(rowsOf(last())[0]!.columns[1]!.blocks).toHaveLength(0)
   })
 
   it('deletes a block from its toolbar and selects its neighbour', async () => {
@@ -226,8 +227,8 @@ describe('BlockEditor: keyboard', () => {
     await userEvent.click(layoutsPalette().getByRole('button', { name: 'Layout 50 / 50' }))
     await addBlock('Spacer')
     fireEvent.keyDown(cells()[0]!, { key: 'ArrowRight', altKey: true })
-    expect(last().rows[0]!.columns[0]!.blocks).toHaveLength(0)
-    expect(last().rows[0]!.columns[1]!.blocks).toHaveLength(1)
+    expect(rowsOf(last())[0]!.columns[0]!.blocks).toHaveLength(0)
+    expect(rowsOf(last())[0]!.columns[1]!.blocks).toHaveLength(1)
   })
 
   it('ignores Delete typed inside a field', async () => {
@@ -335,7 +336,7 @@ describe('BlockEditor: saved rows', () => {
     const group = await screen.findByRole('region', { name: 'Saved rows' })
     await userEvent.click(await within(group).findByRole('button', { name: 'Signature' }))
     expect(last().rows).toHaveLength(1)
-    const row = last().rows[0]!
+    const row = rowsOf(last())[0]!
     const oldIds = ['r_sv', 'c_sv_1', 'c_sv_2', 'b_sv_h', 'b_sv_s']
     const newIds = [row.id, ...row.columns.flatMap((c) => [c.id, ...c.blocks.map((b) => b.id)])]
     expect(newIds).toHaveLength(5)
@@ -343,7 +344,7 @@ describe('BlockEditor: saved rows', () => {
     expect(blockDesignErrors(last())).toEqual([])
     // Inserting it again never repeats an id.
     await userEvent.click(within(group).getByRole('button', { name: 'Signature' }))
-    const ids = last().rows.flatMap((r) => [
+    const ids = rowsOf(last()).flatMap((r) => [
       r.id,
       ...r.columns.flatMap((c) => [c.id, ...c.blocks.map((b) => b.id)]),
     ])
@@ -596,19 +597,19 @@ describe('BlockEditor: properties', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Select row 1' }))
     const props = within(screen.getByRole('complementary', { name: 'Properties' }))
     await userEvent.click(props.getByRole('button', { name: 'Row layout 100' }))
-    expect(last().rows[0]!.columns).toHaveLength(1)
+    expect(rowsOf(last())[0]!.columns).toHaveLength(1)
     expect(allBlocks(last())).toHaveLength(1)
     await userEvent.click(props.getByRole('button', { name: 'Row layout 50 / 50' }))
-    expect(last().rows[0]!.columns.map((c) => c.width)).toEqual([50, 50])
+    expect(rowsOf(last())[0]!.columns.map((c) => c.width)).toEqual([50, 50])
     expect(allBlocks(last())).toHaveLength(1)
     const gap = props.getByRole('spinbutton', { name: /Gap between columns/ })
     await userEvent.clear(gap)
     await userEvent.type(gap, '24')
-    expect(last().rows[0]!.gap).toBe(24)
+    expect(rowsOf(last())[0]!.gap).toBe(24)
     await userEvent.selectOptions(props.getByLabelText('Hide on'), 'mobile')
     expect(last().rows[0]!.hide_on).toBe('mobile')
     await userEvent.click(props.getByRole('button', { name: 'Background: brand Primary' }))
-    expect(last().rows[0]!.background).toBe('brand.primary_color')
+    expect(rowsOf(last())[0]!.background).toBe('brand.primary_color')
     expect(blockDesignErrors(last())).toEqual([])
   })
 
@@ -618,11 +619,11 @@ describe('BlockEditor: properties', () => {
     const props = within(screen.getByRole('complementary', { name: 'Properties' }))
     await userEvent.click(props.getByRole('button', { name: 'Column 2 (50%)' }))
     await userEvent.click(props.getByRole('button', { name: 'Middle' }))
-    expect(last().rows[0]!.columns[1]!.valign).toBe('middle')
+    expect(rowsOf(last())[0]!.columns[1]!.valign).toBe('middle')
     await userEvent.selectOptions(props.getByLabelText('Hide on'), 'desktop')
-    expect(last().rows[0]!.columns[1]!.hide_on).toBe('desktop')
+    expect(rowsOf(last())[0]!.columns[1]!.hide_on).toBe('desktop')
     await userEvent.click(props.getByRole('button', { name: 'Background: brand Background' }))
-    expect(last().rows[0]!.columns[1]!.background).toBe('brand.background_color')
+    expect(rowsOf(last())[0]!.columns[1]!.background).toBe('brand.background_color')
     expect(blockDesignErrors(last())).toEqual([])
   })
 

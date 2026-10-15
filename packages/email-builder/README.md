@@ -11,8 +11,8 @@ buttons and images; the server sanitises, stores and renders it.
   merge fields.
 - **`BlockEditor`** — the drag-and-drop editor for block designs
   (`{ version: 1, mode: 'blocks', settings, rows }`, shining-email 0.3): rows and
-  columns, ten block types and an avatar, saved rows, a desktop and mobile
-  canvas. See [BlockEditor](#blockeditor).
+  columns, eleven block types and a data table, saved rows and shared blocks
+  (shining-email 0.4), a desktop and mobile canvas. See [BlockEditor](#blockeditor).
 - **`EmailPreview`** — the server's rendered HTML in a sandboxed frame, with
   desktop, mobile and plain-text views and the renderer's warnings.
 - **`MergeFieldPicker`** — searchable merge fields, also usable beside a subject
@@ -73,11 +73,15 @@ import { BlockEditor } from '@shining-technologies/email-builder'
     return { url: asset.url, alt: asset.alt_default, assetId: asset.id }
   }}
   savedRows={{
-    // optional: GET/POST/DELETE saved-rows/; leave out save and remove for a read-only user
-    list: () => api.listSavedRows(),
-    save: (name, row) => api.saveRow({ name, row }),
-    remove: (id) => api.deleteSavedRow(id),
+    // optional: saved-rows/; leave out save, update and remove for a read-only user
+    list: () => api.listSavedRows(), // shared blocks come back with shared: true
+    save: (name, row, width, options) =>
+      api.saveRow({ name, row, design_width: width, is_shared: options?.shared }),
+    update: (id, patch, width) => api.updateSavedRow(id, { ...patch, design_width: width }), // shared blocks only
+    get: (id) => api.getSavedRow(id), // null when deleted
+    remove: (id) => api.deleteSavedRow(id), // throw SharedRowInUseError on 409 shared_row_in_use
   }}
+  dataSources={dataSources} // optional: GET data-sources/; without them there is no Table block
   highlight={serverError} // optional, { path?, blockId?, message } | null
   onHighlightClear={() => setServerError(null)}
   device={device} // optional, 'desktop' | 'mobile'
@@ -125,6 +129,30 @@ import { BlockEditor } from '@shining-technologies/email-builder'
   `remove` it hides the delete buttons; listing and inserting still work, so a read-only user keeps
   the saved rows. `savedRows.save(name, row, designWidth)` receives the email's width (480–700);
   the server checks the row's images against it.
+- **Shared blocks (shining-email 0.4).** A saved row the server marks shared (`SavedRow.shared`) is
+  listed under "Shared blocks" with `usageCount`, and inserted as a placeholder
+  (`{ id, type: 'shared', ref }`), not as a copy: the server puts its content in when it renders, so
+  one edit reaches every template that uses it. On the canvas the block is drawn read-only inside a
+  dashed outline with a "Shared · name" badge, "Loading shared block…" while it is fetched
+  (`savedRows.get` for one the list does not hold) and a grey "This shared block was deleted" box
+  that can only be removed. Its toolbar has **Edit shared block** (needs `savedRows.update`; opens a
+  modal with an editor of its own, one row, saved with `update`, the server's refusal shown inside)
+  and **Detach** (replaces it with a copy you can edit in this email; undoable). A row's toolbar has
+  **Save as shared block** (needs `save`; calls `save(name, row, width, { shared: true })`). Whether a
+  row is shared is decided when it is created. A shared block's `id` must be a UUID (the
+  placeholder's `ref` is validated as one). The server stores saved rows compact; the editor fills
+  the defaults in once, when it stores a shared block. `remove` of a shared block that templates use must
+  reject with `SharedRowInUseError(message, templates)`: the editor then says "Used in N templates:
+  <names>. Remove it from those templates first." and never deletes it. A shared block with a footer
+  is refused in an email that already has one.
+- **Table block (shining-email 0.4).** `dataSources` (`DataSourceDefinition[]`) are the lists a table
+  can show (`deal.items`): their `fields` fill the column picker, `default_columns` start a new
+  table, `totals_key` names the totals list, and `sample` / `sample_totals` are drawn on the canvas
+  with a "Sample data" chip. The server formats nothing, so every value is already text. A table has
+  one to six columns (heading, optional second line, alignment, width, hide on phones) and optional
+  totals; a total with an empty value is a note across all columns. Without `dataSources` the Table
+  tile is hidden. If the email has no data for the source when it is sent, the server leaves the
+  table out.
 - **Size.** The editor fills its parent. Give it a height, or set `--seb-block-editor-height`.
 
 When the server refuses a design, its error starts with a path such as
@@ -132,6 +160,11 @@ When the server refuses a design, its error starts with a path such as
 the block, column or row, so the host can select it.
 
 The design helpers are in `@shining-technologies/email-builder/design` and have no React:
-`createBlock`, `newId`, `findBlock`, `updateBlock`, `removeBlock`, `moveBlock`, `duplicateBlock`,
-`insertRow`, `moveRow`, `setRowLayout`, `cloneRowWithNewIds`, `withDefaults` (the server stores
-designs compact, so fill defaults on read), `validateBlockDesign`, `resolveBrand` and more.
+`createBlock`, `tableBlockFor`, `newId`, `findBlock`, `updateBlock`, `removeBlock`, `moveBlock`,
+`duplicateBlock`, `insertRow`, `moveRow`, `setRowLayout`, `cloneRowWithNewIds`, `withDefaults` (the
+server stores designs compact, so fill defaults on read), `validateBlockDesign`, `resolveBrand` and
+more. `BlockDesign.rows` is `DesignRow[]`, a `Row` or a shared-block placeholder: narrow with
+`isSharedRowRef` before reading `columns`. `createSharedRowRef`, `replaceRowWithSharedRef`,
+`detachSharedRow`, `expandSharedRows` and `validateSharedRowContent` work on placeholders, and
+`rowWithDefaults(row)` fills the defaults of one row the way `withDefaults` does for a design (a row
+stored compact by the server).

@@ -38,7 +38,9 @@ function Tile({
           ? 'palette-block'
           : id.split(':')[1] === 'layout'
             ? 'palette-layout'
-            : 'palette-saved',
+            : id.split(':')[1] === 'shared'
+              ? 'palette-shared'
+              : 'palette-saved',
     },
   })
   return (
@@ -69,13 +71,24 @@ function LayoutPreview({ widths }: { widths: number[] }) {
   )
 }
 
-function SavedItem({ saved, onInsert }: { saved: SavedRow; onInsert: () => void }) {
+function SavedItem({
+  saved,
+  onInsert,
+  shared = false,
+}: {
+  saved: SavedRow
+  onInsert: () => void
+  /** A shared block: inserted as a placeholder, with the number of templates that use it. */
+  shared?: boolean
+}) {
   const api = useEditorApi()
   const [confirming, setConfirming] = useState(false)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: paletteId.saved(saved.id),
-    data: { kind: 'palette-saved' },
+    id: shared ? paletteId.shared(saved.id) : paletteId.saved(saved.id),
+    data: { kind: shared ? 'palette-shared' : 'palette-saved' },
   })
+  const noun = shared ? 'shared block' : 'saved row'
+  const used = saved.usageCount
   return (
     <li className="seb-saved-item">
       <button
@@ -88,12 +101,18 @@ function SavedItem({ saved, onInsert }: { saved: SavedRow; onInsert: () => void 
           listeners?.onPointerDown as PointerEventHandler<HTMLButtonElement> | undefined
         }
         onClick={onInsert}
-        title={`Insert “${saved.name}”`}
+        title={shared ? `Insert “${saved.name}” as a shared block` : `Insert “${saved.name}”`}
       >
-        <Icon name="layout" />
+        <Icon name={shared ? 'link' : 'layout'} />
         <span>{saved.name}</span>
+        {shared && typeof used === 'number' && (
+          <small className="seb-saved-count">
+            <span aria-hidden="true">{used}</span>
+            <span className="seb-sr-only">{`, used in ${used} ${used === 1 ? 'template' : 'templates'}`}</span>
+          </small>
+        )}
       </button>
-      {!api.savedRows.canRemove ? null : confirming ? (
+      {!(shared ? api.sharedRows.canRemove : api.savedRows.canRemove) ? null : confirming ? (
         <span className="seb-saved-confirm">
           <button
             type="button"
@@ -110,8 +129,8 @@ function SavedItem({ saved, onInsert }: { saved: SavedRow; onInsert: () => void 
         <button
           type="button"
           className="seb-icon-btn"
-          aria-label={`Delete saved row ${saved.name}`}
-          title="Delete saved row"
+          aria-label={`Delete ${noun} ${saved.name}`}
+          title={`Delete ${noun}`}
           onClick={() => setConfirming(true)}
         >
           <Icon name="trash" />
@@ -126,38 +145,47 @@ export function Palette({
   onAddBlock,
   onAddLayout,
   onInsertSaved,
+  onInsertShared,
 }: {
   onAddBlock: (type: BlockType) => void
   onAddLayout: (layout: LayoutId) => void
   onInsertSaved: (saved: SavedRow) => void
+  onInsertShared: (id: SavedRow['id']) => void
 }) {
   const api = useEditorApi()
-  const footerTaken = hasFooter(api.design)
+  const footerTaken = hasFooter(api.design, api.sharedRows.rowOf)
   const saved = api.savedRows
+  const shared = api.sharedRows
+  // A shared block is one row, so it has no layouts to add.
+  const singleRow = api.constraints.singleRow === true
+  const showShared = shared.enabled && api.constraints.allowShared !== false
+  const types = BLOCK_TYPES.filter((type) => type !== 'table' || api.dataSources.length > 0)
 
   return (
     <div className="seb-palette">
-      <section aria-label="Layouts" className="seb-palette-group">
-        <h3 className="seb-section-title">Layouts</h3>
-        <div className="seb-tiles seb-tiles-layouts">
-          {ROW_LAYOUTS.map((layout) => (
-            <Tile
-              key={layout.id}
-              id={paletteId.layout(layout.id)}
-              label={`Layout ${layout.label}`}
-              onAdd={() => onAddLayout(layout.id)}
-            >
-              <LayoutPreview widths={layout.widths} />
-              <span className="seb-tile-label">{layout.label.replace(/ /g, '')}</span>
-            </Tile>
-          ))}
-        </div>
-      </section>
+      {!singleRow && (
+        <section aria-label="Layouts" className="seb-palette-group">
+          <h3 className="seb-section-title">Layouts</h3>
+          <div className="seb-tiles seb-tiles-layouts">
+            {ROW_LAYOUTS.map((layout) => (
+              <Tile
+                key={layout.id}
+                id={paletteId.layout(layout.id)}
+                label={`Layout ${layout.label}`}
+                onAdd={() => onAddLayout(layout.id)}
+              >
+                <LayoutPreview widths={layout.widths} />
+                <span className="seb-tile-label">{layout.label.replace(/ /g, '')}</span>
+              </Tile>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section aria-label="Blocks" className="seb-palette-group">
         <h3 className="seb-section-title">Blocks</h3>
         <div className="seb-tiles">
-          {BLOCK_TYPES.map((type) => {
+          {types.map((type) => {
             const block = BLOCKS[type]
             const taken = type === 'footer' && footerTaken
             return (
@@ -177,7 +205,7 @@ export function Palette({
         </div>
       </section>
 
-      {saved.enabled && (
+      {saved.enabled && !singleRow && (
         <section aria-label="Saved rows" className="seb-palette-group">
           <h3 className="seb-section-title">Saved rows</h3>
           {saved.status === 'loading' && <p className="seb-hint">Loading…</p>}
@@ -200,6 +228,34 @@ export function Palette({
             <ul className="seb-saved-list">
               {saved.items.map((item) => (
                 <SavedItem key={item.id} saved={item} onInsert={() => onInsertSaved(item)} />
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      {showShared && !singleRow && (
+        <section aria-label="Shared blocks" className="seb-palette-group">
+          <h3 className="seb-section-title">Shared blocks</h3>
+          {saved.status === 'loading' && shared.items.length === 0 && (
+            <p className="seb-hint">Loading…</p>
+          )}
+          {saved.status === 'ready' && shared.items.length === 0 && (
+            <p className="seb-hint">
+              {shared.canShare
+                ? 'No shared blocks yet. Select a row and choose “Save as shared block” to use it in many emails and change it in one place.'
+                : 'No shared blocks yet.'}
+            </p>
+          )}
+          {shared.items.length > 0 && (
+            <ul className="seb-saved-list">
+              {shared.items.map((item) => (
+                <SavedItem
+                  key={item.id}
+                  saved={item}
+                  shared
+                  onInsert={() => onInsertShared(item.id)}
+                />
               ))}
             </ul>
           )}

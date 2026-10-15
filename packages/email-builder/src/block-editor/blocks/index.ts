@@ -9,6 +9,7 @@ import { image } from './image'
 import type { BlockModule } from './shared'
 import { social } from './social'
 import { spacer } from './spacer'
+import { table } from './table'
 import { text } from './text'
 import { video } from './video'
 
@@ -25,6 +26,7 @@ export const BLOCKS: { [T in BlockType]: BlockModule<Extract<Block, { type: T }>
   video,
   footer,
   html,
+  table,
 }
 
 export function blockModule(type: BlockType): BlockModule {

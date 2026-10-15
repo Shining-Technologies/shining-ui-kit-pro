@@ -13,6 +13,7 @@ import {
   type FooterBlock,
   type SpacerBlock,
 } from '../design'
+import { rowsOf } from './helpers'
 
 function design(): BlockDesign {
   const base = emptyBlockDesign()
@@ -197,7 +198,7 @@ describe('highlight: host patterns', () => {
           onClick={() => {
             // The host loads a different copy of the design: the spacer is not the same any more.
             const next = design()
-            ;(next.rows[1]!.columns[0]!.blocks[0] as SpacerBlock).height = 77
+            ;(rowsOf(next)[1]!.columns[0]!.blocks[0] as SpacerBlock).height = 77
             setValue(next)
           }}
         >

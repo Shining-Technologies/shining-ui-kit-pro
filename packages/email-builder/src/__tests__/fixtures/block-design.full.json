@@ -218,6 +218,69 @@
       ]
     },
     {
+      "id": "r_items",
+      "padding": [8, 24, 8, 24],
+      "background": null,
+      "hide_on": null,
+      "gap": 16,
+      "columns": [
+        {
+          "id": "c_items",
+          "width": 100,
+          "hide_on": null,
+          "valign": "top",
+          "background": null,
+          "padding": [0, 0, 0, 0],
+          "blocks": [
+            {
+              "id": "b_table",
+              "type": "table",
+              "source": "deal.items",
+              "totals": "deal.totals",
+              "columns": [
+                {
+                  "key": "name",
+                  "label": "Item",
+                  "secondary": "description",
+                  "align": "left",
+                  "width": 40,
+                  "hide_on_mobile": false
+                },
+                { "key": "quantity", "label": "Qty", "align": "right", "width": 12 },
+                {
+                  "key": "unit_price",
+                  "label": "Unit price",
+                  "align": "right",
+                  "width": 20,
+                  "hide_on_mobile": true
+                },
+                { "key": "line_total", "label": "Total", "align": "right", "width": 20 }
+              ],
+              "show_header": true,
+              "striped": true,
+              "header_background": "brand.primary_color",
+              "header_color": "#ffffff",
+              "border_color": "brand.muted_text_color",
+              "style": {
+                "padding": [8, 0, 8, 0],
+                "background": "#ffffff",
+                "color": "brand.text_color",
+                "font": "brand.body_font",
+                "font_size": 14,
+                "font_weight": "normal"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r_shared",
+      "type": "shared",
+      "ref": "7b0c2f4e-5a1d-4c3b-9e8f-2a6d1b4c9e30",
+      "hide_on": "mobile"
+    },
+    {
       "id": "r_foot",
       "padding": [16, 24, 16, 24],
       "background": null,

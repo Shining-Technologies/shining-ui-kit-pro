@@ -3,6 +3,7 @@
  * `fixtures/block-design.full.json`. The server validates the same file, so
  * the two ends agree on the contract (§1, §1a).
  */
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -12,17 +13,32 @@ import {
   allBlocks,
   blockDesignErrors,
   isBlockDesign,
+  isSharedRowRef,
   toBlockDesign,
   validateBlockDesign,
   withDefaults,
   type BlockDesign,
+  type TableBlock,
 } from '../design'
+
+/**
+ * The SHA-256 of `fixtures/block-design.full.json`, byte for byte. The server (shining-email,
+ * `tests/fixtures/block_design_full.json`) carries a byte-identical copy and the same constant, so
+ * the two ends cannot drift apart unnoticed. Change the file, then this value, then the server's.
+ */
+export const BLOCK_DESIGN_FULL_SHA256 =
+  'bfb9e5c43d150b0840c9a4daff5bf49ad1a681a60c1f759036ee79131afaf58a'
 
 const fixture = JSON.parse(
   readFileSync(resolve(__dirname, 'fixtures/block-design.full.json'), 'utf8'),
 ) as BlockDesign
 
 describe('the shared full-design fixture', () => {
+  it('is the exact file the server carries (same bytes, same SHA-256)', () => {
+    const bytes = readFileSync(resolve(__dirname, 'fixtures/block-design.full.json'))
+    expect(createHash('sha256').update(bytes).digest('hex')).toBe(BLOCK_DESIGN_FULL_SHA256)
+  })
+
   it('is a block design the client accepts, with no warnings either', () => {
     expect(isBlockDesign(fixture)).toBe(true)
     expect(validateBlockDesign(fixture)).toEqual([])
@@ -42,6 +58,10 @@ describe('the shared full-design fixture', () => {
     }
     note('settings', fixture.settings)
     for (const row of fixture.rows) {
+      if (isSharedRowRef(row)) {
+        note('shared', row)
+        continue
+      }
       note('row', row)
       for (const column of row.columns) {
         note('column', column)
@@ -49,6 +69,8 @@ describe('the shared full-design fixture', () => {
           note(block.type, block)
           const style = (block as { style?: unknown }).style
           if (style && typeof style === 'object') note(`${block.type}.style`, style)
+          if (block.type === 'table')
+            for (const tableColumn of block.columns) note('table.column', tableColumn)
           const thumb = (block as { thumbnail?: unknown }).thumbnail
           if (thumb && typeof thumb === 'object') note('video.thumbnail', thumb)
         }
@@ -69,6 +91,11 @@ describe('the shared full-design fixture', () => {
       missing('column', ['id', 'width', 'hide_on', 'valign', 'background', 'padding', 'blocks']),
     ).toEqual(['column', []])
     expect(missing('video.thumbnail', ['src', 'asset_id'])).toEqual(['video.thumbnail', []])
+    // A shared block placeholder and a table's columns.
+    expect(missing('shared', ['id', 'type', 'ref', 'hide_on'])).toEqual(['shared', []])
+    expect(
+      missing('table.column', ['key', 'label', 'secondary', 'align', 'width', 'hide_on_mobile']),
+    ).toEqual(['table.column', []])
     // Every prop of every block type appears on some block of that type.
     for (const type of BLOCK_TYPES) {
       expect(missing(type, BLOCK_SPECS[type].keys)).toEqual([type, []])
@@ -109,6 +136,16 @@ describe('the shared full-design fixture', () => {
     // Everything the fixture sets is kept.
     expect(allBlocks(filled).map((b) => b.id)).toEqual(allBlocks(fixture).map((b) => b.id))
     expect(filled.settings).toEqual(fixture.settings)
+    // A shared block's placeholder passes through untouched, and a table's columns get theirs.
+    expect(filled.rows.find((row) => row.id === 'r_shared')).toEqual(
+      fixture.rows.find((row) => row.id === 'r_shared'),
+    )
+    const table = allBlocks(filled).find((block) => block.type === 'table')
+    // The quantity column leaves hide_on_mobile out; reading fills the default.
+    expect((table as TableBlock).columns[1]).toMatchObject({
+      key: 'quantity',
+      hide_on_mobile: false,
+    })
     expect(blockDesignErrors(filled)).toEqual([])
   })
 

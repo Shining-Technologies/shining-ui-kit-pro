@@ -59,6 +59,7 @@ export function sharedStyleOf(block: Block): BlockStyle {
 /** The text size a block has when ``style.font_size`` is not set: a heading's comes from its level. */
 export function defaultFontSize(block: Block): number {
   if (block.type === 'heading') return { 1: 32, 2: 24, 3: 20 }[block.level]
+  if (block.type === 'table') return 14
   return block.type === 'footer' ? 12 : 16
 }
 
