@@ -25,10 +25,20 @@ column and the email itself. Additive.
     move, Delete removes) and spoken announcements.
   - Undo and redo (Cmd/Ctrl+Z, Shift+Z or Y; 50 steps); a desktop and mobile toggle that shows rows
     and columns hidden on the device dimmed and labelled.
-  - Saved rows (`savedRows` adapter: list, save, delete); insertion copies a row with new ids.
+  - Saved rows (`savedRows` adapter: `list`, with `save` and `remove` optional); insertion copies a row
+    with new ids. Without `save` the editor hides "Save as row", without `remove` the delete buttons,
+    so a read-only user can still list and insert.
   - Colour inputs offer the brand's swatches (written as `brand.<attr>`), neutrals, a hex input and
     Clear; button size and shape presets; padding as four inputs with a link-all toggle.
   - Every edit is checked with `validateBlockDesign` before it is applied.
+  - A server validation error can be shown on the canvas: pass `highlight` (a `BlockEditorHighlight`,
+    `{ path?, blockId?, message }`) and `onHighlightClear`. The block, column or row it points at is
+    outlined, scrolled into view and selected, the message is announced, and the highlight clears
+    when that target is edited or the value is replaced.
+  - `BrandPreview.footer_html` is shown in the footer block above the block's own text, as the server
+    renders them.
+  - `MergeFieldDefinition.description` is a muted second line in the merge-field picker, searched with
+    the label.
 - `/design` (no React, safe in server code):
   - the `BlockDesign`, `Row`, `Column` and `Block` types, `createBlock`, `newId`;
   - the tree helpers `findBlock`, `updateBlock`, `removeBlock`, `moveBlock`, `duplicateBlock`,
@@ -49,20 +59,11 @@ None. `BlockDesign` is now fully typed (`settings` and `rows` were `Record<strin
 
 ## Settings
 
-- New dependencies: `@dnd-kit/core` ^6.3.1, `@dnd-kit/sortable` ^10 and `@dnd-kit/utilities` ^3.2.2.
+- New dependencies: `@dnd-kit/core` ^6.3.1 and `@dnd-kit/sortable` ^10.
 - `styles.css` gains the `.seb-*` rules for the block editor. The editor fills its parent: give it a
   height, or set `--seb-block-editor-height` on it (default `100%`, at least 32rem).
 - `BlockEditor` makes no requests: merge fields, the brand, image upload and saved rows are passed in
   as props and callbacks.
-- `BlockEditor` gains `highlight` (`{ path?, blockId?, message } | null`) and `onHighlightClear` for
-  showing a server validation error: the target is outlined, scrolled to and selected, and the message
-  is announced; it clears when the target is edited. `BrandPreview` gains `footer_html`, shown in the
-  footer block above the block's own text.
-- `SavedRowsAdapter` needs only `list`; `save` and `remove` are optional. Without `save` the editor
-  hides "Save as row"; without `remove` it hides the delete buttons; listing and inserting still work,
-  for a read-only user.
-- `MergeFieldDefinition` gains an optional `description`, shown as a muted second line in the merge-field
-  picker and searched with the label.
 
 ## Upgrading
 
@@ -81,7 +82,10 @@ None. `BlockDesign` is now fully typed (`settings` and `rows` were `Record<strin
    />
    ```
 
-3. When the server refuses a design, `issueTarget(design, error)` finds the block to highlight.
+3. When the server refuses a design, pass its error to the editor with the `highlight` and
+   `onHighlightClear` props (`highlight={{ path: error, message: error }}`, or `blockId` when you
+   know it) to show it on the canvas. To place it yourself, `issueTarget(design, error)` finds the
+   block, column or row it points at.
 
 ## Compatibility
 

@@ -27,13 +27,34 @@ function design(): BlockDesign {
   return { ...base, rows: [first, second] }
 }
 
-let scrolled: Element[] = []
+let scrolled: { scroller: HTMLElement; options: ScrollToOptions }[] = []
 
 beforeEach(() => {
   scrolled = []
-  Element.prototype.scrollIntoView = function (this: Element) {
-    scrolled.push(this)
-  }
+  // happy-dom has no layout: the canvas is 400 high from y = 100, and the highlighted element is
+  // 100 high at y = 500, so it centres at a scroll of 250.
+  const box = (top: number, height: number) => ({
+    x: 0,
+    y: top,
+    left: 0,
+    top,
+    width: 300,
+    height,
+    right: 300,
+    bottom: top + height,
+    toJSON: () => ({}),
+  })
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    if (this.matches('[data-canvas-scroll]')) return box(100, 400)
+    return this.hasAttribute('data-error') ? box(500, 100) : box(0, 0)
+  })
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(400)
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300)
+  HTMLElement.prototype.scrollTo = function (this: HTMLElement, options?: unknown) {
+    scrolled.push({ scroller: this, options: options as ScrollToOptions })
+  } as typeof HTMLElement.prototype.scrollTo
 })
 afterEach(() => {
   vi.restoreAllMocks()
@@ -78,7 +99,9 @@ describe('highlight', () => {
     expect(marked()).toEqual(['b_spacer'])
     expect(screen.getByRole('alert')).toHaveTextContent('Height is too tall')
     expect(scrolled).toHaveLength(1)
-    expect((scrolled[0] as HTMLElement).dataset.blockId).toBe('b_spacer')
+    // The canvas scroller alone is moved, smoothly, to centre the block.
+    expect(scrolled[0]!.scroller).toHaveAttribute('data-canvas-scroll')
+    expect(scrolled[0]!.options).toMatchObject({ top: 250, behavior: 'smooth' })
     expect(document.querySelector('[data-block-id="b_spacer"]')).toHaveAttribute(
       'aria-current',
       'true',
@@ -104,14 +127,14 @@ describe('highlight', () => {
       'true',
     )
     expect(props().getByRole('heading', { name: 'Row 2' })).toBeInTheDocument()
-    expect((scrolled[0] as HTMLElement).dataset.rowId).toBe('r_second')
+    expect(scrolled[0]!.options).toMatchObject({ top: 250 })
   })
 
   it('outlines and selects a column path', () => {
     mount({ path: 'rows[1].columns[1].background', message: 'Column colour is wrong' })
     expect(marked()).toEqual(['c_right'])
     expect(document.querySelector('[data-column-id="c_right"]')).toHaveAttribute('data-selected')
-    expect((scrolled[0] as HTMLElement).dataset.columnId).toBe('c_right')
+    expect(scrolled[0]!.options).toMatchObject({ top: 250 })
   })
 
   it('shows the message for a path that points at nothing on the canvas', () => {
@@ -161,6 +184,73 @@ describe('highlight', () => {
     await userEvent.click(screen.getByRole('button', { name: /delete block/i }))
     expect(cleared).toHaveBeenCalled()
     expect(marked()).toEqual([])
+  })
+})
+
+describe('highlight: host patterns', () => {
+  function Literal({ cleared }: { cleared: () => void }) {
+    const [value, setValue] = useState<unknown>(design())
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => {
+            // The host loads a different copy of the design: the spacer is not the same any more.
+            const next = design()
+            ;(next.rows[1]!.columns[0]!.blocks[0] as SpacerBlock).height = 77
+            setValue(next)
+          }}
+        >
+          Swap value
+        </button>
+        <BlockEditor
+          value={value}
+          onChange={setValue}
+          mergeFields={[]}
+          brand={{}}
+          // A new object on every render, as an inline literal is.
+          highlight={{ blockId: 'b_spacer', message: 'Wrong' }}
+          onHighlightClear={cleared}
+        />
+      </>
+    )
+  }
+
+  it('does not fire again when the host passes an inline literal and re-renders', async () => {
+    const cleared = vi.fn()
+    render(<Literal cleared={cleared} />)
+    expect(scrolled).toHaveLength(1)
+    // Editing another block re-renders the host (and so builds a new literal).
+    await userEvent.click(document.querySelector('[data-block-id="b_divider"]') as HTMLElement)
+    await userEvent.click(screen.getByRole('button', { name: /duplicate block/i }))
+    expect(scrolled).toHaveLength(1)
+    expect(cleared).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toHaveTextContent('Wrong')
+    expect(marked()).toEqual(['b_spacer'])
+  })
+
+  it('dismisses, and tells the host, when the value is replaced from outside', async () => {
+    const cleared = vi.fn()
+    render(<Literal cleared={cleared} />)
+    expect(marked()).toEqual(['b_spacer'])
+    await userEvent.click(screen.getByRole('button', { name: 'Swap value' }))
+    expect(cleared).toHaveBeenCalledTimes(1)
+    expect(marked()).toEqual([])
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('keeps the Dismiss button out of the alert, and flags the target as invalid', () => {
+    mount({ blockId: 'b_spacer', message: 'Wrong' })
+    const alert = screen.getByRole('alert')
+    expect(within(alert).queryByRole('button')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument()
+    expect(document.querySelector('[data-block-id="b_spacer"]')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    )
+    expect(document.querySelector('[data-block-id="b_divider"]')).not.toHaveAttribute(
+      'aria-invalid',
+    )
   })
 })
 

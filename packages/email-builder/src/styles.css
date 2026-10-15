@@ -565,12 +565,8 @@
     cursor: default;
   }
 
-  .seb-format[data-side='above'] {
-    top: auto;
-    bottom: calc(100% + 3px);
-  }
-
-  /* Its link and colour panels open as popovers on the side away from the block. */
+  /* Its link and colour panels open as popovers, downward unless the scroll area has no room
+     below the bar (chosen when the panel opens). */
   .seb-format .seb-inline-panel {
     position: absolute;
     top: calc(100% + 4px);
@@ -583,7 +579,7 @@
     box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
   }
 
-  .seb-format[data-side='above'] .seb-inline-panel {
+  .seb-format[data-panel='up'] .seb-inline-panel {
     top: auto;
     bottom: calc(100% + 4px);
   }
@@ -607,6 +603,10 @@
     background: color-mix(in srgb, var(--seb-destructive) 10%, var(--seb-card));
     color: var(--seb-destructive);
     font-size: 0.8125rem;
+  }
+
+  .seb-alert p {
+    margin: 0;
   }
 
   /* The block, column or row a server error points at. */

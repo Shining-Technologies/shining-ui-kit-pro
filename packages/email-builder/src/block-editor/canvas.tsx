@@ -38,7 +38,6 @@ const VALIGN = { top: 'flex-start', middle: 'center', bottom: 'flex-end' } as co
 
 /* -- small pieces ------------------------------------------------------------ */
 
-/** Above the element, or below it when the pane would clip it. */
 /** The server-error outline: set on the one element the highlight points at. */
 function isHighlight(
   api: ReturnType<typeof useEditorApi>,
@@ -48,6 +47,7 @@ function isHighlight(
   return api.highlight?.kind === kind && api.highlight.id === id ? true : undefined
 }
 
+/** Above the element, or below it when the pane would clip it. */
 function useToolbarSide() {
   const bar = useRef<HTMLDivElement | null>(null)
   const [side, setSide] = useState<'above' | 'below'>('above')
@@ -405,6 +405,7 @@ function BlockCell({
       data-block-id={block.id}
       data-type={block.type}
       data-error={isHighlight(api, 'block', block.id)}
+      aria-invalid={isHighlight(api, 'block', block.id)}
       data-selected={selected || undefined}
       data-dragging={isDragging || undefined}
       data-drop={hint}
@@ -467,6 +468,7 @@ function ColumnView({ column, gutter }: { column: Column; gutter: 'left' | 'righ
       className="seb-col"
       data-column-id={column.id}
       data-error={isHighlight(api, 'column', column.id)}
+      aria-invalid={isHighlight(api, 'column', column.id)}
       data-selected={selected || undefined}
       data-hidden={hidden || undefined}
       data-drop={hint}
@@ -650,6 +652,7 @@ function RowView({ row, index, count }: { row: Row; index: number; count: number
       className="seb-row"
       data-row-id={row.id}
       data-error={isHighlight(api, 'row', row.id)}
+      aria-invalid={isHighlight(api, 'row', row.id)}
       data-selected={selected || undefined}
       data-hidden={hidden || undefined}
       data-dragging={isDragging || undefined}

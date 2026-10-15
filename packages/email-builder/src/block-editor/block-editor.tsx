@@ -342,8 +342,15 @@ function Workspace({
     if (target.kind !== 'block' && target.kind !== 'column' && target.kind !== 'row') return
     const attr = target.kind === 'block' ? 'data-block-id' : `data-${target.kind}-id`
     const element = root.current?.querySelector<HTMLElement>(`[${attr}="${CSS.escape(target.id)}"]`)
-    if (element && typeof element.scrollIntoView === 'function')
-      element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    const scroller = element?.closest<HTMLElement>('[data-canvas-scroll]')
+    if (!element || !scroller || typeof scroller.scrollTo !== 'function') return
+    // Scroll the canvas alone (scrollIntoView would move every ancestor, the page included).
+    const view = scroller.getBoundingClientRect()
+    const box = element.getBoundingClientRect()
+    const top = scroller.scrollTop + (box.top - view.top) - (scroller.clientHeight - box.height) / 2
+    const left =
+      scroller.scrollLeft + (box.left - view.left) - (scroller.clientWidth - box.width) / 2
+    scroller.scrollTo({ top: Math.max(0, top), left: Math.max(0, left), behavior: 'smooth' })
   }, [active, shownKey])
 
   // Editing what the error points at drops it (so does removing it).
@@ -837,8 +844,8 @@ function Workspace({
                 {live}
               </div>
               {shown && (
-                <div className="seb-alert" role="alert">
-                  <span>{shown.message}</span>
+                <div className="seb-alert">
+                  <p role="alert">{shown.message}</p>
                   <button type="button" className="seb-action" onClick={dismissHighlight}>
                     Dismiss
                   </button>
