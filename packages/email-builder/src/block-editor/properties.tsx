@@ -5,6 +5,7 @@ import {
   findBlock,
   findColumn,
   findRow,
+  isSharedRowRef,
   layoutOf,
   type HideOn,
   type VAlign,
@@ -85,10 +86,80 @@ function EmailSettings() {
   )
 }
 
+/** A shared block's placeholder: what it is, where it is used, and how to change or leave it. */
+function SharedRowSettings({ id }: { id: string }) {
+  const api = useEditorApi()
+  const found = findRow(api.design, id)
+  if (!found || !isSharedRowRef(found.row)) return null
+  const { row, index } = found
+  const lookup = api.sharedRows.resolve(row.ref)
+  const saved = typeof lookup === 'string' ? null : lookup
+  const used = saved?.usageCount
+  return (
+    <>
+      <header className="seb-props-head">
+        <h2>Shared block</h2>
+        <p>{saved ? saved.name : 'Row ' + (index + 1)}</p>
+      </header>
+      <Section title="Shared block">
+        {saved ? (
+          <>
+            {typeof used === 'number' && (
+              <p className="seb-hint">
+                Used in {used} {used === 1 ? 'template' : 'templates'}
+              </p>
+            )}
+            <p className="seb-hint">
+              Spacing, background and layout belong to the shared block. Change it with Edit, or
+              make a copy to change it here.
+            </p>
+            <div className="seb-chip-list">
+              {api.sharedRows.canEditShared && (
+                <button
+                  type="button"
+                  className="seb-action"
+                  onClick={() => api.sharedRows.openEditor(row.id)}
+                >
+                  <Icon name="edit" /> Edit the shared block
+                </button>
+              )}
+              <button
+                type="button"
+                className="seb-action"
+                title="Make a copy you can edit here"
+                onClick={() => api.sharedRows.detach(row.id)}
+              >
+                <Icon name="unlink" /> Detach into a copy
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="seb-hint">
+            {lookup === 'loading'
+              ? 'Loading the shared block…'
+              : 'The shared block is not available, so it is left out of the email. Remove it from this email.'}
+          </p>
+        )}
+      </Section>
+      <Section title="Row actions">
+        <div className="seb-chip-list">
+          <button
+            type="button"
+            className="seb-action seb-action-danger"
+            onClick={() => api.removeRow(row.id)}
+          >
+            <Icon name="trash" /> Remove from this email
+          </button>
+        </div>
+      </Section>
+    </>
+  )
+}
+
 function RowSettings({ id }: { id: string }) {
   const api = useEditorApi()
   const found = findRow(api.design, id)
-  if (!found) return null
+  if (!found || isSharedRowRef(found.row)) return null
   const { row, index } = found
   const current = layoutOf(row)
   return (
@@ -165,26 +236,28 @@ function RowSettings({ id }: { id: string }) {
           onChange={(value) => api.updateRow(row.id, { hide_on: hideFrom(value) })}
         />
       </Section>
-      {api.savedRows.canSave && (
+      {api.savedRows.canSave && api.constraints.singleRow !== true && (
         <Section title="Save as row">
           <p className="seb-hint">Keep this row to reuse in other emails.</p>
           <SaveRowForm rowId={row.id} />
         </Section>
       )}
-      <Section title="Row actions">
-        <div className="seb-chip-list">
-          <button type="button" className="seb-action" onClick={() => api.duplicateRow(row.id)}>
-            <Icon name="copy" /> Duplicate row
-          </button>
-          <button
-            type="button"
-            className="seb-action seb-action-danger"
-            onClick={() => api.removeRow(row.id)}
-          >
-            <Icon name="trash" /> Delete row
-          </button>
-        </div>
-      </Section>
+      {api.constraints.singleRow !== true && (
+        <Section title="Row actions">
+          <div className="seb-chip-list">
+            <button type="button" className="seb-action" onClick={() => api.duplicateRow(row.id)}>
+              <Icon name="copy" /> Duplicate row
+            </button>
+            <button
+              type="button"
+              className="seb-action seb-action-danger"
+              onClick={() => api.removeRow(row.id)}
+            >
+              <Icon name="trash" /> Delete row
+            </button>
+          </div>
+        </Section>
+      )}
     </>
   )
 }
@@ -302,7 +375,12 @@ export function Properties() {
   return (
     <fieldset className="seb-props" disabled={api.disabled}>
       {!selection && <EmailSettings />}
-      {selection?.kind === 'row' && <RowSettings key={selection.id} id={selection.id} />}
+      {selection?.kind === 'row' &&
+        (isSharedRowRef(findRow(api.design, selection.id)?.row) ? (
+          <SharedRowSettings key={selection.id} id={selection.id} />
+        ) : (
+          <RowSettings key={selection.id} id={selection.id} />
+        ))}
       {selection?.kind === 'column' && <ColumnSettings key={selection.id} id={selection.id} />}
       {selection?.kind === 'block' && <BlockSettings key={selection.id} id={selection.id} />}
     </fieldset>

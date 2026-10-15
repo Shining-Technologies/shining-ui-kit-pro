@@ -5,6 +5,7 @@ import type {
   BlockType,
   BrandPreview,
   Column,
+  DataSourceDefinition,
   LayoutId,
   MergeFieldDefinition,
   Row,
@@ -13,6 +14,7 @@ import type { UploadedImage } from '../toolbar'
 import type { Device } from './devices'
 import type {
   DropHint,
+  EditorConstraints,
   FocusRequest,
   FormatEditor,
   Selection,
@@ -34,6 +36,10 @@ export interface EditorApi {
   mergeFields: MergeFieldDefinition[]
   getMergeFields: () => MergeFieldDefinition[]
   onUploadImage?: (file: File) => Promise<UploadedImage>
+  /** The lists a table block can show (``GET data-sources/``). */
+  dataSources: DataSourceDefinition[]
+  /** Limits set by the "Edit shared block" dialog; empty in the main editor. */
+  constraints: EditorConstraints
   dropHint: DropHint | null
   /** The block, column or row a server error points at, if any. */
   highlight: { kind: 'block' | 'column' | 'row'; id: string } | null
@@ -66,6 +72,9 @@ export interface EditorApi {
   duplicateRow: (id: string) => void
   removeRow: (id: string) => void
 
+  /** Shared blocks (shining-email 0.4). */
+  sharedRows: SharedRowsApi
+
   savedRows: SavedRowsState & {
     enabled: boolean
     /** The adapter has ``save`` / ``remove``; without them the matching buttons are hidden. */
@@ -75,6 +84,38 @@ export interface EditorApi {
     saveRow: (rowId: string, name: string) => Promise<EditResult>
     removeSaved: (id: SavedRow['id']) => Promise<void>
   }
+}
+
+/** What the editor knows about a shared block: its saved row, still loading, deleted
+ * (``missing``), or not fetchable right now (``unavailable``). */
+export type SharedLookup = SavedRow | 'loading' | 'missing' | 'unavailable'
+
+export interface SharedRowsApi {
+  /** The shared blocks in the saved-row list. */
+  items: SavedRow[]
+  /** The adapter lists saved rows at all (shared blocks come from the same list). */
+  enabled: boolean
+  /** The adapter has ``save``: a row can be saved as a shared block. Never inside a shared block. */
+  canShare: boolean
+  /** The adapter has ``update``: a shared block can be edited. */
+  canEditShared: boolean
+  /** The adapter has ``remove``. */
+  canRemove: boolean
+  /** A shared block's saved row, from the list or fetched with ``get``. */
+  resolve: (ref: string) => SharedLookup
+  /** The row of a resolved shared block (for footer checks), or ``undefined``. */
+  rowOf: (ref: string) => Row | undefined
+  /** Fetch a shared block again after `get` failed for it. */
+  retry: (ref: string) => void
+  insertShared: (id: SavedRow['id']) => void
+  /** Save the row as a shared block, then put a placeholder in its place. */
+  saveAsShared: (rowId: string, name: string) => Promise<EditResult>
+  /** Replace the placeholder with a copy of the shared block's row, editable here. */
+  detach: (rowId: string) => void
+  /** Open the "Edit shared block" dialog for a placeholder. */
+  openEditor: (rowId: string) => void
+  /** Save a changed row to the shared block and refresh every place it is shown. */
+  updateShared: (id: SavedRow['id'], row: Row) => Promise<EditResult>
 }
 
 export const EditorContext = createContext<EditorApi | null>(null)

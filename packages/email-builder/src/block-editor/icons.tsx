@@ -12,6 +12,9 @@ export type IconName =
   | 'video'
   | 'footer'
   | 'html'
+  | 'table'
+  | 'unlink'
+  | 'edit'
   | 'grip'
   | 'up'
   | 'down'
@@ -87,6 +90,16 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   html: <path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" />,
+  table: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M3 10h18M3 15h18M9 10v10" />
+    </>
+  ),
+  unlink: (
+    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M8 8 4 4M20 20l-4-4M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+  ),
+  edit: <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16zM14 6l4 4" />,
   grip: (
     <>
       <circle cx="9" cy="6" r="1" />

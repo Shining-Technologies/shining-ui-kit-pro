@@ -17,6 +17,7 @@ export const paletteId = {
   block: (type: BlockType) => `${PALETTE_PREFIX}block:${type}`,
   layout: (layout: LayoutId) => `${PALETTE_PREFIX}layout:${layout}`,
   saved: (id: string | number) => `${PALETTE_PREFIX}saved:${id}`,
+  shared: (id: string | number) => `${PALETTE_PREFIX}shared:${id}`,
 }
 
 export function parsePaletteId(id: string): PaletteItem | null {
@@ -28,6 +29,7 @@ export function parsePaletteId(id: string): PaletteItem | null {
   if (kind === 'layout' && ROW_LAYOUTS.some((layout) => layout.id === value))
     return { kind: 'palette-layout', layout: value as LayoutId }
   if (kind === 'saved' && value) return { kind: 'palette-saved', id: value }
+  if (kind === 'shared' && value) return { kind: 'palette-shared', id: value }
   return null
 }
 
@@ -57,7 +59,12 @@ export function resolveDrop(
   const isRow = !palette && findRow(design, activeId) !== null
   const isBlock = !palette ? findBlock(design, activeId) !== null : palette.kind === 'palette-block'
 
-  if (isRow || palette?.kind === 'palette-layout' || palette?.kind === 'palette-saved') {
+  if (
+    isRow ||
+    palette?.kind === 'palette-layout' ||
+    palette?.kind === 'palette-saved' ||
+    palette?.kind === 'palette-shared'
+  ) {
     if (overId === CANVAS_END) {
       const index = design.rows.length - (isRow ? 1 : 0)
       return { drop: { kind: 'row', index }, hint: { id: CANVAS_END, position: 'inside' } }

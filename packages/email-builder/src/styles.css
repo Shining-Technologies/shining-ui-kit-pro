@@ -1741,4 +1741,174 @@
   .seb-format .seb-swatch {
     border: 1px solid color-mix(in srgb, var(--seb-fg) 30%, transparent);
   }
+  /* -- shared blocks and tables (shining-email 0.4) --------------------------- */
+
+  /* A shared block: the saved row, drawn read-only inside a dashed outline. */
+  .seb-shared-row,
+  .seb-shared-row:hover {
+    outline: 2px dashed var(--seb-primary);
+    outline-offset: 0;
+  }
+
+  .seb-shared-row[data-selected] {
+    outline-style: solid;
+  }
+
+  .seb-shared-row .seb-row-inner {
+    pointer-events: none;
+  }
+
+  .seb-shared-row .seb-col {
+    outline: 0;
+  }
+
+  .seb-cell-static {
+    cursor: default;
+  }
+
+  .seb-shared-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    max-width: 70%;
+    overflow: hidden;
+    padding: 0.125rem 0.5rem;
+    border-bottom-left-radius: calc(var(--seb-radius) - 2px);
+    background: var(--seb-primary);
+    color: var(--seb-primary-fg);
+    font: 0.6875rem/1.4 var(--font-sans, system-ui, sans-serif);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .seb-shared-state {
+    margin: 0;
+    padding: 1.25rem 1rem;
+    background: var(--seb-muted);
+    color: var(--seb-muted-fg);
+    font: 0.8125rem/1.4 var(--font-sans, system-ui, sans-serif);
+    text-align: center;
+  }
+
+  .seb-saved-count {
+    margin-left: auto;
+    padding: 0 0.375rem;
+    border-radius: 999px;
+    background: var(--seb-muted);
+    color: var(--seb-muted-fg);
+    font-size: 0.6875rem;
+  }
+
+  .seb-table-chip {
+    display: inline-block;
+    margin-bottom: 0.25rem;
+    padding: 0 0.375rem;
+    border-radius: 999px;
+    background: var(--seb-muted);
+    color: var(--seb-muted-fg);
+    font: 0.625rem/1.6 var(--font-sans, system-ui, sans-serif);
+  }
+
+  .seb-table-empty {
+    margin: 0;
+    padding: 0.75rem;
+    border: 1px dashed color-mix(in srgb, var(--seb-muted-fg) 45%, transparent);
+    border-radius: 4px;
+    color: var(--seb-muted-fg);
+    font: 0.8125rem/1.4 var(--font-sans, system-ui, sans-serif);
+    text-align: center;
+  }
+
+  /* -- the "Edit shared block" dialog ------------------------------------------ */
+
+  .seb-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgb(0 0 0 / 0.5);
+  }
+
+  .seb-dialog {
+    display: flex;
+    width: min(70rem, 100%);
+    max-height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--seb-radius);
+    background: var(--seb-card, var(--seb-bg));
+    box-shadow: 0 8px 40px rgb(0 0 0 / 0.35);
+    color: var(--seb-fg);
+  }
+
+  .seb-dialog-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid var(--seb-border);
+  }
+
+  .seb-dialog-head h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .seb-dialog-note {
+    margin: 0;
+    padding: 0.5rem 0.875rem;
+    border-bottom: 1px solid var(--seb-border);
+    color: var(--seb-muted-fg);
+    font-size: 0.8125rem;
+  }
+
+  .seb-dialog-body {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    --seb-block-editor-height: min(38rem, 62vh);
+  }
+
+  .seb-dialog-body > .seb-editor {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .seb-dialog-error {
+    margin: 0;
+    padding: 0.5rem 0.875rem;
+    border-top: 1px solid var(--seb-destructive);
+    background: color-mix(in srgb, var(--seb-destructive) 10%, var(--seb-bg));
+    color: var(--seb-destructive);
+    font-size: 0.8125rem;
+  }
+
+  /* The wrapper the dialog is portalled in: it only carries the editor's tokens and button rules. */
+  .seb-editor.seb-portal {
+    display: contents;
+  }
+
+  .seb-dialog-ask {
+    margin: 0 auto 0 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .seb-dialog-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    border-top: 1px solid var(--seb-border);
+  }
 }
