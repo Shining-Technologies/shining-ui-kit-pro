@@ -27,9 +27,10 @@ Treat it as major.
 
 ## Packages
 
-`@shining-technologies/ui` is the only published package. Prerelease versions of it
-(`2.0.0-rc.N`) are set by hand in its `package.json`; `scripts/publish.mjs` publishes them under
-the `next` tag so they never reach `latest`.
+`@shining-technologies/ui` and `@shining-technologies/email-builder` are the published packages;
+a changeset names whichever ones it changes. Prerelease versions of `ui` (`2.0.0-rc.N`) are set by
+hand in its `package.json`; `scripts/publish.mjs` publishes them under the `next` tag so they never
+reach `latest`. Each stable release of either package also needs its page in `docs/releases/`.
 
 The gallery (`@shining-technologies/ui-gallery`) is `private` and ignored here; it is never
 published.

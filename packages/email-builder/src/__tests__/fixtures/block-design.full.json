@@ -1,0 +1,262 @@
+{
+  "version": 1,
+  "mode": "blocks",
+  "settings": {
+    "width": 640,
+    "background": "#eef1f5",
+    "content_background": "brand.content_background_color",
+    "font": "georgia",
+    "padding": [20, 16, 20, 16]
+  },
+  "rows": [
+    {
+      "id": "r_head",
+      "padding": [24, 24, 8, 24],
+      "background": "brand.background_color",
+      "hide_on": null,
+      "gap": 16,
+      "columns": [
+        {
+          "id": "c_head",
+          "width": 100,
+          "hide_on": null,
+          "valign": "top",
+          "background": null,
+          "padding": [0, 0, 0, 0],
+          "blocks": [
+            {
+              "id": "b_heading",
+              "type": "heading",
+              "level": 1,
+              "html": "Welcome, <strong>{{ contact.first_name|there }}</strong>",
+              "align": "center",
+              "color": "brand.primary_color",
+              "style": {
+                "padding": [8, 0, 8, 0],
+                "background": "#ffffff",
+                "color": "brand.text_color",
+                "font": "brand.heading_font",
+                "font_size": 28,
+                "font_weight": "bold"
+              }
+            },
+            {
+              "id": "b_text",
+              "type": "text",
+              "html": "<p>Thanks for getting in touch. <strong>Here is what happens next.</strong></p><ul><li>One</li><li>Two</li></ul>",
+              "align": "right",
+              "style": {
+                "padding": [8, 12, 8, 12],
+                "background": "#f9fafb",
+                "color": "#374151",
+                "font": "verdana",
+                "font_size": 16,
+                "font_weight": "normal"
+              }
+            },
+            {
+              "id": "b_image",
+              "type": "image",
+              "src": "https://cdn.example.test/hero.png",
+              "asset_id": "as_hero",
+              "alt": "The team",
+              "width": 320,
+              "align": "center",
+              "link": "https://example.test/team",
+              "radius": 12,
+              "style": {
+                "padding": [8, 0, 8, 0],
+                "background": "brand.content_background_color"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r_split",
+      "padding": [16, 24, 16, 24],
+      "background": null,
+      "hide_on": "mobile",
+      "gap": 24,
+      "columns": [
+        {
+          "id": "c_left",
+          "width": 33,
+          "hide_on": "desktop",
+          "valign": "middle",
+          "background": "#f3f4f6",
+          "padding": [8, 8, 8, 8],
+          "blocks": [
+            {
+              "id": "b_avatar",
+              "type": "avatar",
+              "src": "https://cdn.example.test/me.jpg",
+              "asset_id": "as_me",
+              "alt": "Sam from Acme",
+              "size": 96,
+              "shape": "rounded",
+              "align": "center",
+              "style": { "padding": [0, 0, 0, 0], "background": "#ffffff" }
+            }
+          ]
+        },
+        {
+          "id": "c_right",
+          "width": 67,
+          "hide_on": null,
+          "valign": "bottom",
+          "background": null,
+          "padding": [0, 0, 0, 0],
+          "blocks": [
+            {
+              "id": "b_button",
+              "type": "button",
+              "label": "Book a time",
+              "url": "https://example.test/book",
+              "align": "left",
+              "full_width": true,
+              "style": {
+                "padding": [8, 0, 8, 0],
+                "background": "brand.primary_color",
+                "color": "brand.button_text_color",
+                "font": "tahoma",
+                "font_size": 18,
+                "font_weight": "bold",
+                "radius": 40,
+                "padding_y": 16,
+                "padding_x": 32,
+                "border_color": "#111827",
+                "border_width": 2
+              }
+            },
+            {
+              "id": "b_divider",
+              "type": "divider",
+              "color": "brand.muted_text_color",
+              "thickness": 2,
+              "width": 60,
+              "style": { "padding": [12, 0, 12, 0], "background": "#ffffff" }
+            },
+            {
+              "id": "b_spacer",
+              "type": "spacer",
+              "height": 32,
+              "style": { "padding": [0, 0, 0, 0], "background": "#fafafa" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r_media",
+      "padding": [16, 24, 16, 24],
+      "background": "#ffffff",
+      "hide_on": "desktop",
+      "gap": 0,
+      "columns": [
+        {
+          "id": "c_media_a",
+          "width": 33,
+          "hide_on": null,
+          "valign": "top",
+          "background": null,
+          "padding": [0, 0, 0, 0],
+          "blocks": [
+            {
+              "id": "b_social_brand",
+              "type": "social",
+              "source": "brand",
+              "align": "center",
+              "style": { "padding": [8, 0, 8, 0], "background": "#ffffff" }
+            }
+          ]
+        },
+        {
+          "id": "c_media_b",
+          "width": 34,
+          "hide_on": null,
+          "valign": "top",
+          "background": null,
+          "padding": [0, 0, 0, 0],
+          "blocks": [
+            {
+              "id": "b_social_custom",
+              "type": "social",
+              "source": "custom",
+              "links": [
+                { "network": "facebook", "url": "https://facebook.example.test/acme" },
+                { "network": "linkedin", "url": "https://linkedin.example.test/acme" }
+              ],
+              "align": "right",
+              "style": { "padding": [4, 4, 4, 4] }
+            }
+          ]
+        },
+        {
+          "id": "c_media_c",
+          "width": 33,
+          "hide_on": null,
+          "valign": "top",
+          "background": null,
+          "padding": [0, 0, 0, 0],
+          "blocks": [
+            {
+              "id": "b_video",
+              "type": "video",
+              "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+              "thumbnail": {
+                "src": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+                "asset_id": "as_thumb"
+              },
+              "alt": "A short hello",
+              "caption": "Watch the welcome video",
+              "style": { "padding": [8, 0, 8, 0], "background": "#f3f4f6" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r_foot",
+      "padding": [16, 24, 16, 24],
+      "background": null,
+      "hide_on": null,
+      "gap": 16,
+      "columns": [
+        {
+          "id": "c_foot",
+          "width": 100,
+          "hide_on": null,
+          "valign": "top",
+          "background": null,
+          "padding": [0, 0, 0, 0],
+          "blocks": [
+            {
+              "id": "b_html",
+              "type": "html",
+              "html": "<p>Custom <em>markup</em></p>",
+              "style": { "padding": [4, 0, 4, 0] }
+            },
+            {
+              "id": "b_footer",
+              "type": "footer",
+              "show_business": true,
+              "show_address": true,
+              "show_social": false,
+              "html": "<p>You are receiving this because you contacted us.</p>",
+              "style": {
+                "padding": [8, 0, 8, 0],
+                "background": "#f9fafb",
+                "color": "brand.muted_text_color",
+                "font": "system",
+                "font_size": 12,
+                "font_weight": "normal"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

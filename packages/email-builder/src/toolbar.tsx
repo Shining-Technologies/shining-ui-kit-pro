@@ -10,6 +10,8 @@ import { MergeFieldPicker } from './merge-field-picker'
 export interface UploadedImage {
   url: string
   alt?: string
+  /** The asset's id, kept by block designs (``asset_id``). */
+  assetId?: string
 }
 
 export interface ToolbarProps {
@@ -29,7 +31,7 @@ function validUrl(value: string) {
   return URL_OK.test(url) || MERGE_URL.test(url)
 }
 
-function Tool({
+export function Tool({
   label,
   active,
   disabled,
@@ -271,7 +273,7 @@ export function Toolbar({ editor, mergeFields, brandColors, onUploadImage }: Too
   )
 }
 
-function PanelForm({
+export function PanelForm({
   label,
   onSubmit,
   onCancel,
@@ -315,7 +317,7 @@ function PanelForm({
   )
 }
 
-function LinkPanel({
+export function LinkPanel({
   initial,
   onApply,
   onRemove,
@@ -503,7 +505,7 @@ function ImagePanel({
   )
 }
 
-function ColorPanel({
+export function ColorPanel({
   colors,
   onApply,
   onCancel,

@@ -50,8 +50,8 @@ function usable(editor: Editor | null): editor is Editor {
  * server renders the email — use ``EmailPreview`` with ``POST
  * templates/<id>/preview/`` or ``compose/preview/`` to show it.
  *
- * A block-mode design (shining-email 0.2) is shown as read-only notice rather
- * than flattened into rich text.
+ * A block-mode design (shining-email 0.3) is shown as a notice rather than
+ * flattened into rich text; ``BlockEditor`` edits it.
  */
 export function EmailEditor({
   value,
@@ -142,7 +142,8 @@ export function EmailEditor({
     return (
       <div className={['seb-editor', className].filter(Boolean).join(' ')}>
         <p className="seb-notice" role="status">
-          This email was designed with blocks, which this version of the editor cannot change.
+          This email was designed with blocks, which this editor cannot change. Open it with
+          BlockEditor instead.
         </p>
       </div>
     )
