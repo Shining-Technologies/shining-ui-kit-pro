@@ -175,6 +175,38 @@ test('Tailwind override beats component styles; bg-primary equals --primary', as
   expect(def).toBe(primaryVar)
 })
 
+test('Progress and CellProgress share a block name without breaking each other', async ({ page }) => {
+  const width = (selector: string) =>
+    page.locator(selector).first().evaluate((el) => el.getBoundingClientRect().width)
+  const height = (selector: string) =>
+    page.locator(selector).first().evaluate((el) => el.getBoundingClientRect().height)
+
+  // Progress: the indicator fills the track in proportion to the value (a 0 width was the bug).
+  const full = await width('[data-testid="progress-full"]')
+  expect(full).toBeGreaterThan(100)
+  const fullIndicator = page.getByTestId('progress-full').locator('.sui-progress__indicator')
+  expect(await fullIndicator.evaluate((el) => el.getBoundingClientRect().width)).toBeCloseTo(full, 0)
+  expect(await fullIndicator.evaluate((el) => getComputedStyle(el).width)).not.toBe('0px')
+  // At 50 the indicator is translated half a track left, so half of it is visible inside the track.
+  const half = page.getByTestId('progress-half')
+  const halfBox = await half.boundingBox()
+  const halfIndicator = await half.locator('.sui-progress__indicator').boundingBox()
+  expect(halfIndicator!.width).toBeCloseTo(halfBox!.width, 0)
+  expect(halfIndicator!.x + halfIndicator!.width - halfBox!.x).toBeCloseTo(halfBox!.width / 2, 0)
+  expect(await height('[data-testid="progress-sm"]')).toBeLessThan(await height('[data-testid="progress-full"]'))
+
+  // CellProgress: a flex row whose track has a width and whose bar is half of it; the value is not clipped.
+  const cell = page.getByTestId('cell-progress').locator('.sui-progress')
+  expect(await cell.evaluate((el) => getComputedStyle(el).display)).toBe('flex')
+  expect(await cell.evaluate((el) => getComputedStyle(el).overflow)).toBe('visible')
+  const track = await page.getByTestId('cell-progress').locator('.sui-progress__track').boundingBox()
+  const bar = await page.getByTestId('cell-progress').locator('.sui-progress__bar').boundingBox()
+  expect(track!.width).toBeGreaterThan(40)
+  expect(bar!.width).toBeCloseTo(track!.width / 2, 0)
+  const value = await page.getByTestId('cell-progress').locator('.sui-progress__value').boundingBox()
+  expect(value!.height).toBeGreaterThan(8)
+})
+
 test('charts render non-empty svg', async ({ page }) => {
   for (const id of ['trend-chart', 'donut-chart']) {
     const svg = page.getByTestId(id).locator('svg.recharts-surface').first()

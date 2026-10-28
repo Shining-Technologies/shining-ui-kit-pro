@@ -680,7 +680,14 @@
 
 /* ---------------------------------------------------------------- progress */
 
-.sui-progress {
+/*
+ * `.sui-progress` names two components: `Progress` (here) and the DataTable's
+ * `CellProgress`, whose root also carries `.sui-cell-progress` and is laid out
+ * in controls.css. The `Progress` root is therefore every `.sui-progress`
+ * that is not a cell progress. `:where()` keeps the selector at the specificity
+ * of one class, so `--sm` and `--lg` below still override the height.
+ */
+.sui-progress:where(:not(.sui-cell-progress)) {
   position: relative;
   width: 100%;
   height: 0.5rem;

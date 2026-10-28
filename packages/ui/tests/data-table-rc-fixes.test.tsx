@@ -290,6 +290,12 @@ describe('CellProgress showValue', () => {
     render(<CellProgress value={5} max={8} label="Done" />)
     expect(screen.getByText('63%')).toBeInTheDocument()
   })
+
+  it('keeps `.sui-progress` and adds its own layout class, apart from the Progress component', () => {
+    render(<CellProgress value={5} max={8} label="Done" />)
+    const root = screen.getByRole('progressbar', { name: 'Done' }).parentElement!
+    expect(root).toHaveClass('sui-progress', 'sui-cell-progress')
+  })
 })
 
 describe('inline single-value filter label', () => {
