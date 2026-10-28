@@ -1,6 +1,6 @@
 # @shining-technologies/email-builder v0.3.0
 
-Released 2026-10-15 · Minor · [CHANGELOG entry](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/%40shining-technologies%2Femail-builder%400.3.0/packages/email-builder/CHANGELOG.md#030)
+Released 2026-10-28 · Minor · [CHANGELOG entry](https://github.com/Shining-Technologies/shining-ui-kit-pro/blob/%40shining-technologies%2Femail-builder%400.3.0/packages/email-builder/CHANGELOG.md#030)
 
 `BlockEditor` gains shared blocks (a saved row inserted as a placeholder and edited in one place) and a data-table block for shining-email 0.4. Additive at runtime; `BlockDesign.rows` is widened for TypeScript.
 
