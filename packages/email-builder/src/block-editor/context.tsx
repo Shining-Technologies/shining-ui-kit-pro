@@ -82,7 +82,8 @@ export interface EditorApi {
     canRemove: boolean
     reload: () => void
     saveRow: (rowId: string, name: string) => Promise<EditResult>
-    removeSaved: (id: SavedRow['id']) => Promise<void>
+    /** Resolves to the reason when the delete was refused or failed, ``null`` otherwise. */
+    removeSaved: (id: SavedRow['id']) => Promise<string | null>
   }
 }
 

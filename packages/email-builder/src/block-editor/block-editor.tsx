@@ -871,13 +871,14 @@ function Workspace({
       },
       removeSaved: async (id) => {
         const current = adapterRef.current
-        if (!current?.remove) return
+        if (!current?.remove) return null
         try {
           await current.remove(id)
           if (mounted.current)
             setSaved((state) => ({ ...state, items: state.items.filter((item) => item.id !== id) }))
+          return null
         } catch (caught) {
-          if (!mounted.current) return
+          if (!mounted.current) return null
           if (caught instanceof SharedRowInUseError) {
             // A shared block in use is never deleted; say where it is used.
             const names = caught.templates.map((template) => template.name).join(', ')
@@ -887,11 +888,12 @@ function Workspace({
             }. Remove it from those templates first.`
             setNotice(message)
             setLive(message)
-            return
+            return message
           }
-          setNotice(
-            caught instanceof Error ? caught.message : 'The saved row could not be deleted.',
-          )
+          const message =
+            caught instanceof Error ? caught.message : 'The saved row could not be deleted.'
+          setNotice(message)
+          return message
         }
       },
     },

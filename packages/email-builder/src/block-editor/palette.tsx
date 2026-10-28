@@ -83,6 +83,8 @@ function SavedItem({
 }) {
   const api = useEditorApi()
   const [confirming, setConfirming] = useState(false)
+  // Why the last delete was refused, shown under the row where the palette is.
+  const [refusal, setRefusal] = useState('')
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: shared ? paletteId.shared(saved.id) : paletteId.saved(saved.id),
     data: { kind: shared ? 'palette-shared' : 'palette-saved' },
@@ -90,7 +92,7 @@ function SavedItem({
   const noun = shared ? 'shared block' : 'saved row'
   const used = saved.usageCount
   return (
-    <li className="seb-saved-item">
+    <li className="seb-saved-item" data-confirming={confirming || undefined}>
       <button
         ref={setNodeRef}
         type="button"
@@ -117,7 +119,15 @@ function SavedItem({
           <button
             type="button"
             className="seb-action seb-action-danger"
-            onClick={() => void api.savedRows.removeSaved(saved.id)}
+            title={`Delete “${saved.name}”?`}
+            onClick={() =>
+              void api.savedRows.removeSaved(saved.id).then((reason) => {
+                // A refused delete closes the question and says why; a deleted row unmounts.
+                if (reason === null) return
+                setConfirming(false)
+                setRefusal(reason)
+              })
+            }
           >
             Delete “{saved.name}”?
           </button>
@@ -131,11 +141,15 @@ function SavedItem({
           className="seb-icon-btn"
           aria-label={`Delete ${noun} ${saved.name}`}
           title={`Delete ${noun}`}
-          onClick={() => setConfirming(true)}
+          onClick={() => {
+            setRefusal('')
+            setConfirming(true)
+          }}
         >
           <Icon name="trash" />
         </button>
       )}
+      {refusal && <p className="seb-saved-refusal">{refusal}</p>}
     </li>
   )
 }

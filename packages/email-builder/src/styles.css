@@ -815,8 +815,10 @@
 
   .seb-saved-item {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.25rem;
+    min-width: 0;
   }
 
   .seb-saved-main {
@@ -845,10 +847,34 @@
     white-space: nowrap;
   }
 
+  /* The question goes on its own line under the name and wraps inside the palette. */
   .seb-saved-confirm {
     display: flex;
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 100%;
     flex-wrap: wrap;
     gap: 0.25rem;
+  }
+
+  .seb-saved-confirm .seb-action {
+    height: auto;
+    min-height: 2rem;
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 0.25rem;
+    line-height: 1.25;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .seb-saved-refusal {
+    min-width: 0;
+    flex: 1 1 100%;
+    margin: 0;
+    color: var(--seb-destructive);
+    font-size: 0.75rem;
+    overflow-wrap: anywhere;
   }
 
   /* -- the canvas ------------------------------------------------------------- */
