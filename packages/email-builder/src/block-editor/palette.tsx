@@ -1,7 +1,7 @@
 'use client'
 
 import { useDraggable } from '@dnd-kit/core'
-import { useState, type PointerEventHandler, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type PointerEventHandler, type ReactNode } from 'react'
 import { BLOCK_TYPES, ROW_LAYOUTS, hasFooter, type BlockType, type LayoutId } from '../design'
 import { BLOCKS } from './blocks'
 import { useEditorApi } from './context'
@@ -85,6 +85,13 @@ function SavedItem({
   const [confirming, setConfirming] = useState(false)
   // Why the last delete was refused, shown under the row where the palette is.
   const [refusal, setRefusal] = useState('')
+  // True while `remove` is pending, so the question cannot be confirmed twice.
+  const [removing, setRemoving] = useState(false)
+  const deleteButton = useRef<HTMLButtonElement>(null)
+  // The confirm button unmounts when a delete is refused; keep keyboard focus on the row.
+  useEffect(() => {
+    if (refusal) deleteButton.current?.focus()
+  }, [refusal])
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: shared ? paletteId.shared(saved.id) : paletteId.saved(saved.id),
     data: { kind: shared ? 'palette-shared' : 'palette-saved' },
@@ -120,14 +127,18 @@ function SavedItem({
             type="button"
             className="seb-action seb-action-danger"
             title={`Delete “${saved.name}”?`}
-            onClick={() =>
+            disabled={removing}
+            onClick={() => {
+              if (removing) return
+              setRemoving(true)
               void api.savedRows.removeSaved(saved.id).then((reason) => {
+                setRemoving(false)
                 // A refused delete closes the question and says why; a deleted row unmounts.
                 if (reason === null) return
                 setConfirming(false)
                 setRefusal(reason)
               })
-            }
+            }}
           >
             Delete “{saved.name}”?
           </button>
@@ -137,6 +148,7 @@ function SavedItem({
         </span>
       ) : (
         <button
+          ref={deleteButton}
           type="button"
           className="seb-icon-btn"
           aria-label={`Delete ${noun} ${saved.name}`}

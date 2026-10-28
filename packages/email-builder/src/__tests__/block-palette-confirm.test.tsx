@@ -109,6 +109,49 @@ describe('a refused delete in the palette', () => {
     expect(within(group).queryByRole('button', { name: 'Keep' })).toBeNull()
   })
 
+  it('puts keyboard focus back on the row’s delete button', async () => {
+    const remove = vi.fn(async () => {
+      throw new SharedRowInUseError('in use', [{ id: '1', name: 'Welcome' }])
+    })
+    mount({ list: async () => [sharedRow('Legal footer')], remove })
+    const group = await screen.findByRole('region', { name: 'Shared blocks' })
+    await userEvent.click(
+      within(group).getByRole('button', { name: 'Delete shared block Legal footer' }),
+    )
+    const ask = within(group).getByRole('button', { name: 'Delete “Legal footer”?' })
+    ask.focus()
+    await userEvent.keyboard('{Enter}')
+    await waitFor(() => expect(group.querySelector('.seb-saved-refusal')).not.toBeNull())
+    expect(document.activeElement).toBe(
+      within(group).getByRole('button', { name: 'Delete shared block Legal footer' }),
+    )
+  })
+
+  it('disables the delete question while the delete is pending', async () => {
+    let fail: (error: Error) => void = () => undefined
+    const remove = vi.fn(
+      () =>
+        new Promise<void>((_, reject) => {
+          fail = reject
+        }),
+    )
+    mount({ list: async () => [plainRow('Signature')], remove })
+    const group = await screen.findByRole('region', { name: 'Saved rows' })
+    await userEvent.click(within(group).getByRole('button', { name: 'Delete saved row Signature' }))
+    const ask = within(group).getByRole('button', { name: 'Delete “Signature”?' })
+    await userEvent.click(ask)
+    expect(ask).toBeDisabled()
+    await userEvent.click(ask)
+    expect(remove).toHaveBeenCalledTimes(1)
+    fail(new Error('The server is busy'))
+    await waitFor(() =>
+      expect(group.querySelector('.seb-saved-refusal')).toHaveTextContent('The server is busy'),
+    )
+    expect(
+      within(group).getByRole('button', { name: 'Delete saved row Signature' }),
+    ).not.toBeDisabled()
+  })
+
   it('keeps the notice above the canvas too', async () => {
     const remove = vi.fn(async () => {
       throw new SharedRowInUseError('in use', [{ id: '1', name: 'Welcome' }])
@@ -166,6 +209,7 @@ describe('the inline confirm fits the palette', () => {
     expect(action).toMatch(/height:\s*auto/)
     expect(action).toMatch(/max-width:\s*100%/)
     expect(action).toMatch(/overflow-wrap:\s*anywhere/)
+    expect(action).toMatch(/text-align:\s*start/)
     expect(rule('.seb-saved-refusal')).toMatch(/overflow-wrap:\s*anywhere/)
   })
 })

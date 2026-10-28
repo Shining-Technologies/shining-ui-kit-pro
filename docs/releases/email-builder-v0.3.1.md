@@ -15,10 +15,11 @@ The palette's inline delete question for a saved row or shared block fits the pa
   Remove it from those templates first." above the canvas, but the "Delete “name”? / Keep" question
   stayed open in the palette. Now, when `remove` throws (that error or any other), the question closes
   and the same message appears under that row in the palette, in the destructive colour. It stays
-  until the author asks to delete that row again. The notice above the canvas and the screen reader
-  announcement are unchanged.
-- **The question fits the palette.** It sat beside the row's name, and at the palette's narrowest
-  width (13.5rem, for example in a 1440px window) it ran past the right edge. Now, while the question
+  until the author asks to delete that row again. Keyboard focus moves back to that row's delete
+  button, and the "Delete “name”?" button is disabled while `remove` is pending. The notice above
+  the canvas and the screen reader announcement are unchanged.
+- **The question fits the palette.** It sat beside the row's name, and at the palette's narrow
+  widths (down to 13.5rem) it ran past the right edge. Now, while the question
   is open, it takes its own line under the name; the delete button wraps a long block name over
   several lines instead of overflowing, and its `title` holds the full text. This applies to saved
   rows and shared blocks alike.

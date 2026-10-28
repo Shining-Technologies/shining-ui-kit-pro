@@ -864,7 +864,7 @@
     max-width: 100%;
     padding-block: 0.25rem;
     line-height: 1.25;
-    text-align: left;
+    text-align: start;
     overflow-wrap: anywhere;
   }
 
