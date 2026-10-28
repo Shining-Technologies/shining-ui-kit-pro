@@ -31,9 +31,10 @@ None.
 ## Upgrading
 
 - Bump the pin.
-- CSS that targets `.sui-progress` to restyle a `CellProgress` row (for example its `gap` or
-  `align-items`) still applies. CSS written to restyle a `Progress` bar through `.sui-progress`
-  no longer also reaches `CellProgress`; target `.sui-cell-progress` for that.
+- Your own CSS on `.sui-progress` still reaches both components. To restyle only one, target
+  `.sui-cell-progress` or `.sui-progress:not(.sui-cell-progress)`. Only the kit's own rule on the
+  `Progress` root (height, overflow, background, radius, position and width) stopped reaching
+  `CellProgress`.
 
 ## Compatibility
 
