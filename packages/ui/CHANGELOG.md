@@ -1,5 +1,11 @@
 # @shining-technologies/ui
 
+## 2.2.1
+
+### Patch Changes
+
+- 3e488a7: `Progress` shows its bar again: the indicator had a computed width of 0 (`aria-valuenow` was right, the bar always looked empty) because `CellProgress`'s `display: flex` rule for `.sui-progress` also applied to the `Progress` root, and `Progress`'s height and `overflow: hidden` clipped the `CellProgress` percentage. The `CellProgress` row is now styled by its own `.sui-cell-progress` class, added next to `.sui-progress`; no class was renamed or removed.
+
 ## 2.2.0
 
 Components for the views a business application builds around its records when a table is not
@@ -73,7 +79,7 @@ no existing prop, class or default changed. No new dependencies.
 - DataTable: hidden columns are remembered in the browser by default, alongside pinning. `persist`
   now defaults to `{ state: ['columnPinning', 'columnVisibility'] }`; widths are still opt-in.
 - DataTable: the layout is stored as one versioned record per table (`{ version: 1, columnPinning,
-  columnVisibility, columnSizing }` under `sui-data-table:<name>`, typed as `PersistedLayout`)
+columnVisibility, columnSizing }` under `sui-data-table:<name>`, typed as `PersistedLayout`)
   instead of one entry per slice, so the shape can be migrated in future. A table without an `id`
   is named by a hash of its column ids rather than the ids in full. Records saved by 2.1 are
   imported on first load and the old entries removed; nothing a user pinned is lost. A record with
