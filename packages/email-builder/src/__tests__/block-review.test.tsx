@@ -30,6 +30,7 @@ import {
   type Row,
   type TextBlock,
 } from '../design'
+import { rowsOf } from './helpers'
 
 const brand = {}
 function mount(initial: unknown = null, extra: Partial<BlockEditorProps> = {}) {
@@ -103,19 +104,19 @@ describe('2. width safety on moves and inserts', () => {
   it('moveBlock resets an image that no longer fits its column', () => {
     const d = wide()
     expect(blockDesignErrors(d)).toEqual([])
-    const moved = moveBlock(d, 'b_img', { columnId: d.rows[0]!.columns[0]!.id })
+    const moved = moveBlock(d, 'b_img', { columnId: rowsOf(d)[0]!.columns[0]!.id })
     expect(findBlock(moved, 'b_img')!.block).toMatchObject({ width: 'full' })
     expect(blockDesignErrors(moved)).toEqual([])
     // Into a column it fits, it keeps its width.
-    const back = moveBlock(moved, 'b_img', { columnId: d.rows[0]!.columns[1]!.id })
+    const back = moveBlock(moved, 'b_img', { columnId: rowsOf(d)[0]!.columns[1]!.id })
     expect(findBlock(back, 'b_img')!.block).toMatchObject({ width: 'full' })
-    const stays = moveBlock(d, 'b_img', { columnId: d.rows[0]!.columns[1]!.id, index: 0 })
+    const stays = moveBlock(d, 'b_img', { columnId: rowsOf(d)[0]!.columns[1]!.id, index: 0 })
     expect(findBlock(stays, 'b_img')!.block).toMatchObject({ width: 400 })
   })
 
   it('insertBlock, insertRow and duplicateRow keep images within their columns', () => {
     const d = wide()
-    const inserted = insertBlock(d, image('b_two', 300), d.rows[0]!.columns[0]!.id)
+    const inserted = insertBlock(d, image('b_two', 300), rowsOf(d)[0]!.columns[0]!.id)
     expect(findBlock(inserted, 'b_two')!.block).toMatchObject({ width: 'full' })
     const narrow: BlockDesign = { ...emptyBlockDesign(), settings: { ...d.settings, width: 480 } }
     const row = createRow('100')
@@ -130,7 +131,7 @@ describe('2. width safety on moves and inserts', () => {
   it('a keyboard move into a narrower column emits a design the server accepts', async () => {
     const { last } = mount(wide())
     fireEvent.keyDown(cells()[0]!, { key: 'ArrowLeft', altKey: true })
-    expect(last().rows[0]!.columns[0]!.blocks).toHaveLength(1)
+    expect(rowsOf(last())[0]!.columns[0]!.blocks).toHaveLength(1)
     expect(blockDesignErrors(last())).toEqual([])
     expect(allBlocks(last())[0]).toMatchObject({ width: 'full' })
   })

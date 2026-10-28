@@ -1,5 +1,12 @@
 import type { Announcements, UniqueIdentifier } from '@dnd-kit/core'
-import { ROW_LAYOUTS, findBlock, findColumn, findRow, type BlockDesign } from '../design'
+import {
+  ROW_LAYOUTS,
+  findBlock,
+  findColumn,
+  findRow,
+  isSharedRowRef,
+  type BlockDesign,
+} from '../design'
 import { blockLabel, blockSummary } from './blocks'
 import { CANVAS_END, parsePaletteId } from './drop'
 
@@ -25,13 +32,18 @@ export function describeItem(
     const name = savedName(palette.id)
     return name ? `Saved row “${name}”` : 'Saved row'
   }
+  if (palette?.kind === 'palette-shared') {
+    const name = savedName(palette.id)
+    return name ? `Shared block “${name}”` : 'Shared block'
+  }
   const block = findBlock(design, key)
   if (block) {
     const summary = blockSummary(block.block)
     return `${blockLabel(block.block.type)} block${summary ? ` “${summary}”` : ''}`
   }
   const row = findRow(design, key)
-  if (row) return `Row ${row.index + 1}`
+  if (row)
+    return isSharedRowRef(row.row) ? `Shared block, row ${row.index + 1}` : `Row ${row.index + 1}`
   return 'Item'
 }
 

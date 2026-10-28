@@ -41,6 +41,7 @@ import {
   type HeadingBlock,
   type LayoutId,
 } from '../design'
+import { rowsOf } from './helpers'
 
 /** Two rows: [heading, text] in a 50/50 row's columns, and a divider alone. */
 function fixture(): BlockDesign {
@@ -141,42 +142,45 @@ describe('tree operations', () => {
 
   it('moves a block within its column', () => {
     const d = fixture()
-    const col = d.rows[0]!.columns[0]!
+    const col = rowsOf(d)[0]!.columns[0]!
     const moved = moveBlock(d, 'b_h', { columnId: col.id, index: 1 })
-    expect(moved.rows[0]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_t', 'b_h'])
+    expect(rowsOf(moved)[0]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_t', 'b_h'])
   })
 
   it('moves a block across columns and rows without losing any', () => {
     const d = fixture()
-    const right = d.rows[0]!.columns[1]!
+    const right = rowsOf(d)[0]!.columns[1]!
     const across = moveBlock(d, 'b_h', { columnId: right.id, index: 0 })
-    expect(across.rows[0]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_t'])
-    expect(across.rows[0]!.columns[1]!.blocks.map((b) => b.id)).toEqual(['b_h', 'b_btn'])
-    const lower = d.rows[1]!.columns[0]!
+    expect(rowsOf(across)[0]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_t'])
+    expect(rowsOf(across)[0]!.columns[1]!.blocks.map((b) => b.id)).toEqual(['b_h', 'b_btn'])
+    const lower = rowsOf(d)[1]!.columns[0]!
     const down = moveBlock(d, 'b_btn', { columnId: lower.id })
-    expect(down.rows[1]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_d', 'b_btn'])
+    expect(rowsOf(down)[1]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_d', 'b_btn'])
     expect(allBlocks(down)).toHaveLength(4)
     expect(moveBlock(d, 'b_h', { columnId: 'nope' })).toBe(d)
   })
 
   it('inserts a block at a place, clamping the index', () => {
     const d = fixture()
-    const col = d.rows[0]!.columns[0]!
+    const col = rowsOf(d)[0]!.columns[0]!
     const added = insertBlock(d, createBlock('spacer', 'b_s'), col.id, 1)
-    expect(added.rows[0]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_h', 'b_s', 'b_t'])
+    expect(rowsOf(added)[0]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_h', 'b_s', 'b_t'])
     const end = insertBlock(d, createBlock('spacer', 'b_e'), col.id, 99)
-    expect(end.rows[0]!.columns[0]!.blocks.at(-1)!.id).toBe('b_e')
+    expect(rowsOf(end)[0]!.columns[0]!.blocks.at(-1)!.id).toBe('b_e')
   })
 
   it('duplicates a block with a new id right after it, and refuses a second footer', () => {
     const d = fixture()
     const after = duplicateBlock(d, 'b_h')
-    const ids = after.rows[0]!.columns[0]!.blocks.map((b) => b.id)
+    const ids = rowsOf(after)[0]!.columns[0]!.blocks.map((b) => b.id)
     expect(ids).toHaveLength(3)
     expect(ids[0]).toBe('b_h')
     expect(ids[1]).not.toBe('b_h')
-    expect(after.rows[0]!.columns[0]!.blocks[1]).toMatchObject({ type: 'heading', html: 'Heading' })
-    const withFooter = insertBlock(d, createBlock('footer', 'b_f'), d.rows[1]!.columns[0]!.id)
+    expect(rowsOf(after)[0]!.columns[0]!.blocks[1]).toMatchObject({
+      type: 'heading',
+      html: 'Heading',
+    })
+    const withFooter = insertBlock(d, createBlock('footer', 'b_f'), rowsOf(d)[1]!.columns[0]!.id)
     expect(duplicateBlock(withFooter, 'b_f')).toBe(withFooter)
   })
 
@@ -197,12 +201,12 @@ describe('tree operations', () => {
 
   it('clones a row with new ids all through', () => {
     const d = fixture()
-    const copy = cloneRowWithNewIds(d.rows[0]!)
+    const copy = cloneRowWithNewIds(rowsOf(d)[0]!)
     const ids = (r: typeof copy) => [
       r.id,
       ...r.columns.flatMap((c) => [c.id, ...c.blocks.map((b) => b.id)]),
     ]
-    const before = ids(d.rows[0]!)
+    const before = ids(rowsOf(d)[0]!)
     const after = ids(copy)
     expect(after).toHaveLength(before.length)
     expect(after.filter((id) => before.includes(id))).toEqual([])
@@ -242,7 +246,7 @@ describe('layouts', () => {
             .map((b) => b.id)
             .sort(),
         ).toEqual([...kept].sort())
-        expect(d.rows[0]!.columns.map((c) => c.width)).toEqual(
+        expect(rowsOf(d)[0]!.columns.map((c) => c.width)).toEqual(
           ROW_LAYOUTS.find((l) => l.id === to)!.widths,
         )
         expect(blockDesignErrors(d)).toEqual([])
@@ -259,7 +263,7 @@ describe('layouts', () => {
       src: 'https://x.test/a.png',
       width: 500,
     } as never
-    d = insertBlock(d, wide, d.rows[1]!.columns[0]!.id)
+    d = insertBlock(d, wide, rowsOf(d)[1]!.columns[0]!.id)
     expect(blockDesignErrors(d)).toEqual([])
     d = setRowLayout(d, rowId, '33-67')
     expect(blockDesignErrors(d)).toEqual([])
@@ -270,14 +274,14 @@ describe('layouts', () => {
     let d = fixture()
     const rowId = d.rows[0]!.id
     d = setRowLayout(d, rowId, '100')
-    expect(d.rows[0]!.columns).toHaveLength(1)
-    expect(d.rows[0]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_h', 'b_t', 'b_btn'])
+    expect(rowsOf(d)[0]!.columns).toHaveLength(1)
+    expect(rowsOf(d)[0]!.columns[0]!.blocks.map((b) => b.id)).toEqual(['b_h', 'b_t', 'b_btn'])
   })
 
   it('adds empty columns with new ids and keeps the settings of the ones that stay', () => {
     let d = fixture()
     const rowId = d.rows[1]!.id
-    const original = d.rows[1]!.columns[0]!
+    const original = rowsOf(d)[1]!.columns[0]!
     d = {
       ...d,
       rows: d.rows.map((r) =>
@@ -285,7 +289,7 @@ describe('layouts', () => {
       ),
     }
     d = setRowLayout(d, rowId, '33-34-33')
-    const cols = d.rows[1]!.columns
+    const cols = rowsOf(d)[1]!.columns
     expect(cols).toHaveLength(3)
     expect(cols[0]).toMatchObject({ id: original.id, valign: 'middle' })
     expect(cols[1]!.blocks).toEqual([])
@@ -336,17 +340,17 @@ describe('validateBlockDesign', () => {
   it('limits columns and their widths, with paths', () => {
     const d = fixture()
     const bad = structuredClone(d)
-    bad.rows[0]!.columns[0]!.width = 60
+    rowsOf(bad)[0]!.columns[0]!.width = 60
     expect(paths(bad)).toContain('rows[0].columns')
     const four = structuredClone(d)
-    four.rows[0]!.columns = [0, 1, 2, 3].map((i) => ({
+    rowsOf(four)[0]!.columns = [0, 1, 2, 3].map((i) => ({
       ...createRow('100').columns[0]!,
       id: `c_${i}`,
       width: 25,
     }))
     expect(paths(four)).toContain('rows[0].columns')
     const none = structuredClone(d)
-    none.rows[1]!.columns = []
+    rowsOf(none)[1]!.columns = []
     expect(paths(none)).toContain('rows[1].columns')
   })
 
@@ -354,7 +358,7 @@ describe('validateBlockDesign', () => {
     expect(paths(withBlock({ id: 'Has Space' }))).toContain('rows[0].columns[0].blocks[0].id')
     expect(paths(withBlock({ id: 'a'.repeat(41) }))).toContain('rows[0].columns[0].blocks[0].id')
     const dup = fixture()
-    dup.rows[1]!.columns[0]!.blocks[0]!.id = 'b_h'
+    rowsOf(dup)[1]!.columns[0]!.blocks[0]!.id = 'b_h'
     expect(paths(dup)).toContain('rows[1].columns[0].blocks[0].id')
   })
 
@@ -494,7 +498,9 @@ describe('the additions of §1a', () => {
     // New blocks never carry the string.
     expect(createBlock('social')).not.toHaveProperty('style')
     const read = toBlockDesign(only({ ...social, style: 'pill' }))!
-    expect(read.rows[0]!.columns[0]!.blocks[0]).toMatchObject({ style: { padding: [8, 0, 8, 0] } })
+    expect(rowsOf(read)[0]!.columns[0]!.blocks[0]).toMatchObject({
+      style: { padding: [8, 0, 8, 0] },
+    })
   })
 
   it('gives the button font, weight and border', () => {
@@ -530,20 +536,23 @@ describe('the additions of §1a', () => {
   it('has image radius, row gap and column background and padding', () => {
     expect(errors({ ...createBlock('image', 'b_x'), radius: 12 })).toEqual([])
     const d = fixture()
-    const row = d.rows[0]!
+    const row = rowsOf(d)[0]!
     expect(blockDesignErrors({ ...d, rows: [{ ...row, gap: 16 }, d.rows[1]!] })).toEqual([])
     expect(
       blockDesignErrors({ ...d, rows: [{ ...row, gap: 41 }, d.rows[1]!] }).map((i) => i.path),
     ).toContain('rows[0].gap')
     const col = { ...row.columns[0]!, background: '#eeeeee', padding: [4, 4, 4, 4] }
     expect(
-      blockDesignErrors({ ...d, rows: [{ ...row, columns: [col, row.columns[1]!] }, d.rows[1]!] }),
+      blockDesignErrors({
+        ...d,
+        rows: [{ ...row, columns: [col, row.columns[1]!] }, rowsOf(d)[1]!],
+      }),
     ).toEqual([])
     const wide = { ...col, padding: [4, 4, 4, 81] }
     expect(
       blockDesignErrors({
         ...d,
-        rows: [{ ...row, columns: [wide, row.columns[1]!] }, d.rows[1]!],
+        rows: [{ ...row, columns: [wide, row.columns[1]!] }, rowsOf(d)[1]!],
       }).map((i) => i.path),
     ).toContain('rows[0].columns[0].padding')
   })
@@ -590,13 +599,13 @@ describe('the additions of §1a', () => {
     const filled = toBlockDesign(stored)!
     expect(filled.settings).toMatchObject({ width: 640, font: 'brand.body_font' })
     expect(filled.rows[0]).toMatchObject({ background: null, hide_on: null })
-    expect(filled.rows[0]!.columns[0]).toMatchObject({ valign: 'top', hide_on: null })
-    expect(filled.rows[0]!.columns[0]!.blocks[0]).toMatchObject({
+    expect(rowsOf(filled)[0]!.columns[0]).toMatchObject({ valign: 'top', hide_on: null })
+    expect(rowsOf(filled)[0]!.columns[0]!.blocks[0]).toMatchObject({
       html: 'Hi',
       level: 2,
       align: 'left',
     })
-    const button = filled.rows[0]!.columns[0]!.blocks[1] as ButtonBlock
+    const button = rowsOf(filled)[0]!.columns[0]!.blocks[1] as ButtonBlock
     // Explicit values win; the rest is the server's defaults, and a colour left out inherits.
     expect(button.style).toMatchObject({
       radius: 0,
@@ -752,11 +761,11 @@ describe('the server contract', () => {
       ],
     }
     const read = toBlockDesign(stored)!
-    const [spacer, footer, text, heading] = read.rows[0]!.columns[0]!.blocks as never as Array<
+    const [spacer, footer, text, heading] = rowsOf(read)[0]!.columns[0]!.blocks as never as Array<
       Record<string, any>
     >
     expect(read.rows[0]).toMatchObject({ gap: 16, padding: [16, 24, 16, 24] })
-    expect(read.rows[0]!.columns[0]!.padding).toEqual([0, 0, 0, 0])
+    expect(rowsOf(read)[0]!.columns[0]!.padding).toEqual([0, 0, 0, 0])
     expect(spacer).toMatchObject({ height: 24, style: { padding: [0, 0, 0, 0] } })
     expect(footer).toMatchObject({
       show_business: true,
@@ -776,14 +785,14 @@ describe('the server contract', () => {
 
   it('maps a server error to the block, column or row it points into', () => {
     const d = fixtureTree()
-    const b = d.rows[0]!.columns[1]!.blocks[1]!.id
+    const b = rowsOf(d)[0]!.columns[1]!.blocks[1]!.id
     expect(blockIdForPath(d, 'rows[0].columns[1].blocks[1].url: must start with https:')).toBe(b)
     expect(blockIdForPath(d, 'rows[0].columns[1].blocks[1]')).toBe(b)
     expect(blockIdForPath(d, 'rows[0].columns[1].blocks[1].style.padding')).toBe(b)
     expect(blockIdForPath(d, 'rows[0].columns[1].width')).toBeNull()
     expect(issueTarget(d, 'rows[0].columns[1].width: must be a number')).toEqual({
       kind: 'column',
-      id: d.rows[0]!.columns[1]!.id,
+      id: rowsOf(d)[0]!.columns[1]!.id,
       blockId: null,
     })
     expect(issueTarget(d, 'rows[1].gap: x')).toEqual({

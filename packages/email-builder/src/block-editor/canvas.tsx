@@ -15,6 +15,7 @@ import {
   DEFAULT_ROW_GAP,
   ROW_LAYOUTS,
   hasFooter,
+  isSharedRowRef,
   layoutOf,
   resolveBrand,
   resolveFont,
@@ -22,6 +23,7 @@ import {
   type Column,
   type HideOn,
   type Row,
+  type SharedRowRef,
 } from '../design'
 import { blockLabel, blockModule, blockSummary } from './blocks'
 import { ColorInput, SelectInput } from './controls'
@@ -154,7 +156,16 @@ function Popover({
   )
 }
 
-export function SaveRowForm({ rowId, onDone }: { rowId: string; onDone?: () => void }) {
+export function SaveRowForm({
+  rowId,
+  onDone,
+  shared = false,
+}: {
+  rowId: string
+  onDone?: () => void
+  /** Save it as a shared block: one copy that every template using it shows. */
+  shared?: boolean
+}) {
   const api = useEditorApi()
   const [name, setName] = useState('')
   const [error, setError] = useState('')
@@ -164,14 +175,17 @@ export function SaveRowForm({ rowId, onDone }: { rowId: string; onDone?: () => v
       className="seb-save-form"
       onSubmit={async (event) => {
         event.preventDefault()
-        if (!name.trim()) return setError('Give the row a name')
+        if (!name.trim())
+          return setError(shared ? 'Give the shared block a name' : 'Give the row a name')
         setBusy(true)
         setError('')
-        const refused = await api.savedRows
-          .saveRow(rowId, name.trim())
-          .catch((caught: unknown) =>
-            caught instanceof Error ? caught.message : 'The row could not be saved',
-          )
+        const refused = await (
+          shared
+            ? api.sharedRows.saveAsShared(rowId, name.trim())
+            : api.savedRows.saveRow(rowId, name.trim())
+        ).catch((caught: unknown) =>
+          caught instanceof Error ? caught.message : 'The row could not be saved',
+        )
         setBusy(false)
         if (refused) return setError(refused)
         setName('')
@@ -188,13 +202,18 @@ export function SaveRowForm({ rowId, onDone }: { rowId: string; onDone?: () => v
           onChange={(event) => setName(event.target.value)}
         />
       </label>
+      {shared && (
+        <small className="seb-hint">
+          One copy, used by every email that includes it. Changing it later changes them all.
+        </small>
+      )}
       {error && (
         <small className="seb-error" role="alert">
           {error}
         </small>
       )}
       <button type="submit" className="seb-action seb-action-primary" disabled={busy}>
-        Save row
+        {shared ? 'Save shared block' : 'Save row'}
       </button>
     </form>
   )
@@ -222,7 +241,8 @@ function InsertPoint({
     return () => document.removeEventListener('mousedown', onPointer)
   }, [open])
   if (api.disabled) return null
-  const footerTaken = hasFooter(api.design)
+  const footerTaken = hasFooter(api.design, api.sharedRows.rowOf)
+  const types = BLOCK_TYPES.filter((type) => type !== 'table' || api.dataSources.length > 0)
   return (
     <div
       className="seb-insert"
@@ -250,7 +270,7 @@ function InsertPoint({
       </button>
       {open && (
         <div className="seb-menu" role="menu" aria-label="Add a block">
-          {BLOCK_TYPES.map((type) => (
+          {types.map((type) => (
             <button
               key={type}
               type="button"
@@ -524,6 +544,8 @@ function RowToolbar({
 }) {
   const api = useEditorApi()
   const current = layoutOf(row)
+  // A shared block's content is one row: it cannot be moved, copied or removed from inside.
+  const single = api.constraints.singleRow === true
   return (
     <div
       className="seb-toolbar-float seb-row-toolbar"
@@ -532,28 +554,32 @@ function RowToolbar({
       aria-label={`Row ${index + 1} actions`}
       onClick={(event) => event.stopPropagation()}
     >
-      <button
-        type="button"
-        ref={activatorRef}
-        className="seb-icon-btn seb-grip"
-        aria-label="Drag row to reorder"
-        title="Drag row to reorder"
-        {...dragProps}
-      >
-        <Icon name="grip" />
-      </button>
-      <IconButton
-        label="Move row up"
-        icon="up"
-        disabled={index === 0}
-        onClick={() => api.nudgeRow(row.id, -1)}
-      />
-      <IconButton
-        label="Move row down"
-        icon="down"
-        disabled={index === count - 1}
-        onClick={() => api.nudgeRow(row.id, 1)}
-      />
+      {!single && (
+        <>
+          <button
+            type="button"
+            ref={activatorRef}
+            className="seb-icon-btn seb-grip"
+            aria-label="Drag row to reorder"
+            title="Drag row to reorder"
+            {...dragProps}
+          >
+            <Icon name="grip" />
+          </button>
+          <IconButton
+            label="Move row up"
+            icon="up"
+            disabled={index === 0}
+            onClick={() => api.nudgeRow(row.id, -1)}
+          />
+          <IconButton
+            label="Move row down"
+            icon="down"
+            disabled={index === count - 1}
+            onClick={() => api.nudgeRow(row.id, 1)}
+          />
+        </>
+      )}
       <Popover label="Row layout" icon="layout">
         {(close) => (
           <div className="seb-layout-choices">
@@ -607,13 +633,27 @@ function RowToolbar({
           />
         )}
       </Popover>
-      {api.savedRows.canSave && (
+      {!single && api.savedRows.canSave && (
         <Popover label="Save as row" icon="save">
           {(close) => <SaveRowForm rowId={row.id} onDone={close} />}
         </Popover>
       )}
-      <IconButton label="Duplicate row" icon="copy" onClick={() => api.duplicateRow(row.id)} />
-      <IconButton label="Delete row" icon="trash" danger onClick={() => api.removeRow(row.id)} />
+      {!single && api.sharedRows.canShare && (
+        <Popover label="Save as shared block" icon="link">
+          {(close) => <SaveRowForm rowId={row.id} onDone={close} shared />}
+        </Popover>
+      )}
+      {!single && (
+        <>
+          <IconButton label="Duplicate row" icon="copy" onClick={() => api.duplicateRow(row.id)} />
+          <IconButton
+            label="Delete row"
+            icon="trash"
+            danger
+            onClick={() => api.removeRow(row.id)}
+          />
+        </>
+      )}
     </div>
   )
 }
@@ -709,6 +749,268 @@ function RowView({ row, index, count }: { row: Row; index: number; count: number
   )
 }
 
+/* -- shared blocks ---------------------------------------------------------- */
+
+/** A block of a shared row: drawn as it is, but never selectable, editable or a drop target. */
+function StaticBlock({ block }: { block: Block }) {
+  const View = blockModule(block.type).View as (props: {
+    block: Block
+    live?: number | null
+  }) => ReactNode
+  return (
+    <div className="seb-cell seb-cell-static" data-type={block.type}>
+      <View block={block} />
+    </div>
+  )
+}
+
+function StaticColumn({ column }: { column: Column }) {
+  const api = useEditorApi()
+  const hidden = isHiddenOn(column.hide_on, api.device)
+  const mobile = api.device === 'mobile'
+  const pad = column.padding ?? [0, 0, 0, 0]
+  return (
+    <div
+      className="seb-col"
+      data-hidden={hidden || undefined}
+      style={{
+        flex: mobile ? '0 0 auto' : `${column.width} 1 0%`,
+        width: mobile ? '100%' : undefined,
+        background: resolveBrand(column.background, api.brand) || undefined,
+      }}
+    >
+      {hidden && column.hide_on && <HiddenLabel hideOn={column.hide_on} />}
+      <div
+        className="seb-col-inner"
+        style={{
+          padding: pad.map((side) => `${side}px`).join(' '),
+          justifyContent: VALIGN[column.valign],
+        }}
+      >
+        {column.blocks.map((block) => (
+          <StaticBlock key={block.id} block={block} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** The Edit / Detach / Remove toolbar of a shared block; a missing one only has Remove. */
+function SharedRowToolbar({
+  row,
+  activatorRef,
+  dragProps,
+  index,
+  count,
+  available,
+}: {
+  row: SharedRowRef
+  activatorRef: (el: HTMLElement | null) => void
+  dragProps: object
+  index: number
+  count: number
+  /** The shared block's content is known, so it can be moved, copied, edited and detached. */
+  available: boolean
+}) {
+  const api = useEditorApi()
+  return (
+    <div
+      className="seb-toolbar-float seb-row-toolbar"
+      data-gutter="left"
+      role="toolbar"
+      aria-label={`Row ${index + 1} actions`}
+      onClick={(event) => event.stopPropagation()}
+    >
+      {available && (
+        <>
+          <button
+            type="button"
+            ref={activatorRef}
+            className="seb-icon-btn seb-grip"
+            aria-label="Drag row to reorder"
+            title="Drag row to reorder"
+            {...dragProps}
+          >
+            <Icon name="grip" />
+          </button>
+          <IconButton
+            label="Move row up"
+            icon="up"
+            disabled={index === 0}
+            onClick={() => api.nudgeRow(row.id, -1)}
+          />
+          <IconButton
+            label="Move row down"
+            icon="down"
+            disabled={index === count - 1}
+            onClick={() => api.nudgeRow(row.id, 1)}
+          />
+          <IconButton label="Duplicate" icon="copy" onClick={() => api.duplicateRow(row.id)} />
+          {api.sharedRows.canEditShared && (
+            <IconButton
+              label="Edit shared block"
+              icon="edit"
+              onClick={() => api.sharedRows.openEditor(row.id)}
+            />
+          )}
+          <button
+            type="button"
+            className="seb-icon-btn"
+            aria-label="Detach"
+            title="Make a copy you can edit here"
+            onClick={() => api.sharedRows.detach(row.id)}
+          >
+            <Icon name="unlink" />
+          </button>
+        </>
+      )}
+      <button
+        type="button"
+        className="seb-icon-btn"
+        data-danger
+        aria-label="Remove"
+        title="Remove from this email (the shared block itself is kept)"
+        onClick={() => api.removeRow(row.id)}
+      >
+        <Icon name="trash" />
+      </button>
+    </div>
+  )
+}
+
+/**
+ * A shared block in the canvas: the saved row it points at, drawn read-only inside a dashed
+ * outline with a "Shared · name" badge. Its spacing, background and layout belong to the shared
+ * block, so the placeholder takes no row settings. While the saved row loads it shows a
+ * placeholder, and a deleted one shows a grey box that can only be removed.
+ */
+function SharedRowView({ row, index, count }: { row: SharedRowRef; index: number; count: number }) {
+  const api = useEditorApi()
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useSortable({
+    id: row.id,
+    disabled: api.disabled,
+    data: { kind: 'row' },
+  })
+  const lookup = api.sharedRows.resolve(row.ref)
+  const saved = typeof lookup === 'string' ? null : lookup
+  const content = saved?.row
+  const hideOn = row.hide_on ?? content?.hide_on ?? null
+  const hidden = isHiddenOn(hideOn, api.device)
+  const selected = api.selection?.kind === 'row' && api.selection.id === row.id
+  const hint = api.dropHint?.id === row.id ? api.dropHint.position : undefined
+  const mobile = api.device === 'mobile'
+  const state = saved ? 'ready' : lookup
+
+  const label = saved
+    ? `Row ${index + 1}: shared block “${saved.name}”, read-only`
+    : lookup === 'loading'
+      ? `Row ${index + 1}: shared block, loading`
+      : `Row ${index + 1}: shared block that is not available`
+
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      api.select({ kind: 'row', id: row.id })
+    } else if (api.disabled) {
+      return
+    } else if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+      event.preventDefault()
+      api.nudgeRow(row.id, event.key === 'ArrowUp' ? -1 : 1)
+    } else if (event.key === 'Delete' || event.key === 'Backspace') {
+      event.preventDefault()
+      api.removeRow(row.id)
+    }
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      className="seb-row seb-shared-row"
+      data-row-id={row.id}
+      data-shared-row={state}
+      data-error={isHighlight(api, 'row', row.id)}
+      aria-invalid={isHighlight(api, 'row', row.id)}
+      data-selected={selected || undefined}
+      data-hidden={hidden || undefined}
+      data-dragging={isDragging || undefined}
+      data-drop={hint}
+      tabIndex={0}
+      role="group"
+      aria-label={label}
+      aria-current={selected ? 'true' : undefined}
+      onClick={(event) => {
+        event.stopPropagation()
+        api.select({ kind: 'row', id: row.id })
+      }}
+      onKeyDown={onKeyDown}
+    >
+      {hidden && hideOn && <HiddenLabel hideOn={hideOn} />}
+      {selected && !api.disabled && (
+        <SharedRowToolbar
+          row={row}
+          activatorRef={setActivatorNodeRef}
+          dragProps={{ ...attributes, ...listeners }}
+          index={index}
+          count={count}
+          available={Boolean(saved)}
+        />
+      )}
+      {saved && content ? (
+        <>
+          <span className="seb-shared-badge" role="note">
+            <Icon name="link" width={12} height={12} /> Shared · {saved.name}
+          </span>
+          <div
+            className="seb-row-inner"
+            style={{
+              padding: content.padding.map((side) => `${side}px`).join(' '),
+              background: resolveBrand(content.background, api.brand) || undefined,
+            }}
+          >
+            <div
+              className="seb-columns"
+              data-stacked={mobile || undefined}
+              style={{ gap: mobile ? 0 : (content.gap ?? DEFAULT_ROW_GAP) }}
+            >
+              {content.columns.map((column) => (
+                <StaticColumn key={column.id} column={column} />
+              ))}
+            </div>
+          </div>
+        </>
+      ) : lookup === 'loading' ? (
+        <p className="seb-shared-state" role="status">
+          Loading shared block…
+        </p>
+      ) : (
+        <p className="seb-shared-state" data-missing role="note">
+          {!api.sharedRows.enabled
+            ? 'This shared block cannot be shown here.'
+            : lookup === 'unavailable'
+              ? 'This shared block could not be loaded.'
+              : 'This shared block was deleted'}
+          {lookup === 'unavailable' && api.sharedRows.enabled && (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="seb-link-btn"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  api.sharedRows.retry(row.ref)
+                }}
+              >
+                Try again
+              </button>
+            </>
+          )}
+        </p>
+      )}
+    </div>
+  )
+}
+
 /* -- the canvas ------------------------------------------------------------ */
 
 /** Centre pane: a client-side approximation of the email at the device's real width. */
@@ -754,9 +1056,13 @@ export function Canvas() {
           </div>
         )}
         <SortableContext items={design.rows.map((row) => row.id)} strategy={noShift}>
-          {design.rows.map((row, index) => (
-            <RowView key={row.id} row={row} index={index} count={design.rows.length} />
-          ))}
+          {design.rows.map((row, index) =>
+            isSharedRowRef(row) ? (
+              <SharedRowView key={row.id} row={row} index={index} count={design.rows.length} />
+            ) : (
+              <RowView key={row.id} row={row} index={index} count={design.rows.length} />
+            ),
+          )}
         </SortableContext>
         <div
           ref={setNodeRef}

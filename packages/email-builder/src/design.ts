@@ -320,6 +320,51 @@ export interface HtmlBlock {
   html: string
 }
 
+/** One column of a table block: a field of the data source, with the heading shown above it. */
+export interface TableColumn {
+  /** A field of the data source's rows: ``a-z``, digits and ``_``, starting with a letter, 40 at most. */
+  key: string
+  /** The column heading; empty shows nothing. At most 60 characters. */
+  label?: string
+  /** A second field shown in small muted text under the first (an item's description). */
+  secondary?: string | null
+  align?: Align
+  /** 5–90, a percentage of the table; omitted means the column shares what is left. */
+  width?: number | null
+  /** Hide the column on phones. Not on the last column when ``totals`` is set. */
+  hide_on_mobile?: boolean
+}
+
+/** One line under the table (``Subtotal``, ``Total (AUD)``). An empty ``value`` is a note that
+ * runs across every column. */
+export interface TableTotal {
+  label: string
+  value: string
+  emphasis?: boolean
+}
+
+/**
+ * A data table (shining-email 0.4): rows come from a list the project puts in the render context
+ * under ``source`` (``deal.items``); the server formats nothing, so every value is already text.
+ * Without data for the email, the block is left out and the preview says so.
+ */
+export interface TableBlock {
+  id: string
+  type: 'table'
+  /** A merge path whose context value is a list of rows (``deal.items``). */
+  source: string
+  /** A merge path whose context value is a list of `TableTotal`s (``deal.totals``). */
+  totals?: string | null
+  /** 1–6. */
+  columns: TableColumn[]
+  show_header?: boolean
+  striped?: boolean
+  header_background?: BrandRef | null
+  header_color?: BrandRef | null
+  border_color?: BrandRef | null
+  style?: BlockStyle
+}
+
 export type Block =
   | HeadingBlock
   | TextBlock
@@ -332,6 +377,7 @@ export type Block =
   | VideoBlock
   | FooterBlock
   | HtmlBlock
+  | TableBlock
 
 export type BlockType = Block['type']
 
@@ -359,11 +405,55 @@ export interface Row {
   columns: Column[]
 }
 
+/**
+ * A shared block in a design (shining-email 0.4): a row-level placeholder that points at a saved
+ * row marked shared. The server puts the row's content in when it renders, so editing the shared
+ * block changes every template that uses it. A normal row has no ``type``.
+ */
+export interface SharedRowRef {
+  id: string
+  type: 'shared'
+  /** The saved row's id (a UUID). */
+  ref: string
+  hide_on?: HideOn
+}
+
+/** A row of a design: a normal row, or the placeholder for a shared block. Guard with
+ * `isSharedRowRef` before reading ``columns``. */
+export type DesignRow = Row | SharedRowRef
+
 export interface BlockDesign {
   version: typeof DESIGN_VERSION
   mode: 'blocks'
   settings: BlockSettings
-  rows: Row[]
+  rows: DesignRow[]
+}
+
+/** True for the placeholder of a shared block (``type: 'shared'``); false for a normal row. */
+export function isSharedRowRef(row: unknown): row is SharedRowRef {
+  return typeof row === 'object' && row !== null && (row as { type?: unknown }).type === 'shared'
+}
+
+/** A new placeholder for the saved row ``ref``. */
+export function createSharedRowRef(ref: string): SharedRowRef {
+  return { id: newId('r'), type: 'shared', ref }
+}
+
+/** What a data source (``GET data-sources/``) tells the editor about one list the project fills. */
+export interface DataSourceDefinition {
+  /** The merge path of the rows: ``deal.items``. */
+  key: string
+  label: string
+  group?: string
+  /** The fields a row has, for the column picker. */
+  fields: { key: string; label: string; align?: Align }[]
+  /** The columns a new table starts with. */
+  default_columns: TableColumn[]
+  /** The merge path of the totals lines, if the source has any. */
+  totals_key?: string | null
+  /** Rows to draw on the canvas, as text. */
+  sample: Record<string, string>[]
+  sample_totals?: TableTotal[]
 }
 
 export const BLOCK_TYPES: readonly BlockType[] = [
@@ -378,6 +468,7 @@ export const BLOCK_TYPES: readonly BlockType[] = [
   'video',
   'footer',
   'html',
+  'table',
 ]
 
 export const MAX_ROWS = 50
@@ -579,6 +670,7 @@ export const DEFAULT_BLOCK_PADDING: Record<BlockType, Padding> = {
   video: [8, 0, 8, 0],
   footer: [0, 0, 0, 0],
   html: [0, 0, 0, 0],
+  table: [8, 0, 8, 0],
 }
 
 /** Button sizes and shapes: editor presets that write ``padding_y``/``padding_x``
@@ -876,6 +968,39 @@ const THUMBNAIL: Record<string, PropDef> = {
 
 const html = (what: string): Check => text(100_000, what)
 
+/** A field of a data source's rows (the server's `FIELD_KEY`). */
+const FIELD_KEY = /^[a-z][a-z0-9_]{0,39}$/
+const fieldKey: Check = (v, p, c) => {
+  if (typeof v !== 'string' || !FIELD_KEY.test(v))
+    fail(c, p, 'Must be 1-40 characters of a-z, 0-9 or _, starting with a letter')
+}
+/** The merge path of a data source: the same rule as a merge field, 100 characters at most. */
+const sourcePath: Check = (v, p, c) => {
+  if (typeof v !== 'string' || v.length > 100 || !MERGE_PATH.test(v))
+    fail(c, p, 'Must be a data source such as deal.items')
+}
+const MAX_TABLE_COLUMNS = 6
+const TABLE_COLUMN: Record<string, PropDef> = {
+  key: required(fieldKey),
+  label: optional(text(60, 'The heading'), ''),
+  secondary: optional(fieldKey),
+  align: optional(oneOf('left', 'center', 'right'), 'left'),
+  width: optional(integer(5, 90, 'Width')),
+  hide_on_mobile: optional(boolean, false),
+}
+const tableColumns: Check = (v, p, c) => {
+  if (!Array.isArray(v) || v.length < 1 || v.length > MAX_TABLE_COLUMNS)
+    return fail(c, p, `Must be a list of 1 to ${MAX_TABLE_COLUMNS} columns`)
+  v.forEach((column, i) => checkProps(column, TABLE_COLUMN, `${p}[${i}]`, c))
+}
+
+/** A shared block's ``ref``: the saved row's UUID (the server's `uuid_text`). */
+const UUID = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{32})$/i
+const uuidText: Check = (v, p, c) => {
+  if (typeof v !== 'string' || v.length > 36 || !UUID.test(v))
+    fail(c, p, 'Must be the id of a shared block')
+}
+
 /** Per block type: the props the schema allows, with their defaults. */
 const BLOCK_PROPS: Record<BlockType, Record<string, PropDef>> = {
   heading: {
@@ -961,6 +1086,17 @@ const BLOCK_PROPS: Record<BlockType, Record<string, PropDef>> = {
     html: optional(html('The HTML'), ''),
     style: styleProp(styleDefs(FLUSH, { onlyPadding: true })),
   },
+  table: {
+    source: required(sourcePath),
+    totals: optional(sourcePath),
+    columns: required(tableColumns),
+    show_header: optional(boolean, true),
+    striped: optional(boolean, false),
+    header_background: optional(color, 'brand.primary_color'),
+    header_color: optional(color, 'brand.button_text_color'),
+    border_color: optional(color, 'brand.muted_text_color'),
+    style: styleProp(styleDefs(GAP)),
+  },
 }
 
 /** What a block has to satisfy beyond its props. */
@@ -982,6 +1118,20 @@ const BLOCK_POST: Partial<
         ctx,
         join(path, 'thumbnail'),
         'A thumbnail is needed unless the video is a YouTube link',
+      )
+  },
+  table: (block, path, ctx) => {
+    const columns = Array.isArray(block.columns) ? (block.columns as Record<string, unknown>[]) : []
+    const widths = columns.map((column) => column?.width).filter(isInt)
+    const total = widths.reduce((sum, width) => sum + width, 0)
+    if (total > 100)
+      fail(ctx, join(path, 'columns'), `Column widths add up to ${total}; the most is 100`)
+    // Totals sit under the last column, so it has to show on a phone.
+    if (block.totals && columns.length > 0 && columns[columns.length - 1]?.hide_on_mobile === true)
+      fail(
+        ctx,
+        join(path, 'totals'),
+        'Needs the last column to show on phones, because the totals sit under it',
       )
   },
 }
@@ -1007,6 +1157,11 @@ const COLUMN_PROPS: Record<string, PropDef> = {
   valign: optional(oneOf('top', 'middle', 'bottom'), 'top'),
   background: optional(color),
   padding: optional(padding(80), [0, 0, 0, 0]),
+}
+/** The placeholder of a shared block: ``id`` and ``type`` are checked beside these. */
+const SHARED_PROPS: Record<string, PropDef> = {
+  ref: required(uuidText),
+  hide_on: optional(hideOn),
 }
 const SETTINGS_PROPS: Record<string, PropDef> = {
   width: optional(integer(MIN_WIDTH, MAX_WIDTH, 'Width'), 600),
@@ -1115,6 +1270,18 @@ export const BLOCK_SPECS: {
     defaults: () => defaultsOf(BLOCK_PROPS.html),
     create: (id) => ({ id, type: 'html', html: '' }),
   },
+  table: {
+    keys: ['id', 'type', ...Object.keys(BLOCK_PROPS.table)],
+    defaults: () => defaultsOf(BLOCK_PROPS.table),
+    // A table needs a data source: the editor builds one with `tableBlockFor`. This is the
+    // smallest valid table, for code that only wants the shape.
+    create: (id) => ({
+      id,
+      type: 'table',
+      source: 'items',
+      columns: [{ key: 'name', label: 'Item' }],
+    }),
+  },
 }
 
 /** A new block of ``type`` with sensible starting content. A blank address
@@ -1122,6 +1289,18 @@ export const BLOCK_SPECS: {
  * `validateBlockDesign` flags it as a warning. */
 export function createBlock(type: BlockType, id: string = newId('b')): Block {
   return BLOCK_SPECS[type].create(id)
+}
+
+/** A new table for ``source``: its default columns, and its totals when it has them. */
+export function tableBlockFor(source: DataSourceDefinition, id: string = newId('b')): TableBlock {
+  const block: TableBlock = {
+    id,
+    type: 'table',
+    source: source.key,
+    columns: source.default_columns.slice(0, MAX_TABLE_COLUMNS).map((column) => ({ ...column })),
+  }
+  if (source.totals_key) block.totals = source.totals_key
+  return block
 }
 
 /* -- layouts -------------------------------------------------------------- */
@@ -1175,7 +1354,11 @@ export function createRow(layout: LayoutId = '100', blocks: Block[] = []): Row {
  * new ones are empty; when there are fewer columns, the blocks of the columns
  * that go are appended, in order, to the last one that stays. No block is lost.
  */
-export function relayoutRow(row: Row, layout: LayoutId): Row {
+export function relayoutRow(row: Row, layout: LayoutId): Row
+export function relayoutRow(row: DesignRow, layout: LayoutId): DesignRow
+export function relayoutRow(row: DesignRow, layout: LayoutId): DesignRow {
+  // A shared block has no layout of its own: it is the saved row's.
+  if (isSharedRowRef(row)) return row
   const widths = layoutWidths(layout)
   const kept = row.columns.slice(0, widths.length).map((column, index) => ({
     ...column,
@@ -1213,14 +1396,15 @@ export function isBlockDesign(value: unknown): value is BlockDesign {
   if (!Array.isArray(value.rows)) return false
   return value.rows.every(
     (row) =>
-      isRecord(row) &&
-      Array.isArray(row.columns) &&
-      row.columns.every(
-        (column) =>
-          isRecord(column) &&
-          Array.isArray(column.blocks) &&
-          column.blocks.every((block) => isRecord(block) && typeof block.type === 'string'),
-      ),
+      isSharedRowRef(row) ||
+      (isRecord(row) &&
+        Array.isArray(row.columns) &&
+        row.columns.every(
+          (column) =>
+            isRecord(column) &&
+            Array.isArray(column.blocks) &&
+            column.blocks.every((block) => isRecord(block) && typeof block.type === 'string'),
+        )),
   )
 }
 
@@ -1245,46 +1429,144 @@ export function withDefaults(design: BlockDesign): BlockDesign {
   return {
     ...design,
     settings: fill(defaultsOf(SETTINGS_PROPS), design.settings ?? {}) as unknown as BlockSettings,
-    rows: (design.rows ?? []).map((row) => ({
-      ...fill({ ...defaultsOf(ROW_PROPS), background: null, hide_on: null }, row),
-      columns: row.columns.map((column) => ({
-        ...fill({ ...defaultsOf(COLUMN_PROPS), background: null, hide_on: null }, column),
-        blocks: column.blocks.map((block) => {
-          const props = BLOCK_PROPS[block.type as BlockType]
-          if (!props) return block
-          const filled: Record<string, unknown> = fill(BLOCK_SPECS[block.type].defaults(), block)
-          const sub = props.style?.sub
-          const style = filled.style
-          if (sub) {
-            filled.style = fill(defaultsOf(sub), isRecord(style) ? style : {})
-          }
-          if (block.type === 'video' && !filled.thumbnail) {
-            // The server fills a YouTube video's thumbnail; so do we.
-            const own = youtubeThumbnail(String(filled.url ?? ''))
-            if (own) filled.thumbnail = { src: own }
-          }
-          return filled as unknown as Block
-        }),
-      })),
-    })) as Row[],
+    rows: (design.rows ?? []).map((row) => (isSharedRowRef(row) ? row : rowWithDefaults(row))),
   }
 }
 
+/** One row with its defaults filled in (see `withDefaults`); a shared-block placeholder is
+ * returned as it is. */
+export function rowWithDefaults<T extends DesignRow>(row: T): T {
+  if (isSharedRowRef(row)) return row
+  const fill = (defaults: Record<string, unknown>, value: object) => ({ ...defaults, ...value })
+  return {
+    ...fill({ ...defaultsOf(ROW_PROPS), background: null, hide_on: null }, row),
+    columns: row.columns.map((column) => ({
+      ...fill({ ...defaultsOf(COLUMN_PROPS), background: null, hide_on: null }, column),
+      blocks: column.blocks.map((block) => {
+        const props = BLOCK_PROPS[block.type as BlockType]
+        if (!props) return block
+        const filled: Record<string, unknown> = fill(BLOCK_SPECS[block.type].defaults(), block)
+        const sub = props.style?.sub
+        const style = filled.style
+        if (sub) {
+          filled.style = fill(defaultsOf(sub), isRecord(style) ? style : {})
+        }
+        if (block.type === 'video' && !filled.thumbnail) {
+          // The server fills a YouTube video's thumbnail; so do we.
+          const own = youtubeThumbnail(String(filled.url ?? ''))
+          if (own) filled.thumbnail = { src: own }
+        }
+        if (block.type === 'table' && Array.isArray(filled.columns)) {
+          const columnDefaults = defaultsOf(TABLE_COLUMN)
+          filled.columns = (filled.columns as unknown[]).map((column) =>
+            isRecord(column) ? fill(columnDefaults, column) : column,
+          )
+        }
+        return filled as unknown as Block
+      }),
+    })),
+  } as unknown as T
+}
+
+/** The normal rows of a design, in order: the placeholders of shared blocks are left out. */
+function ownRows(design: BlockDesign): Row[] {
+  return design.rows.filter((row): row is Row => !isSharedRowRef(row))
+}
+
+/** Every block the design itself holds. A shared block's content is not in the design (the
+ * server puts it in), so it is not here; use `expandSharedRows` for the whole email. */
 export function allBlocks(design: BlockDesign): Block[] {
-  return design.rows.flatMap((row) => row.columns.flatMap((column) => column.blocks))
+  return ownRows(design).flatMap((row) => row.columns.flatMap((column) => column.blocks))
 }
 
 export function countBlocks(design: BlockDesign): number {
   return allBlocks(design).length
 }
 
-export function hasFooter(design: BlockDesign): boolean {
-  return allBlocks(design).some((block) => block.type === 'footer')
+/** Whether the email has a footer block. Pass ``resolve`` to also look into the shared blocks
+ * (a shared row may hold the footer); a ref it cannot resolve counts as no footer. */
+export function hasFooter(
+  design: BlockDesign,
+  resolve?: (ref: string) => Row | undefined,
+): boolean {
+  if (allBlocks(design).some((block) => block.type === 'footer')) return true
+  if (!resolve) return false
+  return design.rows.some(
+    (row) =>
+      isSharedRowRef(row) &&
+      resolve(row.ref)?.columns.some((column) =>
+        column.blocks.some((block) => block.type === 'footer'),
+      ),
+  )
+}
+
+/** A deep copy of ``row`` re-keyed for the placeholder ``id`` (the server's rule, so an
+ * expanded email has stable ids): the row takes the placeholder's id, and every column and
+ * block ``<first 24 characters of id>-<n>``, counting from 1 in reading order. */
+function rekeyForPlaceholder(row: Row, id: string, used: Set<string>): Row {
+  const copy = JSON.parse(JSON.stringify(row)) as Row
+  const prefix = id.slice(0, 24)
+  let n = 0
+  copy.id = id
+  // A generated id that is taken (a block called ``r1-2`` beside a placeholder called ``r1``, or
+  // two placeholders that share their first 24 characters) gets ``-x<k>`` appended, the first
+  // free ``k``: the server's rule, so the id stays as deterministic as the rest.
+  const give = (holder: { id: string }) => {
+    n += 1
+    let candidate = `${prefix}-${n}`
+    for (let k = 1; used.has(candidate); k++) candidate = `${prefix}-${n}-x${k}`
+    used.add(candidate)
+    holder.id = candidate
+  }
+  for (const column of copy.columns) {
+    give(column)
+    for (const block of column.blocks) give(block)
+  }
+  return copy
+}
+
+/** Every string ``id`` in ``node``, at any depth. */
+function idsIn(node: unknown, found: Set<string> = new Set()): Set<string> {
+  if (Array.isArray(node)) node.forEach((item) => idsIn(item, found))
+  else if (isRecord(node)) {
+    if (typeof node.id === 'string') found.add(node.id)
+    Object.values(node).forEach((value) => idsIn(value, found))
+  }
+  return found
+}
+
+/**
+ * The design with every shared-block placeholder replaced by the row ``resolve`` returns for its
+ * ``ref`` (what the server does before it renders). The row is re-keyed (see
+ * `rekeyForPlaceholder`, including its fallback when an id is taken) and the placeholder's own ``hide_on``, when set, wins. A ref that does
+ * not resolve is left out. Pure; a design with no placeholders is returned as it is.
+ */
+export function expandSharedRows(
+  design: BlockDesign,
+  resolve: (ref: string) => Row | undefined,
+): BlockDesign {
+  if (!design.rows.some(isSharedRowRef)) return design
+  // Ids the design already uses, so a generated one never repeats one.
+  const used = idsIn(design.rows)
+  const rows: Row[] = []
+  for (const row of design.rows) {
+    if (!isSharedRowRef(row)) {
+      rows.push(row)
+      continue
+    }
+    const found = resolve(row.ref)
+    if (!found) continue
+    const copy = rekeyForPlaceholder(found, row.id, used)
+    if (row.hide_on) copy.hide_on = row.hide_on
+    rows.push(copy)
+  }
+  return { ...design, rows }
 }
 
 export function findBlock(design: BlockDesign, id: string): BlockLocation | null {
   for (let rowIndex = 0; rowIndex < design.rows.length; rowIndex++) {
     const row = design.rows[rowIndex]!
+    if (isSharedRowRef(row)) continue
     for (let columnIndex = 0; columnIndex < row.columns.length; columnIndex++) {
       const column = row.columns[columnIndex]!
       const blockIndex = column.blocks.findIndex((block) => block.id === id)
@@ -1296,7 +1578,7 @@ export function findBlock(design: BlockDesign, id: string): BlockLocation | null
   return null
 }
 
-export function findRow(design: BlockDesign, id: string): { row: Row; index: number } | null {
+export function findRow(design: BlockDesign, id: string): { row: DesignRow; index: number } | null {
   const index = design.rows.findIndex((row) => row.id === id)
   return index >= 0 ? { row: design.rows[index]!, index } : null
 }
@@ -1307,6 +1589,7 @@ export function findColumn(
 ): { column: Column; row: Row; rowIndex: number; columnIndex: number } | null {
   for (let rowIndex = 0; rowIndex < design.rows.length; rowIndex++) {
     const row = design.rows[rowIndex]!
+    if (isSharedRowRef(row)) continue
     const columnIndex = row.columns.findIndex((column) => column.id === id)
     if (columnIndex >= 0) return { column: row.columns[columnIndex]!, row, rowIndex, columnIndex }
   }
@@ -1316,7 +1599,9 @@ export function findColumn(
 function mapColumns(design: BlockDesign, change: (column: Column) => Column): BlockDesign {
   return {
     ...design,
-    rows: design.rows.map((row) => ({ ...row, columns: row.columns.map(change) })),
+    rows: design.rows.map((row) =>
+      isSharedRowRef(row) ? row : { ...row, columns: row.columns.map(change) },
+    ),
   }
 }
 
@@ -1450,8 +1735,9 @@ export function cloneRowWithNewIds(row: Row): Row {
 }
 
 /** Insert ``row`` at ``index`` (the end when omitted). */
-export function insertRow(design: BlockDesign, row: Row, index?: number): BlockDesign {
+export function insertRow(design: BlockDesign, row: DesignRow, index?: number): BlockDesign {
   const placed = { ...design, rows: insertAt(design.rows, index ?? design.rows.length, row) }
+  if (isSharedRowRef(row)) return placed
   // A saved row made for a wider email keeps within this one.
   return fitColumns(
     placed,
@@ -1472,10 +1758,14 @@ export function moveRow(design: BlockDesign, id: string, toIndex: number): Block
   return { ...design, rows: insertAt(rest, toIndex, row) }
 }
 
-/** Copy the row ``id`` (new ids all through) right after it. */
+/** Copy the row ``id`` (new ids all through) right after it. A shared block is copied as
+ * another placeholder for the same saved row, with a new id. */
 export function duplicateRow(design: BlockDesign, id: string): BlockDesign {
   const found = findRow(design, id)
   if (!found) return design
+  if (isSharedRowRef(found.row)) {
+    return insertRow(design, { ...found.row, id: newId('r') }, found.index + 1)
+  }
   const copy = cloneRowWithNewIds(found.row)
   copy.columns = copy.columns.map((column) => ({
     ...column,
@@ -1484,12 +1774,52 @@ export function duplicateRow(design: BlockDesign, id: string): BlockDesign {
   return insertRow(design, copy, found.index + 1)
 }
 
+/** ``patch`` merged into the row ``id``. A shared block takes no row settings (they belong to the
+ * saved row), so it is left as it is. */
 export function updateRow(
   design: BlockDesign,
   id: string,
   patch: Partial<Omit<Row, 'id' | 'columns'>>,
 ): BlockDesign {
-  return { ...design, rows: design.rows.map((row) => (row.id === id ? { ...row, ...patch } : row)) }
+  return {
+    ...design,
+    rows: design.rows.map((row) =>
+      row.id === id && !isSharedRowRef(row) ? { ...row, ...patch } : row,
+    ),
+  }
+}
+
+/** The saved row ``row`` in place of the shared-block placeholder ``rowId``, as a copy with new
+ * ids that can be edited here (the shared block itself is untouched). */
+export function detachSharedRow(design: BlockDesign, rowId: string, row: Row): BlockDesign {
+  const found = findRow(design, rowId)
+  if (!found || !isSharedRowRef(found.row)) return design
+  const copy = cloneRowWithNewIds(rowWithDefaults(row))
+  // Where the placeholder hides wins over the saved row's own setting, as it does on expansion.
+  if (found.row.hide_on) copy.hide_on = found.row.hide_on
+  const placed = {
+    ...design,
+    rows: design.rows.map((existing) => (existing.id === rowId ? copy : existing)),
+  }
+  return fitColumns(
+    placed,
+    copy.columns.map((c) => c.id),
+  )
+}
+
+/** The row ``rowId`` replaced by a placeholder for the shared block ``ref`` (the row keeps its id). */
+export function replaceRowWithSharedRef(
+  design: BlockDesign,
+  rowId: string,
+  ref: string,
+): BlockDesign {
+  if (!findRow(design, rowId)) return design
+  return {
+    ...design,
+    rows: design.rows.map((row) =>
+      row.id === rowId ? ({ id: rowId, type: 'shared', ref } satisfies SharedRowRef) : row,
+    ),
+  }
 }
 
 export function updateColumn(
@@ -1505,7 +1835,7 @@ export function updateColumn(
  * otherwise refuse. */
 export function setRowLayout(design: BlockDesign, id: string, layout: LayoutId): BlockDesign {
   const target = design.rows.find((row) => row.id === id)
-  if (!target) return design
+  if (!target || isSharedRowRef(target)) return design
   const next = relayoutRow(target, layout)
   const placed = { ...design, rows: design.rows.map((row) => (row.id === id ? next : row)) }
   return fitColumns(
@@ -1626,6 +1956,12 @@ export function validateBlockDesign(value: unknown): BlockDesignIssue[] {
     rows.forEach((row, index) => {
       const path = `rows[${index}]`
       if (++ctx.rows === MAX_ROWS + 1) fail(ctx, path, `A design may have at most ${MAX_ROWS} rows`)
+      if (isSharedRowRef(row)) {
+        // A shared block is one row: its id, its ref and where it hides, nothing else.
+        if (checkProps(row, SHARED_PROPS, path, ctx, ['id', 'type']))
+          checkId(row.id, join(path, 'id'))
+        return
+      }
       if (checkProps(row, ROW_PROPS, path, ctx, ['id', 'columns'])) {
         checkId(row.id, join(path, 'id'))
         if (row.columns === undefined || row.columns === null)
@@ -1637,6 +1973,25 @@ export function validateBlockDesign(value: unknown): BlockDesignIssue[] {
   if (jsonBytes(value) > MAX_DESIGN_BYTES)
     fail(ctx, '', `The design is larger than ${MAX_DESIGN_BYTES / 1024} KB`)
   return ctx.issues
+}
+
+/**
+ * The problems a row would have as the content of a saved row (a shared block or a saved row):
+ * `validateBlockDesign`'s rules on the row alone, with paths starting ``row`` as the server
+ * reports them, and a placeholder refused, because shared blocks do not nest. ``width`` is the
+ * design width (480–700) its images are checked against.
+ */
+export function validateSharedRowContent(row: unknown, width = 600): BlockDesignIssue[] {
+  if (isSharedRowRef(row))
+    return [
+      { path: 'row', message: 'A saved row cannot contain a shared block', severity: 'error' },
+    ]
+  const design = { ...emptyBlockDesign(), rows: [row] }
+  design.settings = { ...design.settings, width }
+  return validateBlockDesign(design).map((issue) => ({
+    ...issue,
+    path: issue.path.replace(/^rows\[0\]/, 'row'),
+  }))
 }
 
 /** The problems the server would refuse (no warnings). */
@@ -1669,6 +2024,8 @@ export function issueTarget(design: BlockDesign, message: string): IssueTarget |
       : null
   const row = design.rows[Number(match[1])]
   if (!row) return null
+  // Whatever a path says inside a shared block, the block is the row that can be selected.
+  if (isSharedRowRef(row)) return { kind: 'row', id: row.id, blockId: null }
   if (match[2] === undefined) return { kind: 'row', id: row.id, blockId: null }
   const column = row.columns[Number(match[2])]
   if (!column) return { kind: 'row', id: row.id, blockId: null }
