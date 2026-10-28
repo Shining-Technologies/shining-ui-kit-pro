@@ -2,6 +2,7 @@ import './column-meta'
 import { useMemo, useState } from 'react'
 import {
   Button,
+  CellProgress,
   ColorModeToggle,
   Combobox,
   DataTable,
@@ -17,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   PencilIcon,
+  Progress,
   Select,
   SelectContent,
   SelectItem,
@@ -119,6 +121,15 @@ export function App() {
           </p>
           <ColorModeToggle defaultMode="light" data-testid="color-toggle" />
         </header>
+
+        <section className="flex flex-col gap-2" aria-label="Progress">
+          <Progress data-testid="progress-full" value={100} aria-label="Full" />
+          <Progress data-testid="progress-half" value={50} aria-label="Half" />
+          <Progress data-testid="progress-sm" value={50} size="sm" aria-label="Small" />
+          <div data-testid="cell-progress">
+            <CellProgress value={50} label="Cell half" />
+          </div>
+        </section>
 
         <section className="flex flex-wrap items-center gap-4" aria-label="Tailwind overrides">
           <Button data-testid="btn-default">Default</Button>
