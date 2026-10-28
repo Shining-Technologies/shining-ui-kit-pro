@@ -172,7 +172,7 @@ export function CellProgress({
   const percent = max === 0 ? 0 : (clamped / max) * 100
 
   return (
-    <div className={cn('sui-progress', className)}>
+    <div className={cn('sui-progress', 'sui-cell-progress', className)}>
       <div
         className="sui-progress__track"
         role="progressbar"

@@ -605,3 +605,32 @@ describe('the application shell and the sidebar', () => {
     expect([...new Set(fallbacks)]).toEqual(['16rem'])
   })
 })
+
+/* ------------------------------------------------------------------ progress */
+
+describe('the .sui-progress block name', () => {
+  /*
+   * `Progress` (surfaces.css) and the DataTable's `CellProgress` (controls.css) both put
+   * `.sui-progress` on their root. A bare `.sui-progress` rule styles both: `display: flex` made
+   * the `Progress` indicator a zero-width flex item (a bar that never showed), and the 0.5rem
+   * height with `overflow: hidden` clipped the cell's percentage. Each component's root rules
+   * must name its own root.
+   */
+  const bare = componentSheets.flatMap((file) =>
+    parseRules(sheet(file))
+      .filter((rule) => splitTopLevel(rule.selector).some((s) => /\.sui-progress(?![\w-])/.test(s)))
+      .map((rule) => ({ file, selector: rule.selector, body: rule.body })),
+  )
+
+  it('styles the Progress root only where it is not a CellProgress, and the cell root by its own class', () => {
+    expect(bare.map((rule) => [rule.file, rule.selector])).toEqual([
+      ['surfaces.css', '.sui-progress:where(:not(.sui-cell-progress))'],
+    ])
+    expect(ruleFor(sheet('controls.css'), '.sui-cell-progress').body).toMatch(/display:\s*flex/)
+  })
+
+  it('never lays out the Progress root as a flex container, which would collapse its indicator', () => {
+    const root = bare.find((rule) => rule.file === 'surfaces.css')!
+    expect(root.body).not.toMatch(/display:\s*(inline-)?(flex|grid)/)
+  })
+})

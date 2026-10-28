@@ -772,7 +772,17 @@
   vertical-align: -0.05em;
 }
 
-.sui-progress {
+/*
+ * `CellProgress`: a track, a bar and the percentage on one line.
+ *
+ * Its root carries `.sui-progress` (kept for applications that target it) and
+ * `.sui-cell-progress`. The layout lives on the second, because `.sui-progress`
+ * is also the block name of the `Progress` component (surfaces.css) and a
+ * `display: flex` on that root would turn its indicator into a zero-width flex
+ * item. The `.sui-progress__track`, `__bar` and `__value` elements exist only
+ * here.
+ */
+.sui-cell-progress {
   display: flex;
   align-items: center;
   gap: 0.5rem;
