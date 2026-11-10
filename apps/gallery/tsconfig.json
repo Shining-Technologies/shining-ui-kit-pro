@@ -15,7 +15,9 @@
       "@shining-technologies/ui/virtualized": [
         "../../packages/ui/src/components/data-table/virtualized.tsx"
       ],
-      "@shining-technologies/ui/*": ["../../packages/ui/src/components/*/index.ts"]
+      "@shining-technologies/ui/*": ["../../packages/ui/src/components/*/index.ts"],
+      "@shining-technologies/email-builder": ["../../packages/email-builder/src/index.ts"],
+      "@shining-technologies/email-builder/design": ["../../packages/email-builder/src/design.ts"]
     }
   },
   "include": ["src/**/*", "vite.config.ts"]

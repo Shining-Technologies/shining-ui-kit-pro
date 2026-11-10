@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { Actions } from './Actions'
 import { Charts } from './Charts'
 import { DataViews } from './DataViews'
+import { EmailBuilderSection } from './email-builder/EmailBuilder'
 import { FormInputs } from './FormInputs'
 import { LayoutSection } from './Layout'
 import { AppNavigation } from './navigation/AppNavigation'
@@ -276,6 +277,16 @@ export const SECTIONS: GallerySection[] = [
     components: ['Timeline', 'TimelineItem', 'TimelineHeading', 'TreeView'],
     keywords: ['activity feed', 'audit log', 'history', 'folders', 'hierarchy'],
     render: Timelines,
+  },
+  {
+    id: 'email-builder',
+    label: 'Email builder',
+    category: 'Components',
+    blurb:
+      'The separate @shining-technologies/email-builder package: a drag-and-drop block editor, a rich-text editor, the rendered preview and the merge field picker.',
+    components: ['BlockEditor', 'EmailEditor', 'EmailPreview', 'MergeFieldPicker'],
+    keywords: ['email', 'newsletter', 'template', 'merge fields', 'drag and drop', 'tiptap', 'shining-email'],
+    render: EmailBuilderSection,
   },
   {
     id: 'layout',

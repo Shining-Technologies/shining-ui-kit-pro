@@ -41,6 +41,9 @@ importers:
 
   apps/gallery:
     dependencies:
+      '@shining-technologies/email-builder':
+        specifier: workspace:*
+        version: link:../../packages/email-builder
       '@shining-technologies/ui':
         specifier: workspace:*
         version: link:../../packages/ui
