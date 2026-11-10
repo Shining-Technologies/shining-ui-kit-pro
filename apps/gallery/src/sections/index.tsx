@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { Actions } from './Actions'
 import { Charts } from './Charts'
 import { DataViews } from './DataViews'
+import { Installation, Introduction } from './docs/Docs'
 import { EmailBuilderSection } from './email-builder/EmailBuilder'
 import { FormInputs } from './FormInputs'
 import { LayoutSection } from './Layout'
@@ -54,18 +55,27 @@ const DATA = { id: 'data', label: 'Data' }
 
 export const SECTIONS: GallerySection[] = [
   {
-    id: 'overview',
-    label: 'Overview',
-    category: 'Start here',
-    blurb: 'A dashboard built from the package. Switch theme in the bar above and watch it repaint.',
-    components: ['StatsCard', 'TrendChart', 'DonutChart', 'MetricTile', 'BreakdownList', 'AvatarGroup'],
-    keywords: ['dashboard', 'kpi', 'analytics'],
-    render: Overview,
+    id: 'introduction',
+    label: 'Introduction',
+    category: 'Getting started',
+    blurb: 'React components for business applications, themed entirely with CSS variables.',
+    components: [],
+    keywords: ['about', 'overview', 'docs'],
+    render: Introduction,
+  },
+  {
+    id: 'installation',
+    label: 'Installation',
+    category: 'Getting started',
+    blurb: 'Add the package to a Next.js or Vite app and render your first component.',
+    components: [],
+    keywords: ['install', 'setup', 'npm', 'next.js', 'getting started'],
+    render: Installation,
   },
   {
     id: 'themes',
-    label: 'Themes',
-    category: 'Start here',
+    label: 'Theming',
+    category: 'Getting started',
     blurb:
       'Every preset is a few seed colours turned into shadcn-named CSS variables. Compare them, then apply one.',
     components: [],
@@ -298,9 +308,18 @@ export const SECTIONS: GallerySection[] = [
     render: LayoutSection,
   },
   {
+    id: 'overview',
+    label: 'Dashboard',
+    category: 'Examples',
+    blurb: 'A dashboard built from the package. Switch theme in the bar above and watch it repaint.',
+    components: ['StatsCard', 'TrendChart', 'DonutChart', 'MetricTile', 'BreakdownList', 'AvatarGroup'],
+    keywords: ['dashboard', 'kpi', 'analytics'],
+    render: Overview,
+  },
+  {
     id: 'shell',
     label: 'App shell & sidebar',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'The frame an application lives in: sidebar, header, page header and bottom navigation.',
     components: ['AppShell', 'AppShellHeader', 'Sidebar', 'SidebarNav', 'PageHeader', 'SkipToContent'],
     keywords: ['layout', 'user menu'],
@@ -309,7 +328,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-crud',
     label: 'List & CRUD page',
-    category: 'Patterns',
+    category: 'Examples',
     blurb:
       'A page of records: header and primary action, search, filters, bulk actions, the table, pagination, an empty state and a guarded delete.',
     components: ['PageHeader', 'DataTable', 'BulkActionBar', 'ConfirmDialog', 'Empty', 'Sheet'],
@@ -319,7 +338,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-detail',
     label: 'Detail page',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'One record: breadcrumb, header with status and actions, summary, tabs, activity and related data.',
     components: ['Breadcrumb', 'PageHeader', 'StatusBadge', 'SummaryCard', 'Tabs', 'Timeline', 'Table'],
     keywords: ['record', 'show page'],
@@ -328,7 +347,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-form',
     label: 'Create & edit form',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'Sections of fields, validation on submit, and a save bar that knows whether there is anything to save.',
     components: ['Field', 'Fieldset', 'Card', 'FloatingFormActions', 'Alert'],
     keywords: ['form page', 'validation', 'save state'],
@@ -337,7 +356,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-wizard',
     label: 'Multi-step form',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'A stepper over step content, each step validated before the next, a review, then submit.',
     components: ['Stepper', 'Field', 'Card', 'Empty'],
     keywords: ['wizard', 'stepper'],
@@ -346,7 +365,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-approval',
     label: 'Approval workflow',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'Draft, submitted, under review, then approved or rejected — with the history and the decision.',
     components: ['StatusFlow', 'Timeline', 'ConfirmDialog', 'Textarea', 'StatusBadge'],
     keywords: ['approve', 'reject', 'review', 'workflow'],
@@ -355,7 +374,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-search',
     label: 'Search & filter',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'Search, filters and quick toggles, active-filter chips, results, pagination and a no-results state.',
     components: ['FilterBar', 'SearchInput', 'Chip', 'FilterChips', 'Grid', 'Pagination', 'Empty'],
     keywords: ['results', 'faceted search'],
@@ -364,7 +383,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-settings',
     label: 'Settings page',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'Settings navigation beside sections of forms, save and reset per section, and a danger zone.',
     components: ['VerticalNav', 'Card', 'Field', 'Switch', 'Select', 'ConfirmDialog'],
     keywords: ['preferences', 'account settings', 'role selector', 'team'],
@@ -373,7 +392,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-billing',
     label: 'Billing & API keys',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'Plan and pricing cards, usage meters, invoice history, API keys and webhook deliveries.',
     components: ['Card', 'Progress', 'CircularProgress', 'Table', 'CopyButton', 'Timeline', 'Banner'],
     keywords: ['pricing', 'subscription', 'usage meter', 'invoice', 'api key', 'webhook', 'upgrade'],
@@ -382,7 +401,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-onboarding',
     label: 'Onboarding',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'Welcome, profile, organisation, preferences, done: a first run that says how far along you are.',
     components: ['Stepper', 'Field', 'ImageUpload', 'SegmentedControl', 'Empty'],
     keywords: ['welcome', 'first run', 'setup'],
@@ -391,7 +410,7 @@ export const SECTIONS: GallerySection[] = [
   {
     id: 'pattern-auth',
     label: 'Sign-in screens',
-    category: 'Patterns',
+    category: 'Examples',
     blurb: 'Sign in, create an account, reset a password and verify a code. The screens only — no auth logic.',
     components: ['Card', 'Field', 'Input', 'PasswordInput', 'PasswordStrengthIndicator', 'OtpInput', 'Checkbox'],
     keywords: ['login', 'register', 'forgot password', 'otp', 'verification', 'authentication'],

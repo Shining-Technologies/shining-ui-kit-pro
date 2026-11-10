@@ -5,6 +5,7 @@ import { presetStylesheet, storedThemeId } from './theme'
 
 import './ui-styles.css'
 import './styles.css'
+import './site.css'
 
 // Themes go in before the first paint, so a stored theme never flashes the default.
 const themes = document.createElement('style')
