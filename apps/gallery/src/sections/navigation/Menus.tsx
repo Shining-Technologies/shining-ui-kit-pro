@@ -331,15 +331,16 @@ export function Menus() {
 
       <Demo
         title="Command menu"
-        note="A command palette. Press ⌘K (Ctrl+K on Windows) anywhere on this page, or use the button. Type to filter, press ↑/↓ to move and Enter to run. Choosing an item closes the menu, and focus returns to where it was before."
+        note="A command palette. Press ⌘J (Ctrl+J on Windows) anywhere on this page — ⌘K is the site search, or use the button. Type to filter, press ↑/↓ to move and Enter to run. Choosing an item closes the menu, and focus returns to where it was before."
       >
         <Button variant="outline" className="nav-demo__search" onClick={() => setPaletteOpen(true)}>
           <SearchIcon />
           <span>Search or run a command…</span>
-          <kbd className="nav-demo__kbd">⌘K</kbd>
+          <kbd className="nav-demo__kbd">⌘J</kbd>
         </Button>
         <span className="muted">Last command: {picked ?? 'none'}</span>
         <CommandMenu
+          shortcut="mod+j"
           items={commands}
           open={paletteOpen}
           onOpenChange={setPaletteOpen}

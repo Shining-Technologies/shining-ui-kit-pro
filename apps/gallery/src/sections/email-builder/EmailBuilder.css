@@ -1,0 +1,47 @@
+.email-demo__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.email-demo__meta code {
+  font-size: 0.75rem;
+}
+
+/* The block editor fills its container; give it a working height on the page. */
+.email-demo__block-editor {
+  height: min(52rem, 85vh);
+}
+
+.email-demo__toggle {
+  margin-top: 0.75rem;
+}
+
+.email-demo__html {
+  margin: 0.5rem 0 0;
+  max-height: 16rem;
+  overflow: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--muted);
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.email-demo__subject {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.email-demo__subject > :first-child {
+  flex: 1 1 20rem;
+}

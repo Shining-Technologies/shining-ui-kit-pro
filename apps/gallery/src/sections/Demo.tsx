@@ -1,5 +1,5 @@
 import { CopyButton } from '@shining-technologies/ui'
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useId, useState, type ReactNode } from 'react'
 
 /** The page a demo is on, so its anchor link can name it. */
 export const SectionIdContext = createContext('')
@@ -28,49 +28,88 @@ export interface DemoProps {
 }
 
 /**
- * One labelled example.
- *
- * Deliberately plain — the frame around a component must not compete with it,
- * so this is a heading, a note and a bordered box, and nothing else. The
- * heading carries an anchor (`#<page>/<demo>`), so any example can be linked
- * to directly; `code` adds a collapsed snippet that can be copied.
+ * One labelled example, framed the way component docs usually are: a heading
+ * with an anchor (`#<page>/<demo>`), a line of explanation, then the example in
+ * a bordered preview. When there is `code`, Preview and Code tabs switch the
+ * frame between the live example and a snippet that can be copied.
  */
 export function Demo({ title, note, inline = true, code, children }: DemoProps) {
   const sectionId = useContext(SectionIdContext)
   const slug = slugify(title)
+  const [view, setView] = useState<'preview' | 'code'>('preview')
+  const tabsId = useId()
+  const snippet = code?.trim()
 
   return (
-    <section className="demo" id={`demo-${slug}`}>
+    <section className="demo" id={`demo-${slug}`} data-demo-title={title}>
       <div className="demo__head">
         <h2>
-          {title}
           {sectionId ? (
-            <a className="demo__anchor" href={`#${sectionId}/${slug}`} aria-label={`Link to ${title}`}>
-              #
+            <a className="demo__anchor" href={`#${sectionId}/${slug}`}>
+              {title}
             </a>
-          ) : null}
+          ) : (
+            title
+          )}
         </h2>
         {note ? <p>{note}</p> : null}
       </div>
-      <div className={inline ? 'demo__body demo__body--inline' : 'demo__body'}>{children}</div>
-      {code ? (
-        <details className="demo__code">
-          <summary>Code</summary>
-          <div className="demo__code-body">
-            <CopyButton
-              value={code.trim()}
-              size="sm"
-              variant="outline"
-              className="demo__copy"
-              label={`Copy the ${title} code`}
+
+      {snippet ? (
+        <div className="demo__tabs" role="tablist" aria-label={`${title} views`}>
+          {(['preview', 'code'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              id={`${tabsId}-${tab}-tab`}
+              aria-controls={`${tabsId}-${tab}`}
+              aria-selected={view === tab}
+              tabIndex={view === tab ? 0 : -1}
+              className="demo__tab"
+              onClick={() => setView(tab)}
+              onKeyDown={(event) => {
+                if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+                const next = view === 'preview' ? 'code' : 'preview'
+                setView(next)
+                document.getElementById(`${tabsId}-${next}-tab`)?.focus()
+              }}
             >
-              Copy
-            </CopyButton>
-            <pre>
-              <code>{code.trim()}</code>
-            </pre>
-          </div>
-        </details>
+              {tab === 'preview' ? 'Preview' : 'Code'}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      <div
+        id={`${tabsId}-preview`}
+        role={snippet ? 'tabpanel' : undefined}
+        aria-labelledby={snippet ? `${tabsId}-preview-tab` : undefined}
+        hidden={view !== 'preview'}
+        className="demo__frame"
+      >
+        <div className={inline ? 'demo__body demo__body--inline' : 'demo__body'}>{children}</div>
+      </div>
+
+      {snippet ? (
+        <div
+          id={`${tabsId}-code`}
+          role="tabpanel"
+          aria-labelledby={`${tabsId}-code-tab`}
+          hidden={view !== 'code'}
+          className="demo__code"
+        >
+          <CopyButton
+            value={snippet}
+            size="sm"
+            variant="ghost"
+            className="demo__copy"
+            label={`Copy the ${title} code`}
+          />
+          <pre>
+            <code>{snippet}</code>
+          </pre>
+        </div>
       ) : null}
     </section>
   )

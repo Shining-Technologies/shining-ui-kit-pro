@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url))
 const UI = r('../../packages/ui/src')
+const EMAIL = r('../../packages/email-builder/src')
 
 export default defineConfig({
   plugins: [react()],
@@ -18,6 +19,8 @@ export default defineConfig({
       { find: /^@shining-technologies\/ui\/(core|theme|charts|csv)$/, replacement: `${UI}/$1/index.ts` },
       { find: /^@shining-technologies\/ui\/([a-z-]+)$/, replacement: `${UI}/components/$1/index.ts` },
       { find: /^@shining-technologies\/ui$/, replacement: `${UI}/index.ts` },
+      { find: /^@shining-technologies\/email-builder\/design$/, replacement: `${EMAIL}/design.ts` },
+      { find: /^@shining-technologies\/email-builder$/, replacement: `${EMAIL}/index.ts` },
     ],
     // The package source resolves its own React from packages/ui; one copy only.
     dedupe: ['react', 'react-dom'],

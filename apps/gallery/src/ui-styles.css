@@ -26,3 +26,6 @@
 @import '../../../packages/ui/src/styles/sidebar.css' layer(components);
 @import '../../../packages/ui/src/styles/layout.css' layer(components);
 @import '../../../packages/ui/src/styles/data-display.css' layer(components);
+
+/* @shining-technologies/email-builder, from source: one file, already in the components layer. */
+@import '../../../packages/email-builder/src/styles.css';

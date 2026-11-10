@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "arial",
+        "createdAt": "2026-11-10T08:12:39.679Z",
+        "reason": "Claude triage: Arial is in the sample HTML email fixture in email-builder/data.ts; email clients need web-safe fonts, so it is not a UI typeface choice"
+      }
+    ]
+  }
+}
